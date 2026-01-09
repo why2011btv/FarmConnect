@@ -153,7 +153,7 @@ export default function Home() {
             <NotesIcon /> Notes
           </button>
           <button className={mode === "messages" ? "active" : ""} onClick={() => setMode("messages")}>
-            <MessageIcon /> Messages
+            <MessageIcon /> Chat
           </button>
         </div>
       </div>

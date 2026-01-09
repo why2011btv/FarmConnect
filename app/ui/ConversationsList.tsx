@@ -55,7 +55,7 @@ export default function ConversationsList({
         <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
           <div className="row">
             <div>
-              <div className="title" style={{ margin: 0 }}>Messages</div>
+              <div className="title" style={{ margin: 0 }}>Chat</div>
               <div className="muted small" style={{ marginTop: 6 }}>
                 Your conversations
               </div>
