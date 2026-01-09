@@ -50,6 +50,6 @@ button{font:inherit}
 .btnRow{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
 .btn{padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;display:flex;gap:8px;align-items:center}
 .btn.primary{background:rgba(43,191,94,.2);border-color:rgba(43,191,94,.5)}
-.mapWrap{height:70vh;min-height:520px;border-radius:18px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow)}
+.mapWrap{height:70vh;min-height:520px;border-radius:18px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);touch-action:pan-x pan-y}
 .comment{border-top:1px solid var(--border);padding:10px 0}
 .comment p{margin:6px 0 0 0;color:rgba(229,231,235,.9)}

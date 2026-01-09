@@ -53,7 +53,32 @@ export default function MapView({
       publicPosts.forEach((p) => {
         const mk = window.L.marker([p.lat, p.lng], { title: p.title });
         mk.addTo(mapRef.current);
-        mk.on("click", () => onSelect(p.id));
+        
+        // Unified handler for both mouse and touch events
+        const handleSelect = (e: any) => {
+          if (e && e.originalEvent) {
+            // Prevent map from panning when clicking/touching marker
+            e.originalEvent.stopPropagation();
+            // For touch events, prevent default to avoid double-tap zoom
+            if (e.originalEvent.type === 'touchend') {
+              e.originalEvent.preventDefault();
+            }
+          }
+          // Directly call onSelect
+          onSelect(p.id);
+        };
+        
+        // Register multiple event types for maximum compatibility
+        mk.on("click", handleSelect);
+        mk.on("touchend", handleSelect);
+        
+        // Prevent map panning when touching the marker
+        mk.on("touchstart", (e: any) => {
+          if (e.originalEvent) {
+            e.originalEvent.stopPropagation();
+          }
+        });
+        
         markersRef.current.set(p.id, mk);
       });
     })();

@@ -12,11 +12,12 @@ function timeAgo(ts: number) {
 
 // 重点看这里：必须有 export default
 export default function PostCard({
-  post, onUpvote, onOpen,
+  post, onUpvote, onOpen, onMessage,
 }: {
   post: Post;
   onUpvote: (id: string) => void;
   onOpen: (id: string) => void;
+  onMessage?: (userName: string) => void;
 }) {
   const badge =
     post.visibility === "Private" ? "Private" :
@@ -33,9 +34,40 @@ export default function PostCard({
           <span className="muted">· {timeAgo(post.createdAt)} ago</span>
         </div>
         <div className="title">{post.title}</div>
+        {post.imageUrl && (
+          <div style={{ marginTop: 8, marginBottom: 8, borderRadius: 12, overflow: "hidden" }}>
+            <img 
+              src={post.imageUrl} 
+              alt={post.title}
+              style={{ width: "100%", height: "auto", display: "block", maxHeight: "300px", objectFit: "cover" }}
+            />
+          </div>
+        )}
         <div className="body">{post.body}</div>
         <div className="meta">
-          <span className="pill small">📍 {post.lat.toFixed(3)}, {post.lng.toFixed(3)}</span>
+          <span 
+            className="pill small" 
+            style={{ cursor: onMessage ? "pointer" : "default", userSelect: "none" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onMessage) onMessage(post.userName);
+            }}
+            onMouseEnter={(e) => {
+              if (onMessage) {
+                e.currentTarget.style.opacity = "0.8";
+                e.currentTarget.style.textDecoration = "underline";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (onMessage) {
+                e.currentTarget.style.opacity = "1";
+                e.currentTarget.style.textDecoration = "none";
+              }
+            }}
+          >
+            👤 {post.userName}
+          </span>
+          <span className="pill small">📍 {post.city || "Unknown"}</span>
         </div>
       </div>
 
