@@ -35,6 +35,7 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [query, setQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | Post["category"]>("all");
   const [openPostId, setOpenPostId] = useState<string | null>(null);
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [dmUserName, setDmUserName] = useState<string | null>(null);
@@ -62,6 +63,11 @@ export default function Home() {
     if (timeFilter !== "all") {
       list = list.filter((p) => p.createdAt >= cutoff);
     }
+
+    // Apply category filter
+    if (categoryFilter !== "all") {
+      list = list.filter((p) => p.category === categoryFilter);
+    }
     
     // Sort by most recent
     list.sort((a, b) => b.createdAt - a.createdAt);
@@ -71,7 +77,7 @@ export default function Home() {
     return list.filter((p) =>
       [p.title, p.body, p.crop, p.category].some((x) => x.toLowerCase().includes(q))
     );
-  }, [posts, query, timeFilter]);
+  }, [posts, query, timeFilter, categoryFilter]);
 
   const filteredNotes = useMemo(() => {
     const currentUser = getUserName();
@@ -118,12 +124,38 @@ export default function Home() {
         </div>
 
         <div className="search">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search disease/pest/crop…" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search disease/pest/crop…"
+          />
         </div>
 
-        <div className="timeFilter">
-          <select 
-            value={timeFilter} 
+        <div className="timeFilter" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value as any)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "14px",
+              border: "1px solid var(--border)",
+              background: "rgba(255,255,255,.04)",
+              color: "var(--text)",
+              outline: "none",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            <option value="all">All categories</option>
+            <option value="Disease">Disease</option>
+            <option value="Pest">Pest</option>
+            <option value="Weather">Weather</option>
+            <option value="Note">Note</option>
+            <option value="Market">Market</option>
+          </select>
+
+          <select
+            value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
             style={{
               padding: "8px 12px",
@@ -133,7 +165,7 @@ export default function Home() {
               color: "var(--text)",
               outline: "none",
               fontSize: "14px",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             <option value="1h">Last 1 hour</option>

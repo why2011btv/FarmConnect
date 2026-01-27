@@ -75,10 +75,10 @@ export function loadPosts(): Post[] {
       }
     }
 
-    // Ensure the new post with image exists (if not already present)
-    const hasNewPost = migrated.some((p: any) => p.id === "p4");
-    if (!hasNewPost) {
-      const newPost: Post = {
+    // Ensure the corn pest post with image exists (if not already present)
+    const hasP4 = migrated.some((p: any) => p.id === "p4");
+    if (!hasP4) {
+      const newPostP4: Post = {
         id: "p4",
         title: "Corn pest infestation detected",
         body: "Found significant pest damage in the eastern field. Multiple larvae visible on corn leaves. Immediate treatment recommended.",
@@ -95,21 +95,32 @@ export function loadPosts(): Post[] {
         userName: "Charles Zhang",
         imageUrl: "/cornpest_2_0.webp",
       };
-      migrated.push(newPost);
+      migrated.push(newPostP4);
       localStorage.setItem(KEY, JSON.stringify(migrated));
-    } else {
-      // Update existing p4 post to have correct name and location
-      const p4Index = migrated.findIndex((p: any) => p.id === "p4");
-      if (p4Index !== -1) {
-        migrated[p4Index] = {
-          ...migrated[p4Index],
-          userName: "Charles Zhang",
-          lat: 42.3601,
-          lng: -71.0589,
-          city: "Boston",
-        };
-        localStorage.setItem(KEY, JSON.stringify(migrated));
-      }
+    }
+
+    // Ensure the market blueberries post exists (if not already present)
+    const hasP5 = migrated.some((p: any) => p.id === "p5");
+    if (!hasP5) {
+      const newPostP5: Post = {
+        id: "p5",
+        title: "Fresh blueberries at local market",
+        body: "Selling freshly picked organic blueberries at the Saturday farmers market. Limited supply this week.",
+        crop: "Blueberries",
+        category: "Market",
+        severity: 1,
+        visibility: "Public",
+        lat: 42.3601,
+        lng: -71.0589,
+        city: "Boston",
+        createdAt: Date.now() - 1000 * 60 * 45,
+        upvotes: 7,
+        comments: [],
+        userName: "Alex Wang",
+        imageUrl: "/blueberries.jpg",
+      };
+      migrated.push(newPostP5);
+      localStorage.setItem(KEY, JSON.stringify(migrated));
     }
     
     return migrated;
