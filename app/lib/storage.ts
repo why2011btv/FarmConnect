@@ -184,6 +184,23 @@ export function loadPosts(): Post[] {
       userName: "Charles Zhang",
       imageUrl: "/cornpest_2_0.webp",
     },
+    {
+      id: "p5",
+      title: "Fresh blueberries at local market",
+      body: "Selling freshly picked organic blueberries at the Saturday farmers market. Limited supply this week.",
+      crop: "Blueberries",
+      category: "Market",
+      severity: 1,
+      visibility: "Public",
+      lat: 42.3601,
+      lng: -71.0589,
+      city: "Boston",
+      createdAt: Date.now() - 1000 * 60 * 45,
+      upvotes: 7,
+      comments: [],
+      userName: "Alex Wang",
+      imageUrl: "/blueberries.jpg",
+    },
   ];
 
   localStorage.setItem(KEY, JSON.stringify(seed));

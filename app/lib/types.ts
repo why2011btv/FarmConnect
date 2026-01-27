@@ -5,7 +5,7 @@ export type Post = {
   title: string;
   body: string;
   crop: string;
-  category: "Disease" | "Pest" | "Weather" | "Note";
+  category: "Disease" | "Pest" | "Weather" | "Note" | "Market";
   severity: 1 | 2 | 3 | 4 | 5;
   visibility: "Public" | "Private";
   lat: number;

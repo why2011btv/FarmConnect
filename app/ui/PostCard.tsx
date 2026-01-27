@@ -10,6 +10,42 @@ function timeAgo(ts: number) {
   return `${Math.floor(hrs / 24)}d`;
 }
 
+const CATEGORY_THEME: Record<
+  Post["category"],
+  { cardBg: string; border: string; pillBg: string; pillText: string }
+> = {
+  Disease: {
+    cardBg: "linear-gradient(135deg, rgba(248,113,113,0.24), rgba(15,23,42,0.96))",
+    border: "rgba(248,113,113,0.8)",
+    pillBg: "rgba(248,113,113,0.22)",
+    pillText: "#fecaca",
+  },
+  Pest: {
+    cardBg: "linear-gradient(135deg, rgba(250,204,21,0.18), rgba(15,23,42,0.96))",
+    border: "rgba(250,204,21,0.75)",
+    pillBg: "rgba(250,204,21,0.20)",
+    pillText: "#fef9c3",
+  },
+  Weather: {
+    cardBg: "linear-gradient(135deg, rgba(59,130,246,0.26), rgba(15,23,42,0.96))",
+    border: "rgba(59,130,246,0.8)",
+    pillBg: "rgba(59,130,246,0.24)",
+    pillText: "#bfdbfe",
+  },
+  Note: {
+    cardBg: "linear-gradient(135deg, rgba(148,163,184,0.20), rgba(15,23,42,0.96))",
+    border: "rgba(148,163,184,0.7)",
+    pillBg: "rgba(148,163,184,0.20)",
+    pillText: "#e5e7eb",
+  },
+  Market: {
+    cardBg: "linear-gradient(135deg, rgba(52,211,153,0.26), rgba(15,23,42,0.96))",
+    border: "rgba(52,211,153,0.8)",
+    pillBg: "rgba(52,211,153,0.24)",
+    pillText: "#bbf7d0",
+  },
+};
+
 // 重点看这里：必须有 export default
 export default function PostCard({
   post, onUpvote, onOpen, onMessage,
@@ -23,13 +59,33 @@ export default function PostCard({
     post.visibility === "Private" ? "Private" :
     post.category === "Note" ? "Public" : "Alert";
 
+  const theme = CATEGORY_THEME[post.category];
+
   return (
-    <div className="card" onClick={() => onOpen(post.id)} role="button" tabIndex={0}>
+    <div
+      className="card"
+      onClick={() => onOpen(post.id)}
+      role="button"
+      tabIndex={0}
+      style={{
+        background: theme.cardBg,
+        borderColor: theme.border,
+      }}
+    >
       <div className="hd">
         <div className="kicker">
           <span className="pill">{badge}</span>
           <span className="pill">{post.crop}</span>
-          <span className="pill">{post.category}</span>
+          <span
+            className="pill"
+            style={{
+              borderColor: theme.border,
+              background: theme.pillBg,
+              color: theme.pillText,
+            }}
+          >
+            {post.category}
+          </span>
           <span className="pill">Severity {post.severity}</span>
           <span className="muted">· {timeAgo(post.createdAt)} ago</span>
         </div>

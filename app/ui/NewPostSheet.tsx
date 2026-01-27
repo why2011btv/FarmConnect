@@ -157,6 +157,7 @@ export default function NewPostSheet({
               <option value="Pest">Pest</option>
               <option value="Weather">Weather</option>
               <option value="Note">Note</option>
+              <option value="Market">Market</option>
             </select>
           </div>
 

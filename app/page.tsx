@@ -15,11 +15,13 @@ function nid(prefix: string) {
   return prefix + Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
 
-type TimeFilter = "1d" | "3d" | "1w" | "3w" | "all";
+type TimeFilter = "1h" | "5h" | "1d" | "3d" | "1w" | "3w" | "all";
 
 function getTimeFilterCutoff(filter: TimeFilter): number {
   const now = Date.now();
   switch (filter) {
+    case "1h": return now - 1 * 60 * 60 * 1000;
+    case "5h": return now - 5 * 60 * 60 * 1000;
     case "1d": return now - 24 * 60 * 60 * 1000;
     case "3d": return now - 3 * 24 * 60 * 60 * 1000;
     case "1w": return now - 7 * 24 * 60 * 60 * 1000;
@@ -134,6 +136,8 @@ export default function Home() {
               cursor: "pointer"
             }}
           >
+            <option value="1h">Last 1 hour</option>
+            <option value="5h">Last 5 hours</option>
             <option value="1d">Last 1 day</option>
             <option value="3d">Last 3 days</option>
             <option value="1w">Last 1 week</option>
