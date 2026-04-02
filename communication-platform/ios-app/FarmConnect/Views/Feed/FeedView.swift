@@ -46,29 +46,40 @@ struct FeedView: View {
                         .frame(maxHeight: .infinity)
                 } else {
                     List(viewModel.posts) { post in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(post.title)
-                                .font(.headline)
-                            Text(post.body)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            HStack {
-                                Text(post.category.rawValue)
-                                Text(post.city)
-                                Spacer()
-                                Button("Upvote (\(post.upvotes))") {
-                                    Task { await viewModel.upvote(postId: post.id) }
+                        NavigationLink {
+                            PostDetailView(post: post)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(post.title)
+                                    .font(.headline)
+                                Text(post.body)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                HStack {
+                                    Text(post.category.rawValue)
+                                    Text(post.city)
+                                    Spacer()
+                                    Button("Upvote (\(post.upvotes))") {
+                                        Task { await viewModel.upvote(postId: post.id) }
+                                    }
                                 }
+                                .font(.caption)
                             }
-                            .font(.caption)
+                            .padding(.vertical, 6)
                         }
-                        .padding(.vertical, 6)
                     }
                     .listStyle(.plain)
                 }
             }
             .padding()
             .navigationTitle("Feed")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Refresh") {
+                        Task { await viewModel.load() }
+                    }
+                }
+            }
             .task {
                 await viewModel.load()
             }

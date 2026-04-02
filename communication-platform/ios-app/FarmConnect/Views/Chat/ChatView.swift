@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ChatView: View {
     @EnvironmentObject private var viewModel: ChatViewModel
+    @EnvironmentObject private var session: SessionStore
 
     var body: some View {
         NavigationStack {
@@ -15,17 +16,23 @@ struct ChatView: View {
                     ContentUnavailableView("No conversations", systemImage: "message")
                 } else {
                     List(viewModel.conversations) { conversation in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(conversation.participantNames.joined(separator: ", "))
-                                .font(.headline)
-                            if let last = conversation.messages.last {
-                                Text(last.text)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                        let title = conversation.participantNames.joined(separator: ", ")
+                        let otherUserId = conversation.participants.first(where: { $0 != session.currentUser?.id }) ?? conversation.participants.first ?? ""
+                        NavigationLink {
+                            ChatThreadView(otherUserId: otherUserId, title: title)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(title)
+                                    .font(.headline)
+                                if let last = conversation.messages.last {
+                                    Text(last.text)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                     .listStyle(.plain)
                 }

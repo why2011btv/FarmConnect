@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
+import { requireAuth } from "../auth/requireAuth.js";
 
 const registerTokenSchema = z.object({
-  userId: z.string().min(1),
   deviceToken: z.string().min(1),
 });
 
@@ -15,6 +15,9 @@ const sendNotificationSchema = z.object({
 
 export async function notificationRoutes(app: FastifyInstance, db: Pool) {
   app.post("/v1/notifications/register-device", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
     const parsed = registerTokenSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
 
@@ -24,7 +27,7 @@ export async function notificationRoutes(app: FastifyInstance, db: Pool) {
       VALUES ($1, $2)
       ON CONFLICT DO NOTHING
       `,
-      [parsed.data.userId, parsed.data.deviceToken]
+      [authUser.id, parsed.data.deviceToken]
     );
     return { ok: true };
   });

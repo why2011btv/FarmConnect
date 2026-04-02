@@ -20,12 +20,14 @@ Server defaults:
 
 ## API endpoints
 
+- `POST /v1/auth/login`
+- `GET /v1/auth/me`
 - `GET /v1/posts`
 - `POST /v1/posts`
 - `POST /v1/posts/:postId/upvote`
 - `POST /v1/posts/:postId/comments`
-- `GET /v1/conversations?userId=<id>`
-- `GET /v1/messages?userA=<id>&userB=<id>`
+- `GET /v1/conversations` (auth required)
+- `GET /v1/messages?otherUserId=<id>` (auth required)
 - `POST /v1/messages`
 - `POST /v1/uploads/create`
 - `POST /v1/notifications/register-device`
@@ -35,4 +37,5 @@ Server defaults:
 
 - Uses Postgres repositories and SQL migrations.
 - Seed data is included in `migrations/002_seed.sql`.
+- Session tokens are stored in `auth_sessions` (migration `003_auth_sessions.sql`).
 - Notification routes are APNs stubs; integrate a queue worker in production.

@@ -8,6 +8,7 @@ final class FeedViewModel: ObservableObject {
     @Published var selectedTimeFilter: TimeFilter = .all
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var refreshTrigger = UUID()
 
     func load() async {
         isLoading = true
@@ -31,6 +32,47 @@ final class FeedViewModel: ObservableObject {
             await load()
         } catch {
             errorMessage = "Upvote failed: \(error.localizedDescription)"
+        }
+    }
+
+    func addComment(postId: String, text: String) async {
+        do {
+            try await APIClient.shared.addComment(postId: postId, text: text)
+            await load()
+        } catch {
+            errorMessage = "Comment failed: \(error.localizedDescription)"
+        }
+    }
+
+    func createPost(
+        title: String,
+        body: String,
+        crop: String,
+        category: Category,
+        severity: Int,
+        visibility: String,
+        lat: Double,
+        lng: Double,
+        city: String,
+        imageUrl: String?
+    ) async {
+        do {
+            try await APIClient.shared.createPost(
+                title: title,
+                body: body,
+                crop: crop,
+                category: category,
+                severity: severity,
+                visibility: visibility,
+                lat: lat,
+                lng: lng,
+                city: city,
+                imageUrl: imageUrl
+            )
+            refreshTrigger = UUID()
+            await load()
+        } catch {
+            errorMessage = "Create post failed: \(error.localizedDescription)"
         }
     }
 }

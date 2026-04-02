@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import { pool } from "./db.js";
 import { ChatRepository } from "./repositories/chatRepository.js";
 import { PostRepository } from "./repositories/postRepository.js";
+import { authRoutes } from "./routes/auth.js";
 import { chatRoutes } from "./routes/chats.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { postRoutes } from "./routes/posts.js";
@@ -21,12 +22,13 @@ await app.register(cors, {
 await app.register(sensible);
 
 app.get("/health", async () => ({ ok: true, service: "communication-backend" }));
+await authRoutes(app, pool);
 
 const postRepository = new PostRepository(pool);
 const chatRepository = new ChatRepository(pool);
 
-await postRoutes(app, postRepository);
-await chatRoutes(app, chatRepository);
+await postRoutes(app, postRepository, pool);
+await chatRoutes(app, chatRepository, pool);
 await app.register(uploadRoutes);
 await notificationRoutes(app, pool);
 

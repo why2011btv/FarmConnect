@@ -11,6 +11,40 @@ final class APIClient {
 
     // Replace this with your cloud API endpoint.
     private let baseURL = URL(string: "http://localhost:4000")!
+    private var authToken: String?
+
+    func setAuthToken(_ token: String?) {
+        authToken = token
+    }
+
+    private func authorizedRequest(path: String, method: String = "GET") throws -> URLRequest {
+        let url = baseURL.appendingPathComponent(path)
+        var req = URLRequest(url: url)
+        req.httpMethod = method
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = authToken {
+            req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return req
+    }
+
+    func login(name: String) async throws -> AuthResponse {
+        var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+
+    func me() async throws -> UserProfile {
+        let req = try authorizedRequest(path: "/v1/auth/me")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(AuthMeResponse.self, from: data).user
+    }
 
     func getPosts(
         query: String,
@@ -34,25 +68,107 @@ final class APIClient {
     }
 
     func upvote(postId: String) async throws {
-        let url = baseURL.appendingPathComponent("/v1/posts/\(postId)/upvote")
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        let req = try authorizedRequest(path: "/v1/posts/\(postId)/upvote", method: "POST")
 
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
     }
 
-    func getConversations(userId: String) async throws -> [Conversation] {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/conversations"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "userId", value: userId)]
-        guard let url = components?.url else { throw APIError.badURL }
-
-        let (data, response) = try await URLSession.shared.data(from: url)
+    func getConversations() async throws -> [Conversation] {
+        let req = try authorizedRequest(path: "/v1/conversations")
+        let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
 
         return try JSONDecoder().decode(ConversationListResponse.self, from: data).items
+    }
+
+    func getMessages(otherUserId: String) async throws -> [Message] {
+        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/messages"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "otherUserId", value: otherUserId)]
+        guard let url = components?.url else { throw APIError.badURL }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        if let token = authToken {
+            req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(MessageListResponse.self, from: data).items
+    }
+
+    func sendMessage(toUserId: String, text: String) async throws {
+        var req = try authorizedRequest(path: "/v1/messages", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "toUserId": toUserId,
+            "text": text
+        ])
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func addComment(postId: String, text: String) async throws {
+        var req = try authorizedRequest(path: "/v1/posts/\(postId)/comments", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["text": text])
+
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func createUploadUrl(fileName: String, mimeType: String) async throws -> (uploadUrl: String, publicUrl: String) {
+        var req = try authorizedRequest(path: "/v1/uploads/create", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "fileName": fileName,
+            "mimeType": mimeType
+        ])
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let uploadUrl = json["uploadUrl"] as? String,
+            let publicUrl = json["publicUrl"] as? String
+        else {
+            throw APIError.badStatus(-2)
+        }
+        return (uploadUrl, publicUrl)
+    }
+
+    func createPost(
+        title: String,
+        body: String,
+        crop: String,
+        category: Category,
+        severity: Int,
+        visibility: String,
+        lat: Double,
+        lng: Double,
+        city: String,
+        imageUrl: String?
+    ) async throws {
+        var req = try authorizedRequest(path: "/v1/posts", method: "POST")
+        var payload: [String: Any] = [
+            "title": title,
+            "body": body,
+            "crop": crop,
+            "category": category.rawValue,
+            "severity": severity,
+            "visibility": visibility,
+            "lat": lat,
+            "lng": lng,
+            "city": city
+        ]
+        if let imageUrl {
+            payload["imageUrl"] = imageUrl
+        }
+        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
     }
 }

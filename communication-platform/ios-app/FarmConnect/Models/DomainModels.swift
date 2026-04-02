@@ -92,3 +92,18 @@ struct ConversationListResponse: Codable {
 struct MessageListResponse: Codable {
     let items: [Message]
 }
+
+struct UserProfile: Codable, Identifiable {
+    let id: String
+    let name: String
+}
+
+struct AuthResponse: Codable {
+    let token: String
+    let user: UserProfile
+    let expiresAt: String
+}
+
+struct AuthMeResponse: Codable {
+    let user: UserProfile
+}

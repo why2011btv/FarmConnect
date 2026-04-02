@@ -13,7 +13,7 @@ struct RootTabView: View {
                     Label("Map", systemImage: "map")
                 }
 
-            NewPostPlaceholderView()
+            NewPostView()
                 .tabItem {
                     Label("New", systemImage: "plus.circle")
                 }
@@ -41,22 +41,24 @@ private struct MapPlaceholderView: View {
     }
 }
 
-private struct NewPostPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            Text("New post form scaffold. Next: image picker + upload URL flow.")
-                .padding()
-                .navigationTitle("Create Post")
-        }
-    }
-}
-
 private struct ProfilePlaceholderView: View {
+    @EnvironmentObject private var session: SessionStore
+
     var body: some View {
         NavigationStack {
-            Text("Profile/auth scaffold. Next: login + settings + notification toggle.")
-                .padding()
-                .navigationTitle("Profile")
+            VStack(spacing: 12) {
+                if let user = session.currentUser {
+                    Text("Signed in as \(user.name)")
+                } else {
+                    Text("Not signed in")
+                }
+                Button("Sign out") {
+                    session.logout()
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding()
+            .navigationTitle("Profile")
         }
     }
 }
