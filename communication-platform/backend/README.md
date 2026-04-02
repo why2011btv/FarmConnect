@@ -32,6 +32,7 @@ Server defaults:
 - `POST /v1/uploads/create`
 - `POST /v1/notifications/register-device`
 - `POST /v1/notifications/send`
+- `POST /v1/uploads/image` (multipart, auth required)
 
 ## Notes
 
@@ -39,3 +40,4 @@ Server defaults:
 - Seed data is included in `migrations/002_seed.sql`.
 - Session tokens are stored in `auth_sessions` (migration `003_auth_sessions.sql`).
 - Notification routes are APNs stubs; integrate a queue worker in production.
+- Uploaded images are stored locally in `backend/uploads/` and served under `/uploads/*`.

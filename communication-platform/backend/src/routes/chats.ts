@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { ChatRepository } from "../repositories/chatRepository.js";
+import { queuePushNotification } from "../services/notificationService.js";
 
 const getMessagesQuerySchema = z.object({
   otherUserId: z.string().min(1),
@@ -44,6 +45,15 @@ export async function chatRoutes(app: FastifyInstance, chatRepository: ChatRepos
       fromUserId: authUser.id,
       fromUserName: authUser.name,
     });
+    if (parsed.data.toUserId !== authUser.id) {
+      await queuePushNotification(
+        db,
+        app.log,
+        parsed.data.toUserId,
+        "New message",
+        `${authUser.name}: ${parsed.data.text}`
+      );
+    }
     return { item: result.message, conversation: result.conversation };
   });
 }

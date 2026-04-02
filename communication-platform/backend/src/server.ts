@@ -1,6 +1,10 @@
+import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import Fastify from "fastify";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { pool } from "./db.js";
 import { ChatRepository } from "./repositories/chatRepository.js";
 import { PostRepository } from "./repositories/postRepository.js";
@@ -20,6 +24,19 @@ await app.register(cors, {
 });
 
 await app.register(sensible);
+const uploadsRoot = path.resolve(process.cwd(), "uploads");
+mkdirSync(uploadsRoot, { recursive: true });
+
+await app.register(multipart, {
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+  },
+});
+await app.register(fastifyStatic, {
+  root: uploadsRoot,
+  prefix: "/uploads/",
+});
 
 app.get("/health", async () => ({ ok: true, service: "communication-backend" }));
 await authRoutes(app, pool);
@@ -29,7 +46,7 @@ const chatRepository = new ChatRepository(pool);
 
 await postRoutes(app, postRepository, pool);
 await chatRoutes(app, chatRepository, pool);
-await app.register(uploadRoutes);
+await uploadRoutes(app, pool);
 await notificationRoutes(app, pool);
 
 const port = Number(process.env.PORT ?? 4000);

@@ -10,6 +10,15 @@ struct PostDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(post.title)
                     .font(.title3.bold())
+                if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Color.gray.opacity(0.2)
+                    }
+                    .frame(height: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
                 Text(post.body)
                     .foregroundStyle(.secondary)
                 HStack {

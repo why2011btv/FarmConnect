@@ -52,6 +52,15 @@ struct FeedView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(post.title)
                                     .font(.headline)
+                                if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
+                                    AsyncImage(url: url) { image in
+                                        image.resizable().scaledToFill()
+                                    } placeholder: {
+                                        Color.gray.opacity(0.2)
+                                    }
+                                    .frame(height: 160)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
                                 Text(post.body)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)

@@ -6,9 +6,10 @@ This folder contains a SwiftUI-first scaffold for the communication platform MVP
 
 - Feed tab (posts list + filters)
 - Map tab placeholder (to connect MapKit)
-- New Post tab placeholder
-- Chat tab (conversations/messages loading hooks)
-- Profile tab placeholder
+- New Post form with photo upload to backend
+- Chat tab with conversation list + thread send/load
+- Login + session restore + sign-out
+- APNs registration scaffold and backend device-token registration
 - Shared API client for backend endpoints
 
 ## Generate an Xcode project

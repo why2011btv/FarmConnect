@@ -139,6 +139,35 @@ final class APIClient {
         return (uploadUrl, publicUrl)
     }
 
+    func uploadImage(data: Data, fileName: String, mimeType: String) async throws -> String {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var req = try authorizedRequest(path: "/v1/uploads/image", method: "POST")
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        req.httpBody = body
+
+        let (responseData, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+
+        guard
+            let json = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+            let publicUrl = json["publicUrl"] as? String
+        else {
+            throw APIError.badStatus(-2)
+        }
+        if publicUrl.hasPrefix("http://") || publicUrl.hasPrefix("https://") {
+            return publicUrl
+        }
+        return baseURL.appendingPathComponent(publicUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))).absoluteString
+    }
+
     func createPost(
         title: String,
         body: String,
@@ -167,6 +196,14 @@ final class APIClient {
             payload["imageUrl"] = imageUrl
         }
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func registerDeviceToken(_ token: String) async throws {
+        var req = try authorizedRequest(path: "/v1/notifications/register-device", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["deviceToken": token])
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }

@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 struct NewPostView: View {
@@ -13,6 +14,9 @@ struct NewPostView: View {
     @State private var lat = 25.7742
     @State private var lng = -80.1936
     @State private var imageUrl = ""
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isUploadingImage = false
+    @State private var uploadError: String?
 
     private let cropOptions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
     private let cityOptions = ["Montpelier", "Boston", "Miami", "New York", "Los Angeles", "Chicago"]
@@ -59,10 +63,22 @@ struct NewPostView: View {
                 }
 
                 Section("Media (optional)") {
-                    TextField("Image URL (or upload result URL)", text: $imageUrl)
-                    Text("Next step: use PhotosPicker + upload URL endpoint to upload binary image and auto-fill public URL.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        Label("Choose Photo", systemImage: "photo")
+                    }
+                    if isUploadingImage {
+                        ProgressView("Uploading image...")
+                    }
+                    if let uploadError {
+                        Text(uploadError)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                    if !imageUrl.isEmpty {
+                        Text("Uploaded: \(imageUrl)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Button("Publish Post") {
@@ -87,6 +103,33 @@ struct NewPostView: View {
                 .buttonStyle(.borderedProminent)
             }
             .navigationTitle("Create Post")
+            .onChange(of: selectedPhoto) { _, newValue in
+                guard let newValue else { return }
+                Task {
+                    await uploadSelectedPhoto(newValue)
+                }
+            }
+        }
+    }
+
+    private func uploadSelectedPhoto(_ item: PhotosPickerItem) async {
+        isUploadingImage = true
+        uploadError = nil
+        defer { isUploadingImage = false }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self) else {
+                uploadError = "Failed to load selected image."
+                return
+            }
+            let fileName = "post-\(UUID().uuidString).jpg"
+            imageUrl = try await APIClient.shared.uploadImage(
+                data: data,
+                fileName: fileName,
+                mimeType: "image/jpeg"
+            )
+        } catch {
+            uploadError = "Image upload failed: \(error.localizedDescription)"
         }
     }
 }

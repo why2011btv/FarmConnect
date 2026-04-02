@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { PostRepository } from "../repositories/postRepository.js";
+import { queuePushNotification } from "../services/notificationService.js";
 import { Category, TimeFilter } from "../types.js";
 
 const categoryValues: Category[] = ["Disease", "Pest", "Weather", "Note", "Market"];
@@ -85,6 +86,16 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
       userName: authUser.name,
     });
     if (!result) return app.httpErrors.notFound("Post not found");
+
+    if (result.post.userId !== authUser.id) {
+      await queuePushNotification(
+        db,
+        app.log,
+        result.post.userId,
+        "New comment on your post",
+        `${authUser.name}: ${parsed.data.text}`
+      );
+    }
     return { item: result.comment, post: result.post };
   });
 }

@@ -237,6 +237,11 @@ export class PostRepository {
     return { comment, post };
   }
 
+  async getById(postId: string): Promise<Post | null> {
+    const posts = await this.listByIds([postId]);
+    return posts[0] ?? null;
+  }
+
   private async listByIds(ids: string[]): Promise<Post[]> {
     if (!ids.length) return [];
     const { rows } = await this.db.query<PostRow>(

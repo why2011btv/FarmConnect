@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
+import { queuePushNotification } from "../services/notificationService.js";
 
 const registerTokenSchema = z.object({
   deviceToken: z.string().min(1),
@@ -33,16 +34,16 @@ export async function notificationRoutes(app: FastifyInstance, db: Pool) {
   });
 
   app.post("/v1/notifications/send", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
     const parsed = sendNotificationSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
 
-    // Stub for APNs worker integration.
-    // In production: enqueue to background worker + APNs provider.
-    const { rows } = await db.query<{ device_token: string }>(
-      "SELECT device_token FROM device_tokens WHERE user_id = $1",
-      [parsed.data.userId]
-    );
-    const targets = rows.map((r) => r.device_token);
-    return { queued: true, targetCount: targets.length };
+    // Allow sending only to self in this scaffold endpoint.
+    if (parsed.data.userId !== authUser.id) {
+      return reply.code(403).send({ error: "Cannot send arbitrary notifications" });
+    }
+    return queuePushNotification(db, app.log, parsed.data.userId, parsed.data.title, parsed.data.body);
   });
 }

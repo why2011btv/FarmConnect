@@ -19,3 +19,5 @@ targets:
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: We use location to show local farm posts on the map.
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: We use photos to upload images in posts.
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: We may save generated media to your photo library.
+        INFOPLIST_KEY_UIBackgroundModes:
+          - remote-notification
