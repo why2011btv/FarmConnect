@@ -1,5 +1,6 @@
 import { FastifyBaseLogger } from "fastify";
 import { Pool } from "pg";
+import { sendApnsPush } from "./apnsService.js";
 
 export async function queuePushNotification(
   db: Pool,
@@ -17,11 +18,12 @@ export async function queuePushNotification(
     return { queued: false, targetCount: 0 };
   }
 
-  // APNs integration point:
-  // Replace with queue + APNs provider call in production.
+  const deviceTokens = rows.map((r) => r.device_token);
+  const result = await sendApnsPush(deviceTokens, title, body, { userId });
+
   logger.info(
-    { userId, title, body, targetCount: rows.length },
-    "Queued push notification stub"
+    { userId, title, body, targetCount: rows.length, result },
+    "Push notification dispatch result"
   );
-  return { queued: true, targetCount: rows.length };
+  return { queued: true, targetCount: rows.length, ...result };
 }

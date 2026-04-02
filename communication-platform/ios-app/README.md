@@ -9,7 +9,7 @@ This folder contains a SwiftUI-first scaffold for the communication platform MVP
 - New Post form with photo upload to backend
 - Chat tab with conversation list + thread send/load
 - Login + session restore + sign-out
-- APNs registration scaffold and backend device-token registration
+- APNs registration + backend device-token registration
 - Shared API client for backend endpoints
 
 ## Generate an Xcode project

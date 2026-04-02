@@ -39,5 +39,15 @@ Server defaults:
 - Uses Postgres repositories and SQL migrations.
 - Seed data is included in `migrations/002_seed.sql`.
 - Session tokens are stored in `auth_sessions` (migration `003_auth_sessions.sql`).
-- Notification routes are APNs stubs; integrate a queue worker in production.
+- APNs delivery is wired via token-based auth key env vars (see `.env.example`).
 - Uploaded images are stored locally in `backend/uploads/` and served under `/uploads/*`.
+
+## APNs setup (for TestFlight)
+
+Set these in `.env`:
+
+- `APNS_KEY_ID`
+- `APNS_TEAM_ID`
+- `APNS_BUNDLE_ID`
+- `APNS_PRIVATE_KEY` (single-line with `\n` escapes)
+- `APNS_USE_PRODUCTION=true` for TestFlight/App Store builds
