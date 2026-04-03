@@ -5,7 +5,7 @@ struct NewPostView: View {
     @EnvironmentObject private var feedViewModel: FeedViewModel
 
     @State private var title = ""
-    @State private var body = ""
+    @State private var descriptionText = ""
     @State private var crop = "Corn"
     @State private var category: Category = .disease
     @State private var severity = 3
@@ -26,7 +26,7 @@ struct NewPostView: View {
             Form {
                 Section("Content") {
                     TextField("Title", text: $title)
-                    TextField("Description", text: $body, axis: .vertical)
+                    TextField("Description", text: $descriptionText, axis: .vertical)
                         .lineLimit(4...8)
                 }
 
@@ -85,7 +85,7 @@ struct NewPostView: View {
                     Task {
                         await feedViewModel.createPost(
                             title: title.isEmpty ? "Untitled post" : title,
-                            body: body.isEmpty ? "(no description)" : body,
+                            body: descriptionText.isEmpty ? "(no description)" : descriptionText,
                             crop: crop,
                             category: category,
                             severity: severity,
@@ -96,7 +96,7 @@ struct NewPostView: View {
                             imageUrl: imageUrl.isEmpty ? nil : imageUrl
                         )
                         title = ""
-                        body = ""
+                        descriptionText = ""
                         imageUrl = ""
                     }
                 }

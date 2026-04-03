@@ -10,9 +10,10 @@ targets:
       - FarmConnect
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.yourorg.farmconnect
+        PRODUCT_BUNDLE_IDENTIFIER: com.persephonesbasket.farmconnect
         PRODUCT_NAME: FarmConnect
         SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: FarmConnect/FarmConnect.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: FarmConnect
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
