@@ -35,7 +35,7 @@ export type Message = {
   conversationId: string;
   fromUserId: string;
   fromUserName: string;
-  toUserId: string;
+  toUserId?: string;
   text: string;
   createdAt: number;
   read: boolean;
@@ -43,6 +43,8 @@ export type Message = {
 
 export type Conversation = {
   id: string;
+  type: "direct" | "group";
+  groupName?: string;
   participants: string[];
   participantNames: string[];
   messages: Message[];
@@ -52,4 +54,21 @@ export type Conversation = {
 export type User = {
   id: string;
   name: string;
+};
+
+export type SensorReading = {
+  sensorType: string;
+  value: number;
+  unit: string;
+  createdAt: number;
+};
+
+export type SensorDeviceOverview = {
+  id: string;
+  name: string;
+  farmName: string;
+  locationLabel: string;
+  status: "online" | "offline";
+  lastSeenAt: number;
+  readings: SensorReading[];
 };

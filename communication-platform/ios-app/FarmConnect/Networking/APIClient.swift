@@ -17,6 +17,16 @@ final class APIClient {
         authToken = token
     }
 
+    func resolveMediaURL(from rawPath: String) -> URL? {
+        if rawPath.hasPrefix("http://") || rawPath.hasPrefix("https://") {
+            return URL(string: rawPath)
+        }
+
+        let trimmed = rawPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !trimmed.isEmpty else { return nil }
+        return baseURL.appendingPathComponent(trimmed)
+    }
+
     private func authorizedRequest(path: String, method: String = "GET") throws -> URLRequest {
         let url = baseURL.appendingPathComponent(path)
         var req = URLRequest(url: url)
@@ -84,9 +94,16 @@ final class APIClient {
         return try JSONDecoder().decode(ConversationListResponse.self, from: data).items
     }
 
-    func getMessages(otherUserId: String) async throws -> [Message] {
+    func getMessages(otherUserId: String? = nil, conversationId: String? = nil) async throws -> [Message] {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/messages"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "otherUserId", value: otherUserId)]
+        var items: [URLQueryItem] = []
+        if let otherUserId {
+            items.append(URLQueryItem(name: "otherUserId", value: otherUserId))
+        }
+        if let conversationId {
+            items.append(URLQueryItem(name: "conversationId", value: conversationId))
+        }
+        components?.queryItems = items
         guard let url = components?.url else { throw APIError.badURL }
         var req = URLRequest(url: url)
         req.httpMethod = "GET"
@@ -100,15 +117,46 @@ final class APIClient {
         return try JSONDecoder().decode(MessageListResponse.self, from: data).items
     }
 
-    func sendMessage(toUserId: String, text: String) async throws {
+    func sendMessage(toUserId: String? = nil, conversationId: String? = nil, text: String) async throws {
         var req = try authorizedRequest(path: "/v1/messages", method: "POST")
-        req.httpBody = try JSONSerialization.data(withJSONObject: [
-            "toUserId": toUserId,
-            "text": text
-        ])
+        var payload: [String: Any] = ["text": text]
+        if let toUserId {
+            payload["toUserId"] = toUserId
+        }
+        if let conversationId {
+            payload["conversationId"] = conversationId
+        }
+        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func listUsers() async throws -> [UserProfile] {
+        let req = try authorizedRequest(path: "/v1/users")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(UserListResponse.self, from: data).items
+    }
+
+    func createGroupConversation(name: String, memberUserIds: [String]) async throws -> Conversation {
+        var req = try authorizedRequest(path: "/v1/conversations/group", method: "POST")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "name": name,
+            "memberUserIds": memberUserIds
+        ])
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let item = json["item"]
+        else {
+            throw APIError.badStatus(-2)
+        }
+        let itemData = try JSONSerialization.data(withJSONObject: item)
+        return try JSONDecoder().decode(Conversation.self, from: itemData)
     }
 
     func addComment(postId: String, text: String) async throws {
@@ -207,5 +255,13 @@ final class APIClient {
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func getSensorOverview() async throws -> [SensorDeviceOverview] {
+        let req = try authorizedRequest(path: "/v1/sensors/overview")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(SensorOverviewResponse.self, from: data).items
     }
 }

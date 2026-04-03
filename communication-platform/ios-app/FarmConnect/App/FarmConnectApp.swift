@@ -7,6 +7,7 @@ struct FarmConnectApp: App {
     @StateObject private var sessionStore = SessionStore()
     @StateObject private var feedViewModel = FeedViewModel()
     @StateObject private var chatViewModel = ChatViewModel()
+    @StateObject private var sensorViewModel = SensorViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -20,6 +21,7 @@ struct FarmConnectApp: App {
             .environmentObject(sessionStore)
             .environmentObject(feedViewModel)
             .environmentObject(chatViewModel)
+            .environmentObject(sensorViewModel)
             .task {
                 await sessionStore.restoreSessionIfPossible()
             }

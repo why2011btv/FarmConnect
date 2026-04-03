@@ -67,7 +67,7 @@ struct Message: Codable, Identifiable {
     let conversationId: String
     let fromUserId: String
     let fromUserName: String
-    let toUserId: String
+    let toUserId: String?
     let text: String
     let createdAt: Int64
     let read: Bool
@@ -75,6 +75,8 @@ struct Message: Codable, Identifiable {
 
 struct Conversation: Codable, Identifiable {
     let id: String
+    let type: String
+    let groupName: String?
     let participants: [String]
     let participantNames: [String]
     let messages: [Message]
@@ -106,4 +108,29 @@ struct AuthResponse: Codable {
 
 struct AuthMeResponse: Codable {
     let user: UserProfile
+}
+
+struct UserListResponse: Codable {
+    let items: [UserProfile]
+}
+
+struct SensorReading: Codable {
+    let sensorType: String
+    let value: Double
+    let unit: String
+    let createdAt: Int64
+}
+
+struct SensorDeviceOverview: Codable, Identifiable {
+    let id: String
+    let name: String
+    let farmName: String
+    let locationLabel: String
+    let status: String
+    let lastSeenAt: Int64
+    let readings: [SensorReading]
+}
+
+struct SensorOverviewResponse: Codable {
+    let items: [SensorDeviceOverview]
 }

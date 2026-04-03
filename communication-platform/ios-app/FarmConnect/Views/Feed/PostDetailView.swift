@@ -3,14 +3,24 @@ import SwiftUI
 struct PostDetailView: View {
     let post: Post
     @EnvironmentObject private var feedViewModel: FeedViewModel
+    @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var chatViewModel: ChatViewModel
     @State private var commentText = ""
+
+    private var currentPost: Post {
+        feedViewModel.posts.first(where: { $0.id == post.id }) ?? post
+    }
+
+    private var canChatAuthor: Bool {
+        currentPost.userId != session.currentUser?.id
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text(post.title)
+                Text(currentPost.title)
                     .font(.title3.bold())
-                if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
+                if let imageUrl = currentPost.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
                     AsyncImage(url: url) { image in
                         image.resizable().scaledToFill()
                     } placeholder: {
@@ -19,12 +29,21 @@ struct PostDetailView: View {
                     .frame(height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                Text(post.body)
+                Text(currentPost.body)
                     .foregroundStyle(.secondary)
                 HStack {
-                    Label(post.category.rawValue, systemImage: "tag")
+                    Label(currentPost.category.rawValue, systemImage: "tag")
                     Spacer()
-                    Text("By \(post.userName)")
+                    if canChatAuthor {
+                        NavigationLink {
+                            ChatThreadView(conversationId: nil, otherUserId: currentPost.userId, title: currentPost.userName)
+                                .environmentObject(chatViewModel)
+                        } label: {
+                            Text("By \(currentPost.userName)")
+                        }
+                    } else {
+                        Text("By \(currentPost.userName)")
+                    }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -33,12 +52,12 @@ struct PostDetailView: View {
                 Text("Comments")
                     .font(.headline)
 
-                if post.comments.isEmpty {
+                if currentPost.comments.isEmpty {
                     Text("No comments yet")
                         .foregroundStyle(.secondary)
                         .font(.footnote)
                 } else {
-                    ForEach(post.comments) { comment in
+                    ForEach(currentPost.comments) { comment in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(comment.userName)
                                 .font(.caption.bold())
@@ -61,7 +80,7 @@ struct PostDetailView: View {
                     let text = commentText.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !text.isEmpty else { return }
                     Task {
-                        await feedViewModel.addComment(postId: post.id, text: text)
+                        await feedViewModel.addComment(postId: currentPost.id, text: text)
                         commentText = ""
                     }
                 }

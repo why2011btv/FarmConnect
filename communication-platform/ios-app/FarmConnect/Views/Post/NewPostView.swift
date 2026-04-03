@@ -3,6 +3,7 @@ import SwiftUI
 
 struct NewPostView: View {
     @EnvironmentObject private var feedViewModel: FeedViewModel
+    @StateObject private var locationManager = UserLocationManager()
 
     @State private var title = ""
     @State private var descriptionText = ""
@@ -10,16 +11,13 @@ struct NewPostView: View {
     @State private var category: Category = .disease
     @State private var severity = 3
     @State private var visibility = "Public"
-    @State private var city = "Miami"
-    @State private var lat = 25.7742
-    @State private var lng = -80.1936
     @State private var imageUrl = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isUploadingImage = false
     @State private var uploadError: String?
+    @State private var createError: String?
 
     private let cropOptions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
-    private let cityOptions = ["Montpelier", "Boston", "Miami", "New York", "Los Angeles", "Chicago"]
 
     var body: some View {
         NavigationStack {
@@ -50,16 +48,37 @@ struct NewPostView: View {
                         Text("Public").tag("Public")
                         Text("Private").tag("Private")
                     }
+                    if visibility == "Private" {
+                        Text("Private posts are not shown in the public feed tab.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section("Location") {
-                    Picker("City", selection: $city) {
-                        ForEach(cityOptions, id: \.self) { value in
-                            Text(value).tag(value)
-                        }
+                    Button {
+                        locationManager.requestCurrentLocation()
+                    } label: {
+                        Label("Use my current location", systemImage: "location.fill")
                     }
-                    TextField("Latitude", value: $lat, format: .number)
-                    TextField("Longitude", value: $lng, format: .number)
+                    .buttonStyle(.bordered)
+
+                    if locationManager.isLocating {
+                        ProgressView("Getting location...")
+                    }
+                    if let city = locationManager.city {
+                        Text("City: \(city)")
+                    }
+                    if let lat = locationManager.latitude, let lng = locationManager.longitude {
+                        Text("Coordinates: \(lat.formatted(.number.precision(.fractionLength(4)))), \(lng.formatted(.number.precision(.fractionLength(4))))")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let locationError = locationManager.locationError {
+                        Text(locationError)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
                 }
 
                 Section("Media (optional)") {
@@ -83,6 +102,16 @@ struct NewPostView: View {
 
                 Button("Publish Post") {
                     Task {
+                        createError = nil
+                        guard
+                            let lat = locationManager.latitude,
+                            let lng = locationManager.longitude,
+                            let city = locationManager.city
+                        else {
+                            createError = "Please grant location access and fetch your current location first."
+                            return
+                        }
+
                         await feedViewModel.createPost(
                             title: title.isEmpty ? "Untitled post" : title,
                             body: descriptionText.isEmpty ? "(no description)" : descriptionText,
@@ -101,6 +130,12 @@ struct NewPostView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+
+                if let createError {
+                    Text(createError)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
             }
             .navigationTitle("Create Post")
             .onChange(of: selectedPhoto) { _, newValue in
@@ -108,6 +143,9 @@ struct NewPostView: View {
                 Task {
                     await uploadSelectedPhoto(newValue)
                 }
+            }
+            .task {
+                locationManager.requestCurrentLocation()
             }
         }
     }

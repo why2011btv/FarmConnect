@@ -2,6 +2,8 @@ import SwiftUI
 
 struct FeedView: View {
     @EnvironmentObject private var viewModel: FeedViewModel
+    @EnvironmentObject private var session: SessionStore
+    @EnvironmentObject private var chatViewModel: ChatViewModel
 
     var body: some View {
         NavigationStack {
@@ -17,7 +19,7 @@ struct FeedView: View {
 
                 HStack {
                     Picker("Category", selection: $viewModel.selectedCategory) {
-                        Text("All").tag("all")
+                        Text("All types").tag("all")
                         Text("Disease").tag("Disease")
                         Text("Pest").tag("Pest")
                         Text("Weather").tag("Weather")
@@ -46,48 +48,80 @@ struct FeedView: View {
                         .frame(maxHeight: .infinity)
                 } else {
                     List(viewModel.posts) { post in
-                        NavigationLink {
-                            PostDetailView(post: post)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(post.title)
-                                    .font(.headline)
-                                if let imageUrl = post.imageUrl, let url = URL(string: imageUrl) {
-                                    AsyncImage(url: url) { image in
-                                        image.resizable().scaledToFill()
-                                    } placeholder: {
-                                        Color.gray.opacity(0.2)
-                                    }
-                                    .frame(height: 160)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                NavigationLink {
+                                    PostDetailView(post: post)
+                                } label: {
+                                    Text(post.title)
+                                        .font(.headline)
                                 }
-                                Text(post.body)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                HStack {
-                                    Text(post.category.rawValue)
-                                    Text(post.city)
-                                    Spacer()
-                                    Button("Upvote (\(post.upvotes))") {
-                                        Task { await viewModel.upvote(postId: post.id) }
+                                Spacer()
+                                if post.userId != session.currentUser?.id {
+                                    NavigationLink {
+                                        ChatThreadView(conversationId: nil, otherUserId: post.userId, title: post.userName)
+                                            .environmentObject(chatViewModel)
+                                    } label: {
+                                        Text(post.userName)
+                                            .font(.caption)
                                     }
+                                } else {
+                                    Text(post.userName)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
-                                .font(.caption)
                             }
-                            .padding(.vertical, 6)
+                            if let imageUrl = post.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
+                                AsyncImage(url: url) { image in
+                                    image.resizable().scaledToFill()
+                                } placeholder: {
+                                    Color.gray.opacity(0.2)
+                                }
+                                .frame(height: 160)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            Text(post.body)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            HStack {
+                                Text(post.category.rawValue)
+                                Text(post.city)
+                                Spacer()
+                                Button("Upvote (\(post.upvotes))") {
+                                    Task { await viewModel.upvote(postId: post.id) }
+                                }
+                            }
+                            .font(.caption)
                         }
+                        .padding(.vertical, 6)
                     }
                     .listStyle(.plain)
+                    .refreshable {
+                        await viewModel.load()
+                    }
                 }
             }
             .padding()
             .navigationTitle("Feed")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Refresh") {
-                        Task { await viewModel.load() }
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        if let user = session.currentUser {
+                            Text(user.name)
+                        }
+                        Button("Sign out", role: .destructive) {
+                            session.logout()
+                        }
+                    } label: {
+                        Image(systemName: "person.crop.circle")
                     }
                 }
+            }
+            .onChange(of: viewModel.selectedCategory) { _, _ in
+                Task { await viewModel.load() }
+            }
+            .onChange(of: viewModel.selectedTimeFilter) { _, _ in
+                Task { await viewModel.load() }
             }
             .task {
                 await viewModel.load()

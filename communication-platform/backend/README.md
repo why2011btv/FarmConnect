@@ -33,6 +33,7 @@ Server defaults:
 - `POST /v1/notifications/register-device`
 - `POST /v1/notifications/send`
 - `POST /v1/uploads/image` (multipart, auth required)
+- `GET /v1/sensors/overview` (auth required)
 
 ## Notes
 

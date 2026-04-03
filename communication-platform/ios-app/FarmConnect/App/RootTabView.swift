@@ -1,64 +1,43 @@
 import SwiftUI
 
 struct RootTabView: View {
+    @EnvironmentObject private var feedViewModel: FeedViewModel
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             FeedView()
+                .tag(0)
                 .tabItem {
                     Label("Feed", systemImage: "list.bullet.rectangle")
                 }
 
-            MapPlaceholderView()
+            MapFeedView()
+                .tag(1)
                 .tabItem {
                     Label("Map", systemImage: "map")
                 }
 
             NewPostView()
+                .tag(2)
                 .tabItem {
                     Label("New", systemImage: "plus.circle")
                 }
 
             ChatView()
+                .tag(3)
                 .tabItem {
                     Label("Chat", systemImage: "message")
                 }
 
-            ProfilePlaceholderView()
+            SensorDashboardView()
+                .tag(4)
                 .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
+                    Label("Sensors", systemImage: "waveform.path.ecg")
                 }
         }
-    }
-}
-
-private struct MapPlaceholderView: View {
-    var body: some View {
-        NavigationStack {
-            Text("Map screen scaffold. Next: MapKit pins + post detail routing.")
-                .padding()
-                .navigationTitle("Map")
-        }
-    }
-}
-
-private struct ProfilePlaceholderView: View {
-    @EnvironmentObject private var session: SessionStore
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 12) {
-                if let user = session.currentUser {
-                    Text("Signed in as \(user.name)")
-                } else {
-                    Text("Not signed in")
-                }
-                Button("Sign out") {
-                    session.logout()
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding()
-            .navigationTitle("Profile")
+        .onChange(of: feedViewModel.refreshTrigger) { _, _ in
+            selectedTab = 0
         }
     }
 }

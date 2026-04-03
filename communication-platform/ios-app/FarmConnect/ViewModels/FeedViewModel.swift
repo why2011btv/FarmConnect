@@ -69,6 +69,9 @@ final class FeedViewModel: ObservableObject {
                 city: city,
                 imageUrl: imageUrl
             )
+            query = ""
+            selectedCategory = "all"
+            selectedTimeFilter = .all
             refreshTrigger = UUID()
             await load()
         } catch {
