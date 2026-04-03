@@ -18,20 +18,14 @@ struct RootTabView: View {
                     Label("Map", systemImage: "map")
                 }
 
-            NewPostView()
-                .tag(2)
-                .tabItem {
-                    Label("New", systemImage: "plus.circle")
-                }
-
             ChatView()
-                .tag(3)
+                .tag(2)
                 .tabItem {
                     Label("Chat", systemImage: "message")
                 }
 
             SensorDashboardView()
-                .tag(4)
+                .tag(3)
                 .tabItem {
                     Label("Sensors", systemImage: "waveform.path.ecg")
                 }

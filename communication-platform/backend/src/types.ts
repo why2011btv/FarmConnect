@@ -72,3 +72,12 @@ export type SensorDeviceOverview = {
   lastSeenAt: number;
   readings: SensorReading[];
 };
+
+export type SensorInsight = {
+  id: string;
+  title: string;
+  message: string;
+  severity: "low" | "medium" | "high";
+  deviceId?: string;
+  createdAt: number;
+};

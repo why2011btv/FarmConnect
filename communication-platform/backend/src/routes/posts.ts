@@ -65,9 +65,12 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
     return { item: post };
   });
 
-  app.post("/v1/posts/:postId/upvote", async (req) => {
+  app.post("/v1/posts/:postId/upvote", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
     const postId = (req.params as { postId: string }).postId;
-    const p = await postRepository.upvote(postId);
+    const p = await postRepository.upvote(postId, authUser.id);
     if (!p) return app.httpErrors.notFound("Post not found");
     return { item: p };
   });

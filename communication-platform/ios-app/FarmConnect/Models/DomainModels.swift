@@ -1,6 +1,6 @@
 import Foundation
 
-enum Category: String, Codable, CaseIterable, Identifiable {
+enum Category: String, Codable, CaseIterable, Identifiable, Hashable {
     case disease = "Disease"
     case pest = "Pest"
     case weather = "Weather"
@@ -34,7 +34,7 @@ enum TimeFilter: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct Comment: Codable, Identifiable {
+struct Comment: Codable, Identifiable, Hashable {
     let id: String
     let postId: String
     let text: String
@@ -43,7 +43,7 @@ struct Comment: Codable, Identifiable {
     let createdAt: Int64
 }
 
-struct Post: Codable, Identifiable {
+struct Post: Codable, Identifiable, Hashable {
     let id: String
     let title: String
     let body: String
@@ -131,6 +131,16 @@ struct SensorDeviceOverview: Codable, Identifiable {
     let readings: [SensorReading]
 }
 
+struct SensorInsight: Codable, Identifiable {
+    let id: String
+    let title: String
+    let message: String
+    let severity: String
+    let deviceId: String?
+    let createdAt: Int64
+}
+
 struct SensorOverviewResponse: Codable {
     let items: [SensorDeviceOverview]
+    let insights: [SensorInsight]
 }

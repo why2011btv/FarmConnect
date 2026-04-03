@@ -31,7 +31,6 @@ final class APIClient {
         let url = baseURL.appendingPathComponent(path)
         var req = URLRequest(url: url)
         req.httpMethod = method
-        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         if let token = authToken {
             req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -40,6 +39,7 @@ final class APIClient {
 
     func login(name: String) async throws -> AuthResponse {
         var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
 
         let (data, response) = try await URLSession.shared.data(for: req)
@@ -119,6 +119,7 @@ final class APIClient {
 
     func sendMessage(toUserId: String? = nil, conversationId: String? = nil, text: String) async throws {
         var req = try authorizedRequest(path: "/v1/messages", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         var payload: [String: Any] = ["text": text]
         if let toUserId {
             payload["toUserId"] = toUserId
@@ -142,6 +143,7 @@ final class APIClient {
 
     func createGroupConversation(name: String, memberUserIds: [String]) async throws -> Conversation {
         var req = try authorizedRequest(path: "/v1/conversations/group", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: [
             "name": name,
             "memberUserIds": memberUserIds
@@ -161,6 +163,7 @@ final class APIClient {
 
     func addComment(postId: String, text: String) async throws {
         var req = try authorizedRequest(path: "/v1/posts/\(postId)/comments", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["text": text])
 
         let (_, response) = try await URLSession.shared.data(for: req)
@@ -170,6 +173,7 @@ final class APIClient {
 
     func createUploadUrl(fileName: String, mimeType: String) async throws -> (uploadUrl: String, publicUrl: String) {
         var req = try authorizedRequest(path: "/v1/uploads/create", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: [
             "fileName": fileName,
             "mimeType": mimeType
@@ -229,6 +233,7 @@ final class APIClient {
         imageUrl: String?
     ) async throws {
         var req = try authorizedRequest(path: "/v1/posts", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         var payload: [String: Any] = [
             "title": title,
             "body": body,
@@ -251,17 +256,28 @@ final class APIClient {
 
     func registerDeviceToken(_ token: String) async throws {
         var req = try authorizedRequest(path: "/v1/notifications/register-device", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["deviceToken": token])
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
     }
 
-    func getSensorOverview() async throws -> [SensorDeviceOverview] {
+    private func getSensorDashboard() async throws -> SensorOverviewResponse {
         let req = try authorizedRequest(path: "/v1/sensors/overview")
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
-        return try JSONDecoder().decode(SensorOverviewResponse.self, from: data).items
+        return try JSONDecoder().decode(SensorOverviewResponse.self, from: data)
+    }
+
+    func getSensorOverview() async throws -> [SensorDeviceOverview] {
+        let dashboard = try await getSensorDashboard()
+        return dashboard.items
+    }
+
+    func getSensorInsights() async throws -> [SensorInsight] {
+        let dashboard = try await getSensorDashboard()
+        return dashboard.insights
     }
 }

@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 final class SensorViewModel: ObservableObject {
     @Published var devices: [SensorDeviceOverview] = []
+    @Published var insights: [SensorInsight] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -13,6 +14,7 @@ final class SensorViewModel: ObservableObject {
 
         do {
             devices = try await APIClient.shared.getSensorOverview()
+            insights = try await APIClient.shared.getSensorInsights()
         } catch {
             errorMessage = "Failed to load sensors: \(error.localizedDescription)"
         }

@@ -5,6 +5,7 @@ struct PostDetailView: View {
     @EnvironmentObject private var feedViewModel: FeedViewModel
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var chatViewModel: ChatViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var commentText = ""
 
     private var currentPost: Post {
@@ -18,6 +19,18 @@ struct PostDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                if canChatAuthor {
+                    NavigationLink {
+                        ChatThreadView(conversationId: nil, otherUserId: currentPost.userId, title: currentPost.userName)
+                            .environmentObject(chatViewModel)
+                    } label: {
+                        authorHeader
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    authorHeader
+                }
+
                 Text(currentPost.title)
                     .font(.title3.bold())
                 if let imageUrl = currentPost.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
@@ -32,18 +45,27 @@ struct PostDetailView: View {
                 Text(currentPost.body)
                     .foregroundStyle(.secondary)
                 HStack {
-                    Label(currentPost.category.rawValue, systemImage: "tag")
-                    Spacer()
-                    if canChatAuthor {
-                        NavigationLink {
-                            ChatThreadView(conversationId: nil, otherUserId: currentPost.userId, title: currentPost.userName)
-                                .environmentObject(chatViewModel)
-                        } label: {
-                            Text("By \(currentPost.userName)")
+                    Button {
+                        Task {
+                            feedViewModel.selectedCategory = currentPost.category.rawValue
+                            feedViewModel.selectedTimeFilter = .all
+                            await feedViewModel.load()
+                            feedViewModel.refreshTrigger = UUID()
+                            dismiss()
                         }
-                    } else {
-                        Text("By \(currentPost.userName)")
+                    } label: {
+                        Label(currentPost.category.rawValue, systemImage: "tag")
                     }
+                    .buttonStyle(.plain)
+                    Spacer()
+                    Button {
+                        Task {
+                            await feedViewModel.upvote(postId: currentPost.id)
+                        }
+                    } label: {
+                        Label("\(currentPost.upvotes)", systemImage: "arrow.up")
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -91,5 +113,41 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var authorHeader: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color.blue.opacity(0.2))
+                .frame(width: 36, height: 36)
+                .overlay(
+                    Text(String(currentPost.userName.prefix(1)).uppercased())
+                        .font(.caption.bold())
+                        .foregroundStyle(.blue)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(currentPost.userName)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                Text(relativeTime(currentPost.createdAt))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+            if canChatAuthor {
+                Image(systemName: "message")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func relativeTime(_ timestampMs: Int64) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }

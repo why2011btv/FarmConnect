@@ -204,8 +204,23 @@ export class PostRepository {
     };
   }
 
-  async upvote(postId: string): Promise<Post | null> {
-    await this.db.query("UPDATE posts SET upvotes = upvotes + 1 WHERE id = $1", [postId]);
+  async upvote(postId: string, userId: string): Promise<Post | null> {
+    const exists = await this.db.query<{ id: string }>("SELECT id FROM posts WHERE id = $1", [postId]);
+    if (!exists.rowCount) return null;
+
+    const insertResult = await this.db.query(
+      `
+      INSERT INTO post_upvotes (post_id, user_id, created_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (post_id, user_id) DO NOTHING
+      `,
+      [postId, userId, Date.now()]
+    );
+
+    if (insertResult.rowCount) {
+      await this.db.query("UPDATE posts SET upvotes = upvotes + 1 WHERE id = $1", [postId]);
+    }
+
     const posts = await this.listByIds([postId]);
     return posts[0] ?? null;
   }
