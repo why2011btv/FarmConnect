@@ -33,6 +33,12 @@ struct PostDetailView: View {
 
                 Text(currentPost.title)
                     .font(.title3.bold())
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.and.ellipse")
+                    Text("\(currentPost.city) · \(formattedCoordinate(currentPost.lat)), \(formattedCoordinate(currentPost.lng))")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 if let imageUrl = currentPost.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
                     AsyncImage(url: url) { image in
                         image.resizable().scaledToFill()
@@ -149,5 +155,9 @@ struct PostDetailView: View {
         formatter.unitsStyle = .abbreviated
         let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    private func formattedCoordinate(_ value: Double) -> String {
+        String(format: "%.4f", value)
     }
 }

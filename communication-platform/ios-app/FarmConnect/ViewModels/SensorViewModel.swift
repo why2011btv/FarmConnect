@@ -19,4 +19,12 @@ final class SensorViewModel: ObservableObject {
             errorMessage = "Failed to load sensors: \(error.localizedDescription)"
         }
     }
+
+    func dismissInsights(at offsets: IndexSet) {
+        insights.remove(atOffsets: offsets)
+    }
+
+    func dismissInsight(id: String) {
+        insights.removeAll { $0.id == id }
+    }
 }

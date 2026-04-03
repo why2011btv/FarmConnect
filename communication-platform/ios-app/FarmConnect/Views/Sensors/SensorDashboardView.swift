@@ -10,6 +10,8 @@ struct SensorDashboardView: View {
 
     @EnvironmentObject private var sensorViewModel: SensorViewModel
     @State private var selectedPanel: SensorPanel = .insights
+    @State private var pendingInsightToDismiss: SensorInsight?
+    @State private var showDismissConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -57,6 +59,14 @@ struct SensorDashboardView: View {
                                             .foregroundStyle(.secondary)
                                     }
                                     .padding(.vertical, 6)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            pendingInsightToDismiss = insight
+                                            showDismissConfirmation = true
+                                        } label: {
+                                            Label("Dismiss", systemImage: "xmark")
+                                        }
+                                    }
                                 }
                             }
                             .listStyle(.insetGrouped)
@@ -109,6 +119,22 @@ struct SensorDashboardView: View {
             }
             .task {
                 await sensorViewModel.load()
+            }
+            .confirmationDialog(
+                "Dismiss insight?",
+                isPresented: $showDismissConfirmation,
+                titleVisibility: .visible,
+                presenting: pendingInsightToDismiss
+            ) { insight in
+                Button("Dismiss", role: .destructive) {
+                    sensorViewModel.dismissInsight(id: insight.id)
+                    pendingInsightToDismiss = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingInsightToDismiss = nil
+                }
+            } message: { insight in
+                Text("Hide \"\(insight.title)\" from Insights?")
             }
         }
     }
