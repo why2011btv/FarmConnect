@@ -10,7 +10,11 @@ final class APIClient {
     private init() {}
 
     // Replace this with your cloud API endpoint.
-    private let baseURL = URL(string: "http://localhost:4000")!
+    //private let baseURL = URL(string: "http://localhost:4000")!
+    //private let baseURL = URL(string: "http://10.145.22.250:4000")!
+    private let baseURL = URL(string: "https://farmconnect-production-500d.up.railway.app")!
+
+
     private var authToken: String?
 
     func setAuthToken(_ token: String?) {
