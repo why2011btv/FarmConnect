@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9AD053305991A9390867F2 /* MapFeedView.swift */; };
+		1993897545798AB42ABED4B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 269A9E80B87E44BA617ABC0D /* Assets.xcassets */; };
 		1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */; };
 		3A5FAD475A52D8BC8A86FD67 /* UserLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E037D2A141A178276DB57 /* UserLocationManager.swift */; };
 		3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0FCB47A55D55BBA048109 /* LoginView.swift */; };
@@ -29,20 +30,20 @@
 
 /* Begin PBXFileReference section */
 		1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
+		269A9E80B87E44BA617ABC0D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		291036E2F2D5AB55607DA4D6 /* FarmConnectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FarmConnectApp.swift; sourceTree = "<group>"; };
 		2D021C17C055DFBA2E76DAC8 /* PushNotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationManager.swift; sourceTree = "<group>"; };
 		3117FAD7A857F17CAF3990DE /* SensorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorViewModel.swift; sourceTree = "<group>"; };
+		35D68ED7ECA81DA6C897D0D6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		39A39F3D4BBE30A968BE4622 /* FarmConnect.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FarmConnect.entitlements; sourceTree = "<group>"; };
 		3C9AD053305991A9390867F2 /* MapFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFeedView.swift; sourceTree = "<group>"; };
 		6A888FAD16E4369D43BC994F /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
 		8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
-		9ED6684CEB63217A5CD70268 /* FarmAlert.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FarmAlert.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		B7E0FCB47A55D55BBA048109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		B87A05DA2F82A90500D5C5A9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B87A05DD2F82AD8700D5C5A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BDC4BD82888633215B07B2A7 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
 		C03385AD637416062FCF000E /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		C1188FF971B4192ACB1F07E9 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
@@ -56,7 +57,6 @@
 		1664E1D30A49913DFDC7FE6F = {
 			isa = PBXGroup;
 			children = (
-				B87A05DA2F82A90500D5C5A9 /* Assets.xcassets */,
 				250ACD424D6736DD12482FCE /* FarmConnect */,
 				C8C3A3E8A037821420778A02 /* Products */,
 			);
@@ -65,8 +65,9 @@
 		250ACD424D6736DD12482FCE /* FarmConnect */ = {
 			isa = PBXGroup;
 			children = (
-				B87A05DD2F82AD8700D5C5A9 /* Info.plist */,
+				269A9E80B87E44BA617ABC0D /* Assets.xcassets */,
 				39A39F3D4BBE30A968BE4622 /* FarmConnect.entitlements */,
+				35D68ED7ECA81DA6C897D0D6 /* Info.plist */,
 				CC9947BCBC66B5F5AC75A246 /* App */,
 				C14A69201840CCB750FCEFD8 /* Models */,
 				E0CB9F2344C3A33B40DA11BF /* Networking */,
@@ -160,7 +161,7 @@
 		C8C3A3E8A037821420778A02 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9ED6684CEB63217A5CD70268 /* FarmAlert.app */,
+				9ED6684CEB63217A5CD70268 /* FarmConnect.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -201,6 +202,7 @@
 			buildConfigurationList = EC22B5E472C5020AA5C2C5BD /* Build configuration list for PBXNativeTarget "FarmConnect" */;
 			buildPhases = (
 				DAE32916F1BD55F9C1563B33 /* Sources */,
+				205475FD09432ACB97C85811 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -210,7 +212,7 @@
 			packageProductDependencies = (
 			);
 			productName = FarmConnect;
-			productReference = 9ED6684CEB63217A5CD70268 /* FarmAlert.app */;
+			productReference = 9ED6684CEB63217A5CD70268 /* FarmConnect.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -221,6 +223,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = B4F6FF2CA20ED34BB49173A4 /* Build configuration list for PBXProject "FarmConnect" */;
 			developmentRegion = en;
@@ -240,6 +244,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		205475FD09432ACB97C85811 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1993897545798AB42ABED4B0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		DAE32916F1BD55F9C1563B33 /* Sources */ = {
@@ -274,12 +289,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CFBundleIconName = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -287,17 +298,17 @@
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
+				INFOPLIST_KEY_UIBackgroundModes = (
+					"remote-notification",
+				);
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
-				PRODUCT_NAME = FarmAlert;
+				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -425,12 +436,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CFBundleIconName = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -438,17 +445,17 @@
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
+				INFOPLIST_KEY_UIBackgroundModes = (
+					"remote-notification",
+				);
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
-				PRODUCT_NAME = FarmAlert;
+				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
