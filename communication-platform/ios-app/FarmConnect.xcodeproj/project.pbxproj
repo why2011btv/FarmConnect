@@ -38,7 +38,7 @@
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
 		8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
-		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9ED6684CEB63217A5CD70268 /* FarmAlert.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FarmAlert.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		B7E0FCB47A55D55BBA048109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		BDC4BD82888633215B07B2A7 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
@@ -156,7 +156,7 @@
 		C8C3A3E8A037821420778A02 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9ED6684CEB63217A5CD70268 /* FarmConnect.app */,
+				9ED6684CEB63217A5CD70268 /* FarmAlert.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -206,7 +206,7 @@
 			packageProductDependencies = (
 			);
 			productName = FarmConnect;
-			productReference = 9ED6684CEB63217A5CD70268 /* FarmConnect.app */;
+			productReference = 9ED6684CEB63217A5CD70268 /* FarmAlert.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -272,6 +272,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -286,8 +287,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
-				PRODUCT_NAME = FarmConnect;
+				PRODUCT_NAME = FarmAlert;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -417,6 +419,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -431,8 +434,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
-				PRODUCT_NAME = FarmConnect;
+				PRODUCT_NAME = FarmAlert;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
