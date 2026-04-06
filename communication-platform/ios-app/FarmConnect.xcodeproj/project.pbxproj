@@ -41,7 +41,7 @@
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
 		8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
-		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		B7E0FCB47A55D55BBA048109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		BDC4BD82888633215B07B2A7 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
@@ -223,8 +223,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = B4F6FF2CA20ED34BB49173A4 /* Build configuration list for PBXProject "FarmConnect" */;
 			developmentRegion = en;
@@ -289,8 +287,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -298,15 +299,16 @@
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					"remote-notification",
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
@@ -436,8 +438,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
@@ -445,15 +450,16 @@
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					"remote-notification",
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
