@@ -294,7 +294,7 @@
 				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
+				INFOPLIST_KEY_CFBundleDisplayName = FarmAlert;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use location to show local farm posts on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
@@ -445,7 +445,7 @@
 				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = FarmConnect;
+				INFOPLIST_KEY_CFBundleDisplayName = FarmAlert;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use location to show local farm posts on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
