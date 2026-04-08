@@ -52,6 +52,9 @@ struct ChatView: View {
             }
             .navigationTitle("Chat")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    AccountMenuButton()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isCreateGroupOpen = true

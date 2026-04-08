@@ -111,6 +111,9 @@ struct SensorDashboardView: View {
             }
             .navigationTitle("Sensors")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    AccountMenuButton()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Refresh") {
                         Task { await sensorViewModel.load() }

@@ -156,6 +156,11 @@ struct MapFeedView: View {
                 }
             }
             .navigationTitle("Nearby Feed Map")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    AccountMenuButton()
+                }
+            }
             .onChange(of: selectedCategory) { _, _ in
                 Task { await loadPosts() }
             }

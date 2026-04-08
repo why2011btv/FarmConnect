@@ -13,6 +13,7 @@
 		3A5FAD475A52D8BC8A86FD67 /* UserLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E037D2A141A178276DB57 /* UserLocationManager.swift */; };
 		3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0FCB47A55D55BBA048109 /* LoginView.swift */; };
 		3CBA481DE1662E4CA5E46E5C /* NewPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759C077ED260960D2113749E /* NewPostView.swift */; };
+		3D4E5F60718293A4B5C6D7E8 /* AccountMenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F60718293A4B5C6D7E8F9 /* AccountMenuButton.swift */; };
 		3E8FA09A79296FD488D8E734 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A3C11C905D8D879A6462C6 /* ChatView.swift */; };
 		42DD87C45272A5156B3AB1AD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */; };
 		5B38E3429F9B0CCA32DE4951 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03385AD637416062FCF000E /* ChatViewModel.swift */; };
@@ -39,6 +40,7 @@
 		35D68ED7ECA81DA6C897D0D6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		39A39F3D4BBE30A968BE4622 /* FarmConnect.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FarmConnect.entitlements; sourceTree = "<group>"; };
 		3C9AD053305991A9390867F2 /* MapFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapFeedView.swift; sourceTree = "<group>"; };
+		4E5F60718293A4B5C6D7E8F9 /* AccountMenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountMenuButton.swift; sourceTree = "<group>"; };
 		6A888FAD16E4369D43BC994F /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 		5FD1B9BF62152DBE1B922225 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				D7E8F90123456789A0B1C2D3 /* Common */,
 				33C96ADFFC67303EFEAD4EC5 /* Auth */,
 				335D0C7CD9BCDA17E682FBBC /* Chat */,
 				92591D50B82390FA53940B77 /* Feed */,
@@ -120,6 +123,14 @@
 				C6D7E8F90123456789A0B1C2 /* Settings */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		D7E8F90123456789A0B1C2D3 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				4E5F60718293A4B5C6D7E8F9 /* AccountMenuButton.swift */,
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 		646181D2DC076639E15B15B9 /* Services */ = {
@@ -286,6 +297,7 @@
 				3E8FA09A79296FD488D8E734 /* ChatView.swift in Sources */,
 				5B38E3429F9B0CCA32DE4951 /* ChatViewModel.swift in Sources */,
 				E1C00A9B32119819F938D53F /* DomainModels.swift in Sources */,
+				3D4E5F60718293A4B5C6D7E8 /* AccountMenuButton.swift in Sources */,
 				D4C2F86EAFEAA05A8E43F9DA /* FarmConnectApp.swift in Sources */,
 				AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */,
 				1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */,

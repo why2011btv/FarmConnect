@@ -2,26 +2,31 @@ import SwiftUI
 
 struct LoginView: View {
     @EnvironmentObject private var session: SessionStore
-    @State private var name = ""
+    @State private var username = ""
     @State private var password = ""
+    @State private var displayName = ""
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
                 Text("FarmConnect")
                     .font(.largeTitle.bold())
-                Text("Sign in to access feed, chat, and posting")
+                Text("Sign in with username and password")
                     .foregroundStyle(.secondary)
 
-                TextField("Your name", text: $name)
+                TextField("Username", text: $username)
                     .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.words)
+                    .textInputAutocapitalization(.never)
 
                 SecureField("Password", text: $password)
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
 
-                Text("Use at least 6 characters. New name + password creates an account.")
+                TextField("Display name (only for first-time signup)", text: $displayName)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.words)
+
+                Text("New username creates an account. Existing username requires the correct password.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
@@ -34,8 +39,9 @@ struct LoginView: View {
                 Button {
                     Task {
                         await session.login(
-                            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-                            password: password
+                            username: username.trimmingCharacters(in: .whitespacesAndNewlines),
+                            password: password,
+                            displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines)
                         )
                     }
                 } label: {
@@ -48,7 +54,7 @@ struct LoginView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(
-                    name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     || password.count < 6
                     || session.isLoading
                 )

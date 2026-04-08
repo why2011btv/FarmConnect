@@ -76,6 +76,9 @@ struct NotesView: View {
             }
             .navigationTitle("Notes")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    AccountMenuButton()
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isCreateNoteOpen = true
