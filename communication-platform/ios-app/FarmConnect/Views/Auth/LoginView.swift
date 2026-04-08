@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct LoginView: View {
+    enum AuthMode: String, CaseIterable, Identifiable {
+        case signIn = "Sign In"
+        case signUp = "Sign Up"
+
+        var id: String { rawValue }
+    }
+
     @EnvironmentObject private var session: SessionStore
+    @State private var mode: AuthMode = .signIn
     @State private var username = ""
     @State private var password = ""
     @State private var displayName = ""
@@ -11,8 +19,15 @@ struct LoginView: View {
             VStack(spacing: 16) {
                 Text("FarmConnect")
                     .font(.largeTitle.bold())
-                Text("Sign in with username and password")
+                Text("Use your account to continue")
                     .foregroundStyle(.secondary)
+
+                Picker("Auth mode", selection: $mode) {
+                    ForEach(AuthMode.allCases) { value in
+                        Text(value.rawValue).tag(value)
+                    }
+                }
+                .pickerStyle(.segmented)
 
                 TextField("Username", text: $username)
                     .textFieldStyle(.roundedBorder)
@@ -22,11 +37,15 @@ struct LoginView: View {
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
 
-                TextField("Display name (only for first-time signup)", text: $displayName)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.words)
+                if mode == .signUp {
+                    TextField("Display name", text: $displayName)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.words)
+                }
 
-                Text("New username creates an account. Existing username requires the correct password.")
+                Text(mode == .signIn
+                     ? "Sign in with an existing username."
+                     : "Create a new account with unique username and display name.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
@@ -38,17 +57,25 @@ struct LoginView: View {
 
                 Button {
                     Task {
-                        await session.login(
-                            username: username.trimmingCharacters(in: .whitespacesAndNewlines),
-                            password: password,
-                            displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-                        )
+                        let normalizedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if mode == .signIn {
+                            await session.signIn(
+                                username: normalizedUsername,
+                                password: password
+                            )
+                        } else {
+                            await session.signUp(
+                                username: normalizedUsername,
+                                password: password,
+                                displayName: displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+                            )
+                        }
                     }
                 } label: {
                     if session.isLoading {
                         ProgressView()
                     } else {
-                        Text("Sign In")
+                        Text(mode.rawValue)
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -56,6 +83,7 @@ struct LoginView: View {
                 .disabled(
                     username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     || password.count < 6
+                    || (mode == .signUp && displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     || session.isLoading
                 )
             }

@@ -32,12 +32,27 @@ final class SessionStore: ObservableObject {
         }
     }
 
-    func login(username: String, password: String, displayName: String?) async {
+    func signIn(username: String, password: String) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            let auth = try await APIClient.shared.login(
+            let auth = try await APIClient.shared.signIn(username: username, password: password)
+            token = auth.token
+            currentUser = auth.user
+            APIClient.shared.setAuthToken(auth.token)
+            UserDefaults.standard.set(auth.token, forKey: tokenKey)
+        } catch {
+            errorMessage = "Sign in failed: check username/password and try again."
+        }
+    }
+
+    func signUp(username: String, password: String, displayName: String) async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            let auth = try await APIClient.shared.signUp(
                 username: username,
                 password: password,
                 displayName: displayName
@@ -47,7 +62,7 @@ final class SessionStore: ObservableObject {
             APIClient.shared.setAuthToken(auth.token)
             UserDefaults.standard.set(auth.token, forKey: tokenKey)
         } catch {
-            errorMessage = "Login failed: check username/password and try again."
+            errorMessage = "Sign up failed: username may be taken or input is invalid."
         }
     }
 

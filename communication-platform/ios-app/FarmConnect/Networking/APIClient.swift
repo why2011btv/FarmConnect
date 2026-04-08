@@ -41,16 +41,29 @@ final class APIClient {
         return req
     }
 
-    func login(username: String, password: String, displayName: String?) async throws -> AuthResponse {
+    func signIn(username: String, password: String) async throws -> AuthResponse {
         var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        var payload: [String: Any] = [
+        let payload: [String: Any] = [
             "username": username,
             "password": password
         ]
-        if let displayName, !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            payload["displayName"] = displayName
-        }
+        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+
+    func signUp(username: String, password: String, displayName: String) async throws -> AuthResponse {
+        var req = try authorizedRequest(path: "/v1/auth/signup", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        let payload: [String: Any] = [
+            "username": username,
+            "password": password,
+            "displayName": displayName
+        ]
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await URLSession.shared.data(for: req)

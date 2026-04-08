@@ -4,10 +4,15 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { compare, hash } from "bcryptjs";
 
-const loginSchema = z.object({
+const signInSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(6),
-  displayName: z.string().min(1).optional(),
+});
+
+const signUpSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(6),
+  displayName: z.string().min(1),
 });
 
 function createUserId() {
@@ -30,12 +35,11 @@ function normalizeUsername(username: string): string {
 
 export async function authRoutes(app: FastifyInstance, db: Pool) {
   app.post("/v1/auth/login", async (req, reply) => {
-    const parsed = loginSchema.safeParse(req.body);
+    const parsed = signInSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
 
     const username = normalizeUsername(parsed.data.username);
     const password = parsed.data.password;
-    const displayName = parsed.data.displayName?.trim();
     if (!username) return reply.code(400).send({ error: "Username is required" });
     if (!password) return reply.code(400).send({ error: "Password is required" });
 
@@ -56,26 +60,16 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     }
 
     if (!user.rows[0]) {
-      const id = createUserId();
-      const passwordHash = await hash(password, 12);
-      await db.query(
-        "INSERT INTO users(id, name, username, password_hash) VALUES ($1, $2, $3, $4)",
-        [id, displayName || username, username, passwordHash]
-      );
-      user = await db.query<{ id: string; name: string; username: string; password_hash: string | null }>(
-        "SELECT id, name, username, password_hash FROM users WHERE id = $1",
-        [id]
-      );
-    } else if (!user.rows[0].password_hash) {
-      // Backward compatibility: existing name-only accounts get bound to first password login.
-      const passwordHash = await hash(password, 12);
-      await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, user.rows[0].id]);
-      user.rows[0].password_hash = passwordHash;
-    } else {
-      const matches = await compare(password, user.rows[0].password_hash);
-      if (!matches) {
-        return reply.code(401).send({ error: "Invalid credentials" });
-      }
+      return reply.code(401).send({ error: "Invalid username or password" });
+    }
+
+    if (!user.rows[0].password_hash) {
+      return reply.code(401).send({ error: "Account requires signup completion. Please sign up again." });
+    }
+
+    const matches = await compare(password, user.rows[0].password_hash);
+    if (!matches) {
+      return reply.code(401).send({ error: "Invalid username or password" });
     }
 
     const token = createToken();
@@ -90,6 +84,48 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
       user: {
         id: user.rows[0].id,
         name: user.rows[0].name,
+      },
+      expiresAt: expiresAt.toISOString(),
+    };
+  });
+
+  app.post("/v1/auth/signup", async (req, reply) => {
+    const parsed = signUpSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+
+    const username = normalizeUsername(parsed.data.username);
+    const password = parsed.data.password;
+    const displayName = parsed.data.displayName.trim();
+    if (!username) return reply.code(400).send({ error: "Username is required" });
+    if (!displayName) return reply.code(400).send({ error: "Display name is required" });
+
+    const existing = await db.query<{ id: string }>(
+      "SELECT id FROM users WHERE username = $1 LIMIT 1",
+      [username]
+    );
+    if (existing.rows[0]) {
+      return reply.code(409).send({ error: "Username is already taken" });
+    }
+
+    const id = createUserId();
+    const passwordHash = await hash(password, 12);
+    await db.query(
+      "INSERT INTO users(id, name, username, password_hash) VALUES ($1, $2, $3, $4)",
+      [id, displayName, username, passwordHash]
+    );
+
+    const token = createToken();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+    await db.query(
+      "INSERT INTO auth_sessions(token, user_id, expires_at) VALUES ($1, $2, $3)",
+      [token, id, expiresAt]
+    );
+
+    return {
+      token,
+      user: {
+        id,
+        name: displayName,
       },
       expiresAt: expiresAt.toISOString(),
     };
