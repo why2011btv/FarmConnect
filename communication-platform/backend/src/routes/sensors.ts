@@ -1,6 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
+import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
+import { createId } from "../lib/id.js";
 import { SensorDeviceOverview, SensorInsight } from "../types.js";
 
 type DeviceRow = {
@@ -19,6 +21,23 @@ type ReadingRow = {
   unit: string;
   created_at: string;
 };
+
+const ingestReadingSchema = z.object({
+  sensorType: z.string().min(1),
+  value: z.number(),
+  unit: z.string().min(1),
+  createdAt: z.number().int().positive().optional(),
+});
+
+const ingestPayloadSchema = z.object({
+  deviceId: z.string().min(1),
+  deviceName: z.string().min(1),
+  farmName: z.string().min(1),
+  locationLabel: z.string().min(1),
+  readings: z.array(ingestReadingSchema).min(1),
+  status: z.enum(["online", "offline"]).optional(),
+  deviceTimestamp: z.number().int().positive().optional(),
+});
 
 function buildInsights(items: SensorDeviceOverview[]): SensorInsight[] {
   const insights: SensorInsight[] = [];
@@ -89,6 +108,72 @@ function buildInsights(items: SensorDeviceOverview[]): SensorInsight[] {
 }
 
 export async function sensorRoutes(app: FastifyInstance, db: Pool) {
+  app.post("/v1/sensors/ingest", async (req, reply) => {
+    const expectedKey = process.env.SENSOR_INGEST_API_KEY;
+    if (!expectedKey) {
+      return reply.code(500).send({ error: "Sensor ingest is not configured. Set SENSOR_INGEST_API_KEY." });
+    }
+
+    const providedKey = (req.headers["x-sensor-key"] as string | undefined)
+      ?? (req.headers["x-device-key"] as string | undefined);
+    if (!providedKey || providedKey !== expectedKey) {
+      return reply.code(401).send({ error: "Invalid sensor ingest key" });
+    }
+
+    const parsed = ingestPayloadSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+
+    const payload = parsed.data;
+    const now = Date.now();
+    const lastSeenAt = payload.deviceTimestamp ?? now;
+    const status = payload.status ?? "online";
+
+    await db.query(
+      `
+      INSERT INTO devices (id, name, farm_name, location_label, status, last_seen_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        farm_name = EXCLUDED.farm_name,
+        location_label = EXCLUDED.location_label,
+        status = EXCLUDED.status,
+        last_seen_at = EXCLUDED.last_seen_at
+      `,
+      [
+        payload.deviceId,
+        payload.deviceName,
+        payload.farmName,
+        payload.locationLabel,
+        status,
+        lastSeenAt,
+      ]
+    );
+
+    for (const reading of payload.readings) {
+      await db.query(
+        `
+        INSERT INTO sensor_readings(id, device_id, sensor_type, value, unit, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          createId("sr"),
+          payload.deviceId,
+          reading.sensorType,
+          reading.value,
+          reading.unit,
+          reading.createdAt ?? now,
+        ]
+      );
+    }
+
+    return {
+      ok: true,
+      deviceId: payload.deviceId,
+      insertedReadings: payload.readings.length,
+      receivedAt: now,
+    };
+  });
+
   app.get("/v1/sensors/overview", async (req, reply) => {
     const authUser = await requireAuth(req, reply, db);
     if (!authUser) return;
@@ -101,7 +186,9 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
       `
     );
 
-    if (deviceRows.length === 0) return { items: [] as SensorDeviceOverview[] };
+    if (deviceRows.length === 0) {
+      return { items: [] as SensorDeviceOverview[], insights: [] as SensorInsight[] };
+    }
 
     const ids = deviceRows.map((d) => d.id);
     const { rows: readingRows } = await db.query<ReadingRow>(
