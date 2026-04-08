@@ -12,6 +12,9 @@ struct FeedView: View {
     @State private var isCreatePostOpen = false
     @State private var selectedPost: Post?
     @State private var selectedChatTarget: ChatTarget?
+    @State private var isFullscreenPresented = false
+    @State private var fullscreenMediaURLs: [URL] = []
+    @State private var fullscreenStartIndex = 0
 
     var body: some View {
         NavigationStack {
@@ -115,10 +118,13 @@ struct FeedView: View {
                                         .frame(maxHeight: 320)
                                         .clipped()
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .onTapGesture {
+                                            openFullscreen(mediaUrls: [url], startIndex: 0)
+                                        }
                                     } else if mediaUrls.count > 1 {
                                         ScrollView(.horizontal, showsIndicators: false) {
                                             HStack(spacing: 8) {
-                                                ForEach(mediaUrls, id: \.absoluteString) { url in
+                                                ForEach(Array(mediaUrls.enumerated()), id: \.element.absoluteString) { index, url in
                                                     AsyncImage(url: url) { image in
                                                         image
                                                             .resizable()
@@ -129,6 +135,9 @@ struct FeedView: View {
                                                     .frame(width: 220, height: 180)
                                                     .clipped()
                                                     .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                    .onTapGesture {
+                                                        openFullscreen(mediaUrls: mediaUrls, startIndex: index)
+                                                    }
                                                 }
                                             }
                                         }
@@ -223,6 +232,19 @@ struct FeedView: View {
                 ChatThreadView(conversationId: nil, otherUserId: target.id, title: target.name)
                     .environmentObject(chatViewModel)
             }
+            .fullScreenCover(isPresented: $isFullscreenPresented, onDismiss: {
+                fullscreenMediaURLs = []
+                fullscreenStartIndex = 0
+            }) {
+                FullscreenMediaViewer(
+                    mediaURLs: fullscreenMediaURLs,
+                    initialIndex: fullscreenStartIndex
+                ) {
+                    isFullscreenPresented = false
+                    fullscreenMediaURLs = []
+                    fullscreenStartIndex = 0
+                }
+            }
         }
     }
 
@@ -295,5 +317,90 @@ struct FeedView: View {
 
     private func resolvedMediaURLs(for post: Post) -> [URL] {
         post.imageUrls.compactMap { APIClient.shared.resolveMediaURL(from: $0) }
+    }
+
+    private func openFullscreen(mediaUrls: [URL], startIndex: Int) {
+        guard !mediaUrls.isEmpty else { return }
+        fullscreenStartIndex = min(max(0, startIndex), mediaUrls.count - 1)
+        fullscreenMediaURLs = mediaUrls
+        isFullscreenPresented = true
+    }
+}
+
+struct FullscreenMediaViewer: View {
+    let mediaURLs: [URL]
+    let initialIndex: Int
+    let onClose: () -> Void
+    @State private var selectedIndex: Int
+
+    init(mediaURLs: [URL], initialIndex: Int, onClose: @escaping () -> Void) {
+        self.mediaURLs = mediaURLs
+        self.initialIndex = initialIndex
+        self.onClose = onClose
+        _selectedIndex = State(initialValue: initialIndex)
+    }
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+
+            TabView(selection: $selectedIndex) {
+                ForEach(Array(mediaURLs.enumerated()), id: \.element.absoluteString) { index, url in
+                    ZoomableRemoteImage(url: url)
+                    .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+
+            Button {
+                onClose()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .padding()
+        }
+    }
+}
+
+private struct ZoomableRemoteImage: View {
+    let url: URL
+    @State private var zoomScale: CGFloat = 1
+    @State private var committedZoomScale: CGFloat = 1
+
+    var body: some View {
+        AsyncImage(url: url) { image in
+            image
+                .resizable()
+                .scaledToFit()
+                .scaleEffect(zoomScale)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .gesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            let proposed = committedZoomScale * value
+                            zoomScale = min(max(proposed, 1), 4)
+                        }
+                        .onEnded { _ in
+                            committedZoomScale = zoomScale
+                        }
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if zoomScale > 1.1 {
+                            zoomScale = 1
+                            committedZoomScale = 1
+                        } else {
+                            zoomScale = 2.5
+                            committedZoomScale = 2.5
+                        }
+                    }
+                }
+        } placeholder: {
+            ProgressView()
+                .tint(.white)
+        }
     }
 }

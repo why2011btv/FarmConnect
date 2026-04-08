@@ -7,6 +7,9 @@ struct PostDetailView: View {
     @EnvironmentObject private var chatViewModel: ChatViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var commentText = ""
+    @State private var isFullscreenPresented = false
+    @State private var fullscreenMediaURLs: [URL] = []
+    @State private var fullscreenStartIndex = 0
 
     private var currentPost: Post {
         feedViewModel.posts.first(where: { $0.id == post.id }) ?? post
@@ -49,9 +52,12 @@ struct PostDetailView: View {
                     }
                     .frame(height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .onTapGesture {
+                        openFullscreen(mediaUrls: [url], startIndex: 0)
+                    }
                 } else if mediaUrls.count > 1 {
                     TabView {
-                        ForEach(mediaUrls, id: \.absoluteString) { url in
+                        ForEach(Array(mediaUrls.enumerated()), id: \.element.absoluteString) { index, url in
                             AsyncImage(url: url) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {
@@ -59,6 +65,9 @@ struct PostDetailView: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: 320)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .onTapGesture {
+                                openFullscreen(mediaUrls: mediaUrls, startIndex: index)
+                            }
                         }
                     }
                     .frame(height: 320)
@@ -135,6 +144,19 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $isFullscreenPresented, onDismiss: {
+            fullscreenMediaURLs = []
+            fullscreenStartIndex = 0
+        }) {
+            FullscreenMediaViewer(
+                mediaURLs: fullscreenMediaURLs,
+                initialIndex: fullscreenStartIndex
+            ) {
+                isFullscreenPresented = false
+                fullscreenMediaURLs = []
+                fullscreenStartIndex = 0
+            }
+        }
     }
 
     private var authorHeader: some View {
@@ -179,5 +201,12 @@ struct PostDetailView: View {
 
     private func resolvedMediaURLs(for post: Post) -> [URL] {
         post.imageUrls.compactMap { APIClient.shared.resolveMediaURL(from: $0) }
+    }
+
+    private func openFullscreen(mediaUrls: [URL], startIndex: Int) {
+        guard !mediaUrls.isEmpty else { return }
+        fullscreenStartIndex = min(max(0, startIndex), mediaUrls.count - 1)
+        fullscreenMediaURLs = mediaUrls
+        isFullscreenPresented = true
     }
 }
