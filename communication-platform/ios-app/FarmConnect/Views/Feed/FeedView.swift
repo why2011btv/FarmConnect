@@ -107,11 +107,12 @@ struct FeedView: View {
                                         AsyncImage(url: url) { image in
                                             image
                                                 .resizable()
-                                                .scaledToFit()
+                                                .scaledToFill()
                                         } placeholder: {
                                             Color.gray.opacity(0.2)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: 320)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 220)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                     } else if mediaUrls.count > 1 {
                                         ScrollView(.horizontal, showsIndicators: false) {
@@ -124,7 +125,7 @@ struct FeedView: View {
                                                     } placeholder: {
                                                         Color.gray.opacity(0.2)
                                                     }
-                                                    .frame(width: 220, height: 160)
+                                                    .frame(width: 220, height: 180)
                                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                                 }
                                             }

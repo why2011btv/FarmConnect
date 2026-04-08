@@ -43,7 +43,7 @@ struct PostDetailView: View {
                 let mediaUrls = resolvedMediaURLs(for: currentPost)
                 if mediaUrls.count == 1, let url = mediaUrls.first {
                     AsyncImage(url: url) { image in
-                        image.resizable().scaledToFit()
+                        image.resizable().scaledToFill()
                     } placeholder: {
                         Color.gray.opacity(0.2)
                     }
@@ -57,11 +57,11 @@ struct PostDetailView: View {
                             } placeholder: {
                                 Color.gray.opacity(0.2)
                             }
-                            .frame(height: 240)
+                            .frame(maxWidth: .infinity, maxHeight: 320)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
-                    .frame(height: 240)
+                    .frame(height: 320)
                     .tabViewStyle(.page(indexDisplayMode: .automatic))
                 }
                 Text(currentPost.body)

@@ -121,7 +121,9 @@ struct NotesView: View {
                 timeFilter: selectedTimeFilter
             )
         } catch {
-            notes = []
+            if isCancellation(error) {
+                return
+            }
             errorMessage = "Failed to load private notes: \(error.localizedDescription)"
         }
     }
@@ -131,5 +133,15 @@ struct NotesView: View {
         formatter.unitsStyle = .abbreviated
         let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+        if let urlError = error as? URLError, urlError.code == .cancelled {
+            return true
+        }
+        return false
     }
 }
