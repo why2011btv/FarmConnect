@@ -9,12 +9,11 @@ struct MapFeedView: View {
     @State private var selectedCategory = "all"
     @State private var selectedTimeFilter: TimeFilter = .all
     @State private var nearbyOnly = true
+    @State private var nearbyRadiusMiles: Double = 20
     @State private var mapPosition: MapCameraPosition = .automatic
     @State private var posts: [Post] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
-
-    private let nearbyRadiusMeters: CLLocationDistance = 30_000
 
     private var mapPosts: [Post] {
         guard let userLocation else { return posts }
@@ -34,6 +33,10 @@ struct MapFeedView: View {
             return nil
         }
         return CLLocation(latitude: lat, longitude: lng)
+    }
+
+    private var nearbyRadiusMeters: CLLocationDistance {
+        nearbyRadiusMiles * 1609.34
     }
 
     var body: some View {
@@ -65,6 +68,34 @@ struct MapFeedView: View {
                 }
                 .padding(.horizontal)
 
+                if nearbyOnly {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Within \(Int(nearbyRadiusMiles)) miles")
+                                .font(.subheadline.weight(.medium))
+                            Spacer()
+                            Text("\(mapPosts.count) posts")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Slider(value: $nearbyRadiusMiles, in: 1...100, step: 1)
+                            .accessibilityLabel("Nearby radius in miles")
+
+                        HStack {
+                            Spacer()
+                            Button {
+                                centerOnUserIfAvailable()
+                            } label: {
+                                Label("Reset to my area", systemImage: "location.fill")
+                            }
+                            .font(.caption)
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+
                 if nearbyOnly, mapPosts.isEmpty, !isLoading {
                     Text("No nearby posts in the current filters. Turn off Nearby only to see all filtered posts.")
                         .font(.footnote)
@@ -91,6 +122,13 @@ struct MapFeedView: View {
 
                 Map(position: $mapPosition) {
                     UserAnnotation()
+
+                    if nearbyOnly, let userLocation {
+                        MapCircle(center: userLocation.coordinate, radius: nearbyRadiusMeters)
+                            .foregroundStyle(.blue.opacity(0.12))
+                            .stroke(.blue.opacity(0.6), lineWidth: 1.5)
+                    }
+
                     ForEach(mapPosts) { post in
                         Annotation(post.title, coordinate: CLLocationCoordinate2D(latitude: post.lat, longitude: post.lng)) {
                             Button {
@@ -117,7 +155,7 @@ struct MapFeedView: View {
                     MapCompass()
                 }
             }
-            .navigationTitle("Map")
+            .navigationTitle("Nearby Feed Map")
             .onChange(of: selectedCategory) { _, _ in
                 Task { await loadPosts() }
             }
@@ -128,6 +166,12 @@ struct MapFeedView: View {
                 centerOnUserIfAvailable()
             }
             .onChange(of: locationManager.longitude) { _, _ in
+                centerOnUserIfAvailable()
+            }
+            .onChange(of: nearbyRadiusMiles) { _, _ in
+                centerOnUserIfAvailable()
+            }
+            .onChange(of: nearbyOnly) { _, _ in
                 centerOnUserIfAvailable()
             }
             .task {
@@ -167,10 +211,18 @@ struct MapFeedView: View {
 
     private func centerOnUserIfAvailable() {
         guard let userLocation else { return }
+        let radiusMeters = max(nearbyRadiusMeters, 1_000)
+        let latitudeDelta = (radiusMeters * 2.4) / 111_000
+        let longitudeScale = max(cos(userLocation.coordinate.latitude * .pi / 180), 0.2)
+        let longitudeDelta = latitudeDelta / longitudeScale
+
         mapPosition = .region(
             MKCoordinateRegion(
                 center: userLocation.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2)
+                span: MKCoordinateSpan(
+                    latitudeDelta: nearbyOnly ? latitudeDelta : max(latitudeDelta, 0.25),
+                    longitudeDelta: nearbyOnly ? longitudeDelta : max(longitudeDelta, 0.25)
+                )
             )
         )
     }
