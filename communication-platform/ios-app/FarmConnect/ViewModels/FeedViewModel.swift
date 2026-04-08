@@ -22,6 +22,9 @@ final class FeedViewModel: ObservableObject {
                 timeFilter: selectedTimeFilter
             )
         } catch {
+            if isCancellation(error) {
+                return
+            }
             errorMessage = "Failed to load posts: \(error.localizedDescription)"
         }
     }
@@ -77,5 +80,17 @@ final class FeedViewModel: ObservableObject {
         } catch {
             errorMessage = "Create post failed: \(error.localizedDescription)"
         }
+    }
+
+    private func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError {
+            return true
+        }
+
+        if let urlError = error as? URLError, urlError.code == .cancelled {
+            return true
+        }
+
+        return false
     }
 }

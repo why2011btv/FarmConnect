@@ -7,7 +7,7 @@ struct NewPostView: View {
 
     @State private var title = ""
     @State private var descriptionText = ""
-    @State private var crop = "Corn"
+    @State private var crop = ""
     @State private var category: Category = .disease
     @State private var severity = 3
     @State private var visibility = "Public"
@@ -17,7 +17,7 @@ struct NewPostView: View {
     @State private var uploadError: String?
     @State private var createError: String?
 
-    private let cropOptions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
+    private let cropSuggestions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
 
     var body: some View {
         NavigationStack {
@@ -29,9 +29,15 @@ struct NewPostView: View {
                 }
 
                 Section("Tags") {
-                    Picker("Crop", selection: $crop) {
-                        ForEach(cropOptions, id: \.self) { value in
-                            Text(value).tag(value)
+                    TextField("Crop (optional)", text: $crop)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(cropSuggestions, id: \.self) { value in
+                                Button(value) {
+                                    crop = value
+                                }
+                                .buttonStyle(.bordered)
+                            }
                         }
                     }
                     Picker("Category", selection: $category) {
@@ -94,9 +100,9 @@ struct NewPostView: View {
                             .foregroundStyle(.red)
                     }
                     if !imageUrl.isEmpty {
-                        Text("Uploaded: \(imageUrl)")
+                        Text("Photo uploaded")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.green)
                     }
                 }
 
@@ -115,7 +121,7 @@ struct NewPostView: View {
                         await feedViewModel.createPost(
                             title: title.isEmpty ? "Untitled post" : title,
                             body: descriptionText.isEmpty ? "(no description)" : descriptionText,
-                            crop: crop,
+                            crop: normalizedCrop(),
                             category: category,
                             severity: severity,
                             visibility: visibility,
@@ -126,6 +132,7 @@ struct NewPostView: View {
                         )
                         title = ""
                         descriptionText = ""
+                        crop = ""
                         imageUrl = ""
                     }
                 }
@@ -169,5 +176,10 @@ struct NewPostView: View {
         } catch {
             uploadError = "Image upload failed: \(error.localizedDescription)"
         }
+    }
+
+    private func normalizedCrop() -> String {
+        let trimmed = crop.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Unknown" : trimmed
     }
 }
