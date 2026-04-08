@@ -28,6 +28,7 @@ const createPostSchema = z.object({
   lng: z.number(),
   city: z.string().min(1),
   imageUrl: z.string().optional(),
+  imageUrls: z.array(z.string()).max(10).optional(),
 });
 
 const addCommentSchema = z.object({

@@ -29,6 +29,7 @@ type PostRow = {
   user_id: string;
   user_name: string;
   image_url: string | null;
+  image_urls: string[] | null;
 };
 
 type CommentRow = {
@@ -61,6 +62,12 @@ function getCutoff(filter: TimeFilter): number {
 }
 
 function toPost(row: PostRow, comments: Comment[]): Post {
+  const normalizedImageUrls = (row.image_urls ?? []).filter((value) => value.trim().length > 0);
+  const fallbackImageUrl = row.image_url ?? undefined;
+  const imageUrls = normalizedImageUrls.length > 0
+    ? normalizedImageUrls
+    : (fallbackImageUrl ? [fallbackImageUrl] : []);
+
   return {
     id: row.id,
     title: row.title,
@@ -77,7 +84,8 @@ function toPost(row: PostRow, comments: Comment[]): Post {
     comments,
     userId: row.user_id,
     userName: row.user_name,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: imageUrls[0],
+    imageUrls,
   };
 }
 
@@ -145,7 +153,7 @@ export class PostRepository {
       `
       SELECT
         p.id, p.title, p.body, p.crop, p.category, p.severity, p.visibility,
-        p.lat, p.lng, p.city, p.created_at, p.upvotes, p.user_id, u.name AS user_name, p.image_url
+        p.lat, p.lng, p.city, p.created_at, p.upvotes, p.user_id, u.name AS user_name, p.image_url, p.image_urls
       FROM posts p
       JOIN users u ON u.id = p.user_id
       ${whereClause}
@@ -180,20 +188,28 @@ export class PostRepository {
   async create(input: CreatePostInput): Promise<Post> {
     const id = createId("p");
     const createdAt = Date.now();
+    const normalizedImageUrls = (input.imageUrls ?? [])
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
+    const fallbackImageUrl = input.imageUrl?.trim();
+    const imageUrls = normalizedImageUrls.length > 0
+      ? normalizedImageUrls
+      : (fallbackImageUrl ? [fallbackImageUrl] : []);
+    const primaryImageUrl = imageUrls[0] ?? null;
 
     const { rows } = await this.db.query<PostRow>(
       `
       INSERT INTO posts (
         id, title, body, crop, category, severity, visibility, lat, lng, city,
-        created_at, upvotes, user_id, image_url
+        created_at, upvotes, user_id, image_url, image_urls
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, $12, $13)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, $12, $13, $14)
       RETURNING id, title, body, crop, category, severity, visibility, lat, lng, city,
-        created_at, upvotes, user_id, image_url
+        created_at, upvotes, user_id, image_url, image_urls
       `,
       [
         id, input.title, input.body, input.crop, input.category, input.severity,
-        input.visibility, input.lat, input.lng, input.city, createdAt, input.userId, input.imageUrl ?? null,
+        input.visibility, input.lat, input.lng, input.city, createdAt, input.userId, primaryImageUrl, imageUrls,
       ]
     );
 
@@ -263,7 +279,7 @@ export class PostRepository {
       `
       SELECT
         p.id, p.title, p.body, p.crop, p.category, p.severity, p.visibility,
-        p.lat, p.lng, p.city, p.created_at, p.upvotes, p.user_id, u.name AS user_name, p.image_url
+        p.lat, p.lng, p.city, p.created_at, p.upvotes, p.user_id, u.name AS user_name, p.image_url, p.image_urls
       FROM posts p
       JOIN users u ON u.id = p.user_id
       WHERE p.id = ANY($1::text[])

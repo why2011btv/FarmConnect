@@ -39,14 +39,30 @@ struct PostDetailView: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                if let imageUrl = currentPost.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
+
+                let mediaUrls = resolvedMediaURLs(for: currentPost)
+                if mediaUrls.count == 1, let url = mediaUrls.first {
                     AsyncImage(url: url) { image in
-                        image.resizable().scaledToFill()
+                        image.resizable().scaledToFit()
                     } placeholder: {
                         Color.gray.opacity(0.2)
                     }
                     .frame(height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else if mediaUrls.count > 1 {
+                    TabView {
+                        ForEach(mediaUrls, id: \.absoluteString) { url in
+                            AsyncImage(url: url) { image in
+                                image.resizable().scaledToFill()
+                            } placeholder: {
+                                Color.gray.opacity(0.2)
+                            }
+                            .frame(height: 240)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .frame(height: 240)
+                    .tabViewStyle(.page(indexDisplayMode: .automatic))
                 }
                 Text(currentPost.body)
                     .foregroundStyle(.secondary)
@@ -159,5 +175,9 @@ struct PostDetailView: View {
 
     private func formattedCoordinate(_ value: Double) -> String {
         String(format: "%.4f", value)
+    }
+
+    private func resolvedMediaURLs(for post: Post) -> [URL] {
+        post.imageUrls.compactMap { APIClient.shared.resolveMediaURL(from: $0) }
     }
 }

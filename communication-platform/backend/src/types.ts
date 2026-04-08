@@ -28,6 +28,7 @@ export type Post = {
   userId: string;
   userName: string;
   imageUrl?: string;
+  imageUrls?: string[];
 };
 
 export type Message = {

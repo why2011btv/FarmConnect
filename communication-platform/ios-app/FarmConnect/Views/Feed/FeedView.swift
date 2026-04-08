@@ -102,14 +102,33 @@ struct FeedView: View {
                                     Text(post.title)
                                         .font(.headline)
 
-                                    if let imageUrl = post.imageUrl, let url = APIClient.shared.resolveMediaURL(from: imageUrl) {
+                                    let mediaUrls = resolvedMediaURLs(for: post)
+                                    if mediaUrls.count == 1, let url = mediaUrls.first {
                                         AsyncImage(url: url) { image in
-                                            image.resizable().scaledToFill()
+                                            image
+                                                .resizable()
+                                                .scaledToFit()
                                         } placeholder: {
                                             Color.gray.opacity(0.2)
                                         }
-                                        .frame(height: 160)
+                                        .frame(maxWidth: .infinity, maxHeight: 320)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    } else if mediaUrls.count > 1 {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 8) {
+                                                ForEach(mediaUrls, id: \.absoluteString) { url in
+                                                    AsyncImage(url: url) { image in
+                                                        image
+                                                            .resizable()
+                                                            .scaledToFill()
+                                                    } placeholder: {
+                                                        Color.gray.opacity(0.2)
+                                                    }
+                                                    .frame(width: 220, height: 160)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                }
+                                            }
+                                        }
                                     }
 
                                     Text(post.body)
@@ -269,5 +288,9 @@ struct FeedView: View {
         case .weather:
             return .blue
         }
+    }
+
+    private func resolvedMediaURLs(for post: Post) -> [URL] {
+        post.imageUrls.compactMap { APIClient.shared.resolveMediaURL(from: $0) }
     }
 }

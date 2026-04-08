@@ -57,7 +57,7 @@ final class FeedViewModel: ObservableObject {
         lat: Double,
         lng: Double,
         city: String,
-        imageUrl: String?
+        imageUrls: [String]?
     ) async -> Bool {
         do {
             try await APIClient.shared.createPost(
@@ -70,7 +70,7 @@ final class FeedViewModel: ObservableObject {
                 lat: lat,
                 lng: lng,
                 city: city,
-                imageUrl: imageUrl
+                imageUrls: imageUrls
             )
             query = ""
             selectedCategory = "all"

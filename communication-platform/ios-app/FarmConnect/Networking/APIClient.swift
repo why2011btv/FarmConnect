@@ -256,7 +256,7 @@ final class APIClient {
         lat: Double,
         lng: Double,
         city: String,
-        imageUrl: String?
+        imageUrls: [String]?
     ) async throws {
         var req = try authorizedRequest(path: "/v1/posts", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -271,8 +271,9 @@ final class APIClient {
             "lng": lng,
             "city": city
         ]
-        if let imageUrl {
-            payload["imageUrl"] = imageUrl
+        if let imageUrls, !imageUrls.isEmpty {
+            payload["imageUrls"] = imageUrls
+            payload["imageUrl"] = imageUrls[0]
         }
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
         let (_, response) = try await URLSession.shared.data(for: req)

@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 
 struct NewPostView: View {
     @EnvironmentObject private var feedViewModel: FeedViewModel
@@ -18,8 +19,9 @@ struct NewPostView: View {
     @State private var category: Category
     @State private var severity = 3
     @State private var visibility: String
-    @State private var imageUrl = ""
-    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var imageUrls: [String] = []
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var showCamera = false
     @State private var isUploadingImage = false
     @State private var uploadError: String?
     @State private var createError: String?
@@ -112,21 +114,47 @@ struct NewPostView: View {
                 }
 
                 Section("Media (optional)") {
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Label("Choose Photo", systemImage: "photo")
+                    PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 6, matching: .images) {
+                        Label("Choose Photos", systemImage: "photo.on.rectangle")
                     }
+
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        Button {
+                            showCamera = true
+                        } label: {
+                            Label("Take Photo", systemImage: "camera")
+                        }
+                    }
+
                     if isUploadingImage {
-                        ProgressView("Uploading image...")
+                        ProgressView("Uploading photos...")
                     }
                     if let uploadError {
                         Text(uploadError)
                             .font(.footnote)
                             .foregroundStyle(.red)
                     }
-                    if !imageUrl.isEmpty {
-                        Text("Photo uploaded")
+                    if !imageUrls.isEmpty {
+                        Text("\(imageUrls.count) photo(s) uploaded")
                             .font(.footnote)
                             .foregroundStyle(.green)
+                    }
+                    if !imageUrls.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(imageUrls, id: \.self) { rawUrl in
+                                    if let url = APIClient.shared.resolveMediaURL(from: rawUrl) {
+                                        AsyncImage(url: url) { image in
+                                            image.resizable().scaledToFill()
+                                        } placeholder: {
+                                            Color.gray.opacity(0.2)
+                                        }
+                                        .frame(width: 72, height: 72)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -152,7 +180,7 @@ struct NewPostView: View {
                             lat: lat,
                             lng: lng,
                             city: city,
-                            imageUrl: imageUrl.isEmpty ? nil : imageUrl
+                            imageUrls: imageUrls.isEmpty ? nil : imageUrls
                         )
                         guard didCreate else {
                             createError = feedViewModel.errorMessage ?? "Create post failed."
@@ -161,7 +189,8 @@ struct NewPostView: View {
                         title = ""
                         descriptionText = ""
                         crop = ""
-                        imageUrl = ""
+                        imageUrls = []
+                        selectedPhotos = []
                         await showSuccessThenDismiss()
                     }
                 }
@@ -186,10 +215,17 @@ struct NewPostView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
-            .onChange(of: selectedPhoto) { _, newValue in
-                guard let newValue else { return }
+            .onChange(of: selectedPhotos) { _, newValue in
+                guard !newValue.isEmpty else { return }
                 Task {
-                    await uploadSelectedPhoto(newValue)
+                    await uploadSelectedPhotos(newValue)
+                }
+            }
+            .sheet(isPresented: $showCamera) {
+                CameraImagePicker { image in
+                    Task {
+                        await uploadCameraImage(image)
+                    }
                 }
             }
             .task {
@@ -200,25 +236,57 @@ struct NewPostView: View {
         }
     }
 
-    private func uploadSelectedPhoto(_ item: PhotosPickerItem) async {
+    private func uploadSelectedPhotos(_ items: [PhotosPickerItem]) async {
         isUploadingImage = true
         uploadError = nil
         defer { isUploadingImage = false }
 
+        var uploaded: [String] = []
         do {
-            guard let data = try await item.loadTransferable(type: Data.self) else {
-                uploadError = "Failed to load selected image."
+            for item in items {
+                guard let data = try await item.loadTransferable(type: Data.self) else {
+                    continue
+                }
+                let imageUrl = try await uploadImageData(data)
+                uploaded.append(imageUrl)
+            }
+
+            if uploaded.isEmpty {
+                uploadError = "Failed to load selected images."
                 return
             }
-            let fileName = "post-\(UUID().uuidString).jpg"
-            imageUrl = try await APIClient.shared.uploadImage(
-                data: data,
-                fileName: fileName,
-                mimeType: "image/jpeg"
-            )
+            imageUrls.append(contentsOf: uploaded)
+            selectedPhotos = []
+        } catch {
+            uploadError = "Photo upload failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func uploadCameraImage(_ image: UIImage) async {
+        isUploadingImage = true
+        uploadError = nil
+        defer { isUploadingImage = false }
+
+        guard let data = image.jpegData(compressionQuality: 0.85) else {
+            uploadError = "Failed to process captured photo."
+            return
+        }
+
+        do {
+            let imageUrl = try await uploadImageData(data)
+            imageUrls.append(imageUrl)
         } catch {
             uploadError = "Image upload failed: \(error.localizedDescription)"
         }
+    }
+
+    private func uploadImageData(_ data: Data) async throws -> String {
+        let fileName = "post-\(UUID().uuidString).jpg"
+        return try await APIClient.shared.uploadImage(
+            data: data,
+            fileName: fileName,
+            mimeType: "image/jpeg"
+        )
     }
 
     private func normalizedCrop() -> String {
@@ -234,5 +302,47 @@ struct NewPostView: View {
         try? await Task.sleep(nanoseconds: 700_000_000)
 
         dismiss()
+    }
+}
+
+private struct CameraImagePicker: UIViewControllerRepresentable {
+    let onImagePicked: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.cameraCaptureMode = .photo
+        picker.delegate = context.coordinator
+        picker.allowsEditing = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        private let parent: CameraImagePicker
+
+        init(parent: CameraImagePicker) {
+            self.parent = parent
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onImagePicked(image)
+            }
+            parent.dismiss()
+        }
     }
 }

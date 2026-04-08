@@ -59,7 +59,67 @@ struct Post: Codable, Identifiable, Hashable {
     let comments: [Comment]
     let userId: String
     let userName: String
-    let imageUrl: String?
+    let imageUrls: [String]
+
+    var imageUrl: String? { imageUrls.first }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, body, crop, category, severity, visibility, lat, lng, city, createdAt, upvotes, comments, userId, userName, imageUrl, imageUrls
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        body = try container.decode(String.self, forKey: .body)
+        crop = try container.decode(String.self, forKey: .crop)
+        category = try container.decode(Category.self, forKey: .category)
+        severity = try container.decode(Int.self, forKey: .severity)
+        visibility = try container.decode(String.self, forKey: .visibility)
+        lat = try container.decode(Double.self, forKey: .lat)
+        lng = try container.decode(Double.self, forKey: .lng)
+        city = try container.decode(String.self, forKey: .city)
+        createdAt = try container.decode(Int64.self, forKey: .createdAt)
+        upvotes = try container.decode(Int.self, forKey: .upvotes)
+        comments = try container.decode([Comment].self, forKey: .comments)
+        userId = try container.decode(String.self, forKey: .userId)
+        userName = try container.decode(String.self, forKey: .userName)
+
+        let multi = try container.decodeIfPresent([String].self, forKey: .imageUrls) ?? []
+        let normalizedMulti = multi
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if !normalizedMulti.isEmpty {
+            imageUrls = normalizedMulti
+        } else if let single = try container.decodeIfPresent(String.self, forKey: .imageUrl)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !single.isEmpty {
+            imageUrls = [single]
+        } else {
+            imageUrls = []
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(body, forKey: .body)
+        try container.encode(crop, forKey: .crop)
+        try container.encode(category, forKey: .category)
+        try container.encode(severity, forKey: .severity)
+        try container.encode(visibility, forKey: .visibility)
+        try container.encode(lat, forKey: .lat)
+        try container.encode(lng, forKey: .lng)
+        try container.encode(city, forKey: .city)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(upvotes, forKey: .upvotes)
+        try container.encode(comments, forKey: .comments)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(userName, forKey: .userName)
+        try container.encode(imageUrls, forKey: .imageUrls)
+        try container.encodeIfPresent(imageUrl, forKey: .imageUrl)
+    }
 }
 
 struct Message: Codable, Identifiable {
