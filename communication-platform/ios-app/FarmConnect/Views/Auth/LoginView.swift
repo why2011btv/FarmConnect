@@ -3,6 +3,7 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject private var session: SessionStore
     @State private var name = ""
+    @State private var password = ""
 
     var body: some View {
         NavigationStack {
@@ -16,6 +17,14 @@ struct LoginView: View {
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.words)
 
+                SecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+
+                Text("Use at least 6 characters. New name + password creates an account.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
                 if let error = session.errorMessage {
                     Text(error)
                         .foregroundStyle(.red)
@@ -23,17 +32,26 @@ struct LoginView: View {
                 }
 
                 Button {
-                    Task { await session.login(name: name.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                    Task {
+                        await session.login(
+                            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            password: password
+                        )
+                    }
                 } label: {
                     if session.isLoading {
                         ProgressView()
                     } else {
-                        Text("Continue")
+                        Text("Sign In")
                             .frame(maxWidth: .infinity)
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isLoading)
+                .disabled(
+                    name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    || password.count < 6
+                    || session.isLoading
+                )
             }
             .padding()
         }

@@ -41,10 +41,13 @@ final class APIClient {
         return req
     }
 
-    func login(name: String) async throws -> AuthResponse {
+    func login(name: String, password: String) async throws -> AuthResponse {
         var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
+            "name": name,
+            "password": password
+        ])
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
