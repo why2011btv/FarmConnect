@@ -15,6 +15,7 @@ struct FeedView: View {
     @State private var isFullscreenPresented = false
     @State private var fullscreenMediaURLs: [URL] = []
     @State private var fullscreenStartIndex = 0
+    @State private var isNotificationSettingsOpen = false
 
     var body: some View {
         NavigationStack {
@@ -197,6 +198,9 @@ struct FeedView: View {
                         if let user = session.currentUser {
                             Text(user.name)
                         }
+                        Button("Notification settings") {
+                            isNotificationSettingsOpen = true
+                        }
                         Button("Sign out", role: .destructive) {
                             session.logout()
                         }
@@ -224,6 +228,9 @@ struct FeedView: View {
             .sheet(isPresented: $isCreatePostOpen) {
                 NewPostView()
                     .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $isNotificationSettingsOpen) {
+                NotificationSettingsView()
             }
             .navigationDestination(item: $selectedPost) { post in
                 PostDetailView(post: post)

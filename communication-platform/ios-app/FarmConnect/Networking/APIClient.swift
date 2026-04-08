@@ -293,6 +293,24 @@ final class APIClient {
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
     }
 
+    func getNotificationPreferences() async throws -> NotificationPreferences {
+        let req = try authorizedRequest(path: "/v1/notifications/preferences")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(NotificationPreferencesResponse.self, from: data).item
+    }
+
+    func updateNotificationPreferences(_ prefs: NotificationPreferences) async throws -> NotificationPreferences {
+        var req = try authorizedRequest(path: "/v1/notifications/preferences", method: "PUT")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(prefs)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(NotificationPreferencesResponse.self, from: data).item
+    }
+
     private func getSensorDashboard() async throws -> SensorOverviewResponse {
         let req = try authorizedRequest(path: "/v1/sensors/overview")
         let (data, response) = try await URLSession.shared.data(for: req)

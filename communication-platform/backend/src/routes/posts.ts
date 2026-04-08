@@ -3,7 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { PostRepository } from "../repositories/postRepository.js";
-import { queuePushNotification } from "../services/notificationService.js";
+import { queueNearbyPostNotifications, queuePushNotification } from "../services/notificationService.js";
 import { Category, TimeFilter } from "../types.js";
 
 const categoryValues: Category[] = ["Disease", "Pest", "Weather", "Note", "Market"];
@@ -63,6 +63,18 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
       userId: authUser.id,
       userName: authUser.name,
     });
+
+    if (post.visibility === "Public") {
+      await queueNearbyPostNotifications(db, app.log, {
+        authorUserId: authUser.id,
+        authorName: authUser.name,
+        title: post.title,
+        category: post.category,
+        lat: post.lat,
+        lng: post.lng,
+      });
+    }
+
     return { item: post };
   });
 

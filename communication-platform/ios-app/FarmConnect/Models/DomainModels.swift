@@ -204,3 +204,19 @@ struct SensorOverviewResponse: Codable {
     let items: [SensorDeviceOverview]
     let insights: [SensorInsight]
 }
+
+struct NotificationPreferences: Codable {
+    var enabled: Bool
+    var radiusMiles: Int
+    var categories: [Category]
+    var quietHoursEnabled: Bool
+    var quietStart: String
+    var quietEnd: String
+    var timezoneOffsetMinutes: Int
+    var locationLat: Double?
+    var locationLng: Double?
+}
+
+struct NotificationPreferencesResponse: Codable {
+    let item: NotificationPreferences
+}
