@@ -17,7 +17,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("FarmConnect")
+                Text("FarmAlert")
                     .font(.largeTitle.bold())
                 Text("Use your account to continue")
                     .foregroundStyle(.secondary)
