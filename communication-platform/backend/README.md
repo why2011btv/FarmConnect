@@ -41,7 +41,7 @@ Server defaults:
 - Seed data is included in `migrations/002_seed.sql`.
 - Session tokens are stored in `auth_sessions` (migration `003_auth_sessions.sql`).
 - APNs delivery is wired via token-based auth key env vars (see `.env.example`).
-- Uploaded images are stored locally in `backend/uploads/` and served under `/uploads/*`.
+- Uploaded images are stored in Cloudflare R2 when `R2_*` env vars are configured.
 
 ## APNs setup (for TestFlight)
 
@@ -52,3 +52,13 @@ Set these in `.env`:
 - `APNS_BUNDLE_ID`
 - `APNS_PRIVATE_KEY` (single-line with `\n` escapes)
 - `APNS_USE_PRODUCTION=true` for TestFlight/App Store builds
+
+## Cloudflare R2 storage setup
+
+Set these in `.env` (or Railway variables):
+
+- `R2_BUCKET`
+- `R2_ENDPOINT` (for example: `https://<accountid>.r2.cloudflarestorage.com`)
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_PUBLIC_BASE_URL` (for example: `https://<public-r2-url>.r2.dev`)

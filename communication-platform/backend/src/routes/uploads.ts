@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
+import { isR2Configured, uploadImageToR2 } from "../services/r2Storage.js";
 
 const createUploadSchema = z.object({
   fileName: z.string().min(1),
@@ -45,15 +45,19 @@ export async function uploadRoutes(app: FastifyInstance, db: Pool) {
       return reply.code(400).send({ error: "Image exceeds 5MB limit" });
     }
 
-    const uploadsDir = path.resolve(process.cwd(), "uploads");
-    await mkdir(uploadsDir, { recursive: true });
     const ext = path.extname(file.filename || "").toLowerCase() || ".jpg";
-    const fileName = `${Date.now()}_${randomBytes(6).toString("hex")}${ext}`;
-    const absPath = path.join(uploadsDir, fileName);
-    await writeFile(absPath, buffer);
+    const objectKey = `${Date.now()}_${randomBytes(6).toString("hex")}${ext}`;
+
+    if (!isR2Configured()) {
+      return reply.code(500).send({
+        error: "Image storage is not configured. Set R2_* environment variables.",
+      });
+    }
+
+    const publicUrl = await uploadImageToR2(objectKey, buffer, file.mimetype);
 
     return {
-      publicUrl: `/uploads/${fileName}`,
+      publicUrl,
       size: buffer.byteLength,
       mimeType: file.mimetype,
     };
