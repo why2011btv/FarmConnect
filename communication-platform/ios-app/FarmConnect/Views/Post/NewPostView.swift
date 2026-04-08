@@ -3,21 +3,45 @@ import SwiftUI
 
 struct NewPostView: View {
     @EnvironmentObject private var feedViewModel: FeedViewModel
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var locationManager = UserLocationManager()
+
+    private let initialCategory: Category
+    private let initialVisibility: String
+    private let screenTitle: String
+    private let publishButtonTitle: String
+    private let successMessage: String
 
     @State private var title = ""
     @State private var descriptionText = ""
     @State private var crop = ""
-    @State private var category: Category = .disease
+    @State private var category: Category
     @State private var severity = 3
-    @State private var visibility = "Public"
+    @State private var visibility: String
     @State private var imageUrl = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isUploadingImage = false
     @State private var uploadError: String?
     @State private var createError: String?
+    @State private var showSuccessBanner = false
 
     private let cropSuggestions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
+
+    init(
+        initialCategory: Category = .disease,
+        initialVisibility: String = "Public",
+        screenTitle: String = "Create Post",
+        publishButtonTitle: String = "Publish Post",
+        successMessage: String = "Post published"
+    ) {
+        self.initialCategory = initialCategory
+        self.initialVisibility = initialVisibility
+        self.screenTitle = screenTitle
+        self.publishButtonTitle = publishButtonTitle
+        self.successMessage = successMessage
+        _category = State(initialValue: initialCategory)
+        _visibility = State(initialValue: initialVisibility)
+    }
 
     var body: some View {
         NavigationStack {
@@ -106,7 +130,7 @@ struct NewPostView: View {
                     }
                 }
 
-                Button("Publish Post") {
+                Button(publishButtonTitle) {
                     Task {
                         createError = nil
                         guard
@@ -118,7 +142,7 @@ struct NewPostView: View {
                             return
                         }
 
-                        await feedViewModel.createPost(
+                        let didCreate = await feedViewModel.createPost(
                             title: title.isEmpty ? "Untitled post" : title,
                             body: descriptionText.isEmpty ? "(no description)" : descriptionText,
                             crop: normalizedCrop(),
@@ -130,10 +154,15 @@ struct NewPostView: View {
                             city: city,
                             imageUrl: imageUrl.isEmpty ? nil : imageUrl
                         )
+                        guard didCreate else {
+                            createError = feedViewModel.errorMessage ?? "Create post failed."
+                            return
+                        }
                         title = ""
                         descriptionText = ""
                         crop = ""
                         imageUrl = ""
+                        await showSuccessThenDismiss()
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -144,7 +173,19 @@ struct NewPostView: View {
                         .foregroundStyle(.red)
                 }
             }
-            .navigationTitle("Create Post")
+            .navigationTitle(screenTitle)
+            .overlay(alignment: .top) {
+                if showSuccessBanner {
+                    Text(successMessage)
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.green.opacity(0.9), in: Capsule())
+                        .foregroundStyle(.white)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
             .onChange(of: selectedPhoto) { _, newValue in
                 guard let newValue else { return }
                 Task {
@@ -152,6 +193,8 @@ struct NewPostView: View {
                 }
             }
             .task {
+                category = initialCategory
+                visibility = initialVisibility
                 locationManager.requestCurrentLocation()
             }
         }
@@ -181,5 +224,15 @@ struct NewPostView: View {
     private func normalizedCrop() -> String {
         let trimmed = crop.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? "Unknown" : trimmed
+    }
+
+    private func showSuccessThenDismiss() async {
+        withAnimation {
+            showSuccessBanner = true
+        }
+
+        try? await Task.sleep(nanoseconds: 700_000_000)
+
+        dismiss()
     }
 }

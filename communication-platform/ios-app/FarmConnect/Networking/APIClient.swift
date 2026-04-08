@@ -81,6 +81,28 @@ final class APIClient {
         return try JSONDecoder().decode(PostListResponse.self, from: data).items
     }
 
+    func getPrivateNotes(query: String = "", timeFilter: TimeFilter = .all) async throws -> [Post] {
+        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/posts"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "query", value: query),
+            URLQueryItem(name: "category", value: "Note"),
+            URLQueryItem(name: "timeFilter", value: timeFilter.rawValue),
+            URLQueryItem(name: "visibility", value: "Private")
+        ]
+        guard let url = components?.url else { throw APIError.badURL }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        if let token = authToken {
+            req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        return try JSONDecoder().decode(PostListResponse.self, from: data).items
+    }
+
     func upvote(postId: String) async throws {
         let req = try authorizedRequest(path: "/v1/posts/\(postId)/upvote", method: "POST")
 

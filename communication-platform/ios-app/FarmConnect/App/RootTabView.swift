@@ -18,20 +18,23 @@ struct RootTabView: View {
                     Label("Map", systemImage: "map")
                 }
 
-            ChatView()
+            NotesView()
                 .tag(2)
+                .tabItem {
+                    Label("Notes", systemImage: "note.text")
+                }
+
+            ChatView()
+                .tag(3)
                 .tabItem {
                     Label("Chat", systemImage: "message")
                 }
 
             SensorDashboardView()
-                .tag(3)
+                .tag(4)
                 .tabItem {
                     Label("Sensors", systemImage: "waveform.path.ecg")
                 }
-        }
-        .onChange(of: feedViewModel.refreshTrigger) { _, _ in
-            selectedTab = 0
         }
     }
 }

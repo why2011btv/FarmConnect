@@ -58,7 +58,7 @@ final class FeedViewModel: ObservableObject {
         lng: Double,
         city: String,
         imageUrl: String?
-    ) async {
+    ) async -> Bool {
         do {
             try await APIClient.shared.createPost(
                 title: title,
@@ -77,8 +77,10 @@ final class FeedViewModel: ObservableObject {
             selectedTimeFilter = .all
             refreshTrigger = UUID()
             await load()
+            return true
         } catch {
             errorMessage = "Create post failed: \(error.localizedDescription)"
+            return false
         }
     }
 

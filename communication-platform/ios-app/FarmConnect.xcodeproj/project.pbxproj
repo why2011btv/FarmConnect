@@ -19,6 +19,7 @@
 		62856BA206121F8A9264F0F0 /* ChatThreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */; };
 		6F4FD44C09E5EC7F711EB1F9 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D021C17C055DFBA2E76DAC8 /* PushNotificationManager.swift */; };
 		739D028B6F301E0299BADBED /* SensorDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */; };
+		8C1A2B3C4D5E6F708192A3B4 /* NotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D2E3F405162738495A6B7C8 /* NotesView.swift */; };
 		AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC4BD82888633215B07B2A7 /* FeedView.swift */; };
 		B830E3AB16B56BE3721B5DE0 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A888FAD16E4369D43BC994F /* PostDetailView.swift */; };
 		BE32AE3EA30923DF043F2EEA /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC43643482121E88359B31BF /* APIClient.swift */; };
@@ -41,6 +42,7 @@
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
 		8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		9D2E3F405162738495A6B7C8 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		B7E0FCB47A55D55BBA048109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				335D0C7CD9BCDA17E682FBBC /* Chat */,
 				92591D50B82390FA53940B77 /* Feed */,
 				4BDE7D7DF224C7BEC1F2F688 /* Map */,
+				A1B2C3D4E5F60718293A4B5C /* Notes */,
 				6848A38861F1A07AE1629743 /* Post */,
 				816996408A074CB67376E5AA /* Sensors */,
 			);
@@ -139,6 +142,14 @@
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
 			);
 			path = Sensors;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A4B5C /* Notes */ = {
+			isa = PBXGroup;
+			children = (
+				9D2E3F405162738495A6B7C8 /* NotesView.swift */,
+			);
+			path = Notes;
 			sourceTree = "<group>";
 		};
 		92591D50B82390FA53940B77 /* Feed */ = {
@@ -269,6 +280,7 @@
 				1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */,
 				3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */,
 				106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */,
+				8C1A2B3C4D5E6F708192A3B4 /* NotesView.swift in Sources */,
 				3CBA481DE1662E4CA5E46E5C /* NewPostView.swift in Sources */,
 				B830E3AB16B56BE3721B5DE0 /* PostDetailView.swift in Sources */,
 				6F4FD44C09E5EC7F711EB1F9 /* PushNotificationManager.swift in Sources */,
