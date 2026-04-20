@@ -44,6 +44,7 @@ Server defaults:
 - APNs delivery is wired via token-based auth key env vars (see `.env.example`).
 - Uploaded images are stored in Cloudflare R2 when `R2_*` env vars are configured.
 - Sensor ingest endpoint uses `SENSOR_INGEST_API_KEY` header auth (`x-sensor-key`).
+- Content moderation guard (text + image URLs) can be enabled via OpenRouter env vars.
 
 ## APNs setup (for TestFlight)
 
@@ -64,6 +65,25 @@ Set these in `.env` (or Railway variables):
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_PUBLIC_BASE_URL` (for example: `https://<public-r2-url>.r2.dev`)
+
+## OpenRouter moderation guard (optional)
+
+Set these in backend env / Railway variables to enable automatic toxic/sexual content blocking:
+
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODERATION_MODEL` (recommended: `openai/gpt-4o-mini`)
+- `OPENROUTER_BASE_URL` (default: `https://openrouter.ai/api/v1`)
+- `OPENROUTER_APP_NAME` (default: `FarmAlert`)
+
+When enabled, the backend moderates:
+
+- Post title/body/crop + post images
+- Post comments
+- Chat messages
+
+If content is blocked, the API returns:
+
+- `400` with `error: "Content violates platform rule: ..."`
 
 ## Raspberry Pi sensor ingestion (beginner setup)
 

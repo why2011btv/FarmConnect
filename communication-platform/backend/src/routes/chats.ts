@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { ChatRepository } from "../repositories/chatRepository.js";
+import { moderateUserContent } from "../services/moderationService.js";
 import { queuePushNotification } from "../services/notificationService.js";
 
 const getMessagesQuerySchema = z.object({
@@ -77,6 +78,15 @@ export async function chatRoutes(app: FastifyInstance, chatRepository: ChatRepos
 
     const parsed = sendMessageSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+
+    const moderation = await moderateUserContent(app.log, {
+      text: parsed.data.text,
+    });
+    if (!moderation.allowed) {
+      return reply.code(400).send({
+        error: `Content violates platform rule: ${moderation.reason ?? "inappropriate content detected"}`,
+      });
+    }
 
     let result: Awaited<ReturnType<ChatRepository["sendMessage"]>> | Awaited<ReturnType<ChatRepository["sendMessageToConversation"]>>;
     if (parsed.data.conversationId) {

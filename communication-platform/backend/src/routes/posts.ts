@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { PostRepository } from "../repositories/postRepository.js";
+import { moderateUserContent } from "../services/moderationService.js";
 import { queueNearbyPostNotifications, queuePushNotification } from "../services/notificationService.js";
 import { Category, TimeFilter } from "../types.js";
 
@@ -58,6 +59,16 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
     const parsed = createPostSchema.safeParse(req.body);
     if (!parsed.success) return app.httpErrors.badRequest(parsed.error.message);
 
+    const moderation = await moderateUserContent(app.log, {
+      text: [parsed.data.title, parsed.data.body, parsed.data.crop].join("\n"),
+      imageUrls: parsed.data.imageUrls ?? (parsed.data.imageUrl ? [parsed.data.imageUrl] : []),
+    });
+    if (!moderation.allowed) {
+      return reply.code(400).send({
+        error: `Content violates platform rule: ${moderation.reason ?? "inappropriate content detected"}`,
+      });
+    }
+
     const post = await postRepository.create({
       ...parsed.data,
       userId: authUser.id,
@@ -95,6 +106,15 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
     const postId = (req.params as { postId: string }).postId;
     const parsed = addCommentSchema.safeParse(req.body);
     if (!parsed.success) return app.httpErrors.badRequest(parsed.error.message);
+
+    const moderation = await moderateUserContent(app.log, {
+      text: parsed.data.text,
+    });
+    if (!moderation.allowed) {
+      return reply.code(400).send({
+        error: `Content violates platform rule: ${moderation.reason ?? "inappropriate content detected"}`,
+      });
+    }
 
     const result = await postRepository.addComment(postId, {
       text: parsed.data.text,

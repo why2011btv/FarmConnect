@@ -1,6 +1,12 @@
 import SwiftUI
 
 struct NotesView: View {
+    enum DisplayMode: String, CaseIterable, Identifiable {
+        case list = "List"
+        case calendar = "Calendar"
+        var id: String { rawValue }
+    }
+
     @EnvironmentObject private var feedViewModel: FeedViewModel
     @State private var notes: [Post] = []
     @State private var isLoading = false
@@ -9,6 +15,9 @@ struct NotesView: View {
     @State private var query = ""
     @State private var selectedTimeFilter: TimeFilter = .all
     @State private var isCreateNoteOpen = false
+    @State private var displayMode: DisplayMode = .list
+    @State private var displayedMonth = NotesView.startOfMonth(Date())
+    @State private var selectedCalendarDay = Calendar.current.startOfDay(for: Date())
 
     var body: some View {
         NavigationStack {
@@ -31,6 +40,14 @@ struct NotesView: View {
                 .padding(.horizontal)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+                Picker("Mode", selection: $displayMode) {
+                    ForEach(DisplayMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.footnote)
@@ -45,32 +62,15 @@ struct NotesView: View {
                 } else if notes.isEmpty {
                     ContentUnavailableView("No private notes", systemImage: "note.text")
                         .frame(maxHeight: .infinity)
+                } else if displayMode == .list {
+                    notesList(notes)
                 } else {
-                    List(notes) { note in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(note.title)
-                                .font(.headline)
-                            Text(note.body)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(3)
-                            HStack {
-                                Text(note.city)
-                                Spacer()
-                                Text(relativeTime(note.createdAt))
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            calendarView
+                            selectedDayNotesSection
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedPost = note
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    .listStyle(.plain)
-                    .refreshable {
-                        await loadNotes()
+                        .padding(.bottom, 12)
                     }
                 }
             }
@@ -96,6 +96,9 @@ struct NotesView: View {
             }
             .onChange(of: selectedTimeFilter) { _, _ in
                 Task { await loadNotes() }
+            }
+            .onChange(of: selectedCalendarDay) { _, newValue in
+                displayedMonth = Self.startOfMonth(newValue)
             }
             .sheet(isPresented: $isCreateNoteOpen) {
                 NewPostView(
@@ -129,6 +132,195 @@ struct NotesView: View {
             }
             errorMessage = "Failed to load private notes: \(error.localizedDescription)"
         }
+    }
+
+    private var notesByDay: [Date: [Post]] {
+        Dictionary(grouping: notes) { note in
+            let date = Date(timeIntervalSince1970: Double(note.createdAt) / 1000)
+            return Calendar.current.startOfDay(for: date)
+        }
+    }
+
+    private var monthDays: [Date?] {
+        let calendar = Calendar.current
+        guard let dayRange = calendar.range(of: .day, in: .month, for: displayedMonth) else {
+            return []
+        }
+        let firstWeekdayOfMonth = calendar.component(.weekday, from: displayedMonth)
+        let leadingBlanks = (firstWeekdayOfMonth - calendar.firstWeekday + 7) % 7
+        var items: [Date?] = Array(repeating: nil, count: leadingBlanks)
+        for day in dayRange {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: displayedMonth) {
+                items.append(calendar.startOfDay(for: date))
+            }
+        }
+        return items
+    }
+
+    private var selectedDayNotes: [Post] {
+        (notesByDay[selectedCalendarDay] ?? []).sorted { $0.createdAt > $1.createdAt }
+    }
+
+    private var calendarView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Button {
+                    if let previous = Calendar.current.date(byAdding: .month, value: -1, to: displayedMonth) {
+                        displayedMonth = Self.startOfMonth(previous)
+                    }
+                } label: {
+                    Image(systemName: "chevron.left")
+                }
+                Spacer()
+                Text(monthTitle(for: displayedMonth))
+                    .font(.headline)
+                Spacer()
+                Button {
+                    if let next = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) {
+                        displayedMonth = Self.startOfMonth(next)
+                    }
+                } label: {
+                    Image(systemName: "chevron.right")
+                }
+            }
+            .padding(.horizontal)
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                ForEach(weekdaySymbols(), id: \.self) { day in
+                    Text(day)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+
+                ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
+                    if let date {
+                        dayCell(for: date)
+                    } else {
+                        Color.clear
+                            .frame(height: 34)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func dayCell(for date: Date) -> some View {
+        let hasNotes = notesByDay[date] != nil
+        let isSelected = Calendar.current.isDate(date, inSameDayAs: selectedCalendarDay)
+        return Button {
+            selectedCalendarDay = date
+        } label: {
+            Text("\(Calendar.current.component(.day, from: date))")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(hasNotes ? .white : .primary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(hasNotes ? Color.blue : Color.gray.opacity(0.2))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? Color.primary.opacity(0.8) : Color.clear, lineWidth: 1.5)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var selectedDayNotesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Notes on \(dayTitle(for: selectedCalendarDay))")
+                .font(.headline)
+                .padding(.horizontal)
+
+            if selectedDayNotes.isEmpty {
+                Text("No notes on this date.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                ForEach(selectedDayNotes) { note in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(note.title)
+                            .font(.headline)
+                        Text(note.body)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
+                        HStack {
+                            Text(note.city)
+                            Spacer()
+                            Text(relativeTime(note.createdAt))
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .background(Color.gray.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal)
+                    .onTapGesture {
+                        selectedPost = note
+                    }
+                }
+            }
+        }
+    }
+
+    private func notesList(_ notes: [Post]) -> some View {
+        List(notes) { note in
+            VStack(alignment: .leading, spacing: 6) {
+                Text(note.title)
+                    .font(.headline)
+                Text(note.body)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                HStack {
+                    Text(note.city)
+                    Spacer()
+                    Text(relativeTime(note.createdAt))
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                selectedPost = note
+            }
+            .padding(.vertical, 4)
+        }
+        .listStyle(.plain)
+        .refreshable {
+            await loadNotes()
+        }
+    }
+
+    private func weekdaySymbols() -> [String] {
+        let calendar = Calendar.current
+        let symbols = calendar.shortWeekdaySymbols
+        let start = max(0, calendar.firstWeekday - 1)
+        return Array(symbols[start...] + symbols[..<start])
+    }
+
+    private func monthTitle(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+
+    private func dayTitle(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+
+    private static func startOfMonth(_ date: Date) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: date)
+        return calendar.date(from: components).map { calendar.startOfDay(for: $0) } ?? calendar.startOfDay(for: date)
     }
 
     private func relativeTime(_ timestampMs: Int64) -> String {

@@ -3,6 +3,23 @@ import Foundation
 enum APIError: Error {
     case badURL
     case badStatus(Int)
+    case serverMessage(Int, String)
+}
+
+extension APIError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .badURL:
+            return "Invalid request URL."
+        case .badStatus(let code):
+            if code == -1 {
+                return "Unable to reach the server."
+            }
+            return "Request failed (HTTP \(code))."
+        case .serverMessage(_, let message):
+            return message
+        }
+    }
 }
 
 final class APIClient {
@@ -16,6 +33,10 @@ final class APIClient {
 
 
     private var authToken: String?
+
+    private struct ErrorResponse: Decodable {
+        let error: String
+    }
 
     func setAuthToken(_ token: String?) {
         authToken = token
@@ -39,6 +60,16 @@ final class APIClient {
             req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         return req
+    }
+
+    private func statusError(data: Data, statusCode: Int) -> APIError {
+        if
+            let decoded = try? JSONDecoder().decode(ErrorResponse.self, from: data),
+            !decoded.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
+            return .serverMessage(statusCode, decoded.error)
+        }
+        return .badStatus(statusCode)
     }
 
     func signIn(username: String, password: String) async throws -> AuthResponse {
@@ -174,9 +205,9 @@ final class APIClient {
             payload["conversationId"] = conversationId
         }
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
-        let (_, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
     }
 
     func listUsers() async throws -> [UserProfile] {
@@ -212,9 +243,9 @@ final class APIClient {
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["text": text])
 
-        let (_, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
     }
 
     func createUploadUrl(fileName: String, mimeType: String) async throws -> (uploadUrl: String, publicUrl: String) {
@@ -296,9 +327,9 @@ final class APIClient {
             payload["imageUrl"] = imageUrls[0]
         }
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
-        let (_, response) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
     }
 
     func registerDeviceToken(_ token: String) async throws {
