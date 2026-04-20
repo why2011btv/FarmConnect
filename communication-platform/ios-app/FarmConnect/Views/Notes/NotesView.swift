@@ -161,6 +161,17 @@ struct NotesView: View {
         (notesByDay[selectedCalendarDay] ?? []).sorted { $0.createdAt > $1.createdAt }
     }
 
+    private var availableYears: [Int] {
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: Date())
+        let noteYears = notes.map { note in
+            calendar.component(.year, from: Date(timeIntervalSince1970: Double(note.createdAt) / 1000))
+        }
+        let minimum = min(noteYears.min() ?? currentYear, currentYear - 3)
+        let maximum = max(noteYears.max() ?? currentYear, currentYear + 3)
+        return Array(minimum...maximum)
+    }
+
     private var calendarView: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -172,8 +183,37 @@ struct NotesView: View {
                     Image(systemName: "chevron.left")
                 }
                 Spacer()
-                Text(monthTitle(for: displayedMonth))
-                    .font(.headline)
+                let month = Calendar.current.component(.month, from: displayedMonth)
+                let year = Calendar.current.component(.year, from: displayedMonth)
+                HStack(spacing: 8) {
+                    Menu {
+                        Picker("Month", selection: Binding(
+                            get: { month },
+                            set: { updateDisplayedMonth(month: $0, year: nil) }
+                        )) {
+                            ForEach(1...12, id: \.self) { value in
+                                Text(monthName(for: value)).tag(value)
+                            }
+                        }
+                    } label: {
+                        Label(monthName(for: month), systemImage: "chevron.down")
+                            .font(.headline)
+                    }
+
+                    Menu {
+                        Picker("Year", selection: Binding(
+                            get: { year },
+                            set: { updateDisplayedMonth(month: nil, year: $0) }
+                        )) {
+                            ForEach(availableYears, id: \.self) { value in
+                                Text("\(value)").tag(value)
+                            }
+                        }
+                    } label: {
+                        Label("\(year)", systemImage: "chevron.down")
+                            .font(.headline)
+                    }
+                }
                 Spacer()
                 Button {
                     if let next = Calendar.current.date(byAdding: .month, value: 1, to: displayedMonth) {
@@ -305,10 +345,30 @@ struct NotesView: View {
         return Array(symbols[start...] + symbols[..<start])
     }
 
-    private func monthTitle(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date)
+    private func monthName(for month: Int) -> String {
+        let symbols = DateFormatter().monthSymbols ?? []
+        guard month >= 1, month <= symbols.count else {
+            return "\(month)"
+        }
+        return symbols[month - 1]
+    }
+
+    private func updateDisplayedMonth(month: Int?, year: Int?) {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month], from: displayedMonth)
+        if let month {
+            components.month = month
+        }
+        if let year {
+            components.year = year
+        }
+        guard let newMonth = calendar.date(from: components).map({ Self.startOfMonth($0) }) else {
+            return
+        }
+        displayedMonth = newMonth
+        if !calendar.isDate(selectedCalendarDay, equalTo: newMonth, toGranularity: .month) {
+            selectedCalendarDay = newMonth
+        }
     }
 
     private func dayTitle(for date: Date) -> String {

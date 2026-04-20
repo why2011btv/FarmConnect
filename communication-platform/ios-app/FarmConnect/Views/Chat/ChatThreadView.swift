@@ -37,13 +37,28 @@ struct ChatThreadView: View {
                     let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !text.isEmpty else { return }
                     Task {
-                        await chatViewModel.sendMessage(toUserId: otherUserId, conversationId: conversationId, text: text)
-                        draft = ""
+                        let didSend = await chatViewModel.sendMessage(
+                            toUserId: otherUserId,
+                            conversationId: conversationId,
+                            text: text
+                        )
+                        if didSend {
+                            draft = ""
+                        }
                     }
                 }
                 .buttonStyle(.borderedProminent)
             }
             .padding()
+
+            if let errorMessage = chatViewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)

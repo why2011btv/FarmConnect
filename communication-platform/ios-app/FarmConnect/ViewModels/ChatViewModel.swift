@@ -36,7 +36,8 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
-    func sendMessage(toUserId: String? = nil, conversationId: String? = nil, text: String) async {
+    func sendMessage(toUserId: String? = nil, conversationId: String? = nil, text: String) async -> Bool {
+        errorMessage = nil
         do {
             try await APIClient.shared.sendMessage(toUserId: toUserId, conversationId: conversationId, text: text)
             if let conversationId {
@@ -45,8 +46,10 @@ final class ChatViewModel: ObservableObject {
                 await loadMessages(otherUserId: toUserId)
             }
             await loadConversations()
+            return true
         } catch {
             errorMessage = "Failed to send message: \(error.localizedDescription)"
+            return false
         }
     }
 
