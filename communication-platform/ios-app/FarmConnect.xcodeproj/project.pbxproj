@@ -29,6 +29,10 @@
 		E1C00A9B32119819F938D53F /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00A5CBC466AA00FCCA3BF50 /* DomainModels.swift */; };
 		E7292CC73D449EC8B24621AA /* SensorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3117FAD7A857F17CAF3990DE /* SensorViewModel.swift */; };
 		EF834883A902B1EC0A89FABC /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1188FF971B4192ACB1F07E9 /* RootTabView.swift */; };
+		BB11AAAAAAAAAAAA00000001 /* CategoryStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11AAAAAAAAAAAA00000001 /* CategoryStyle.swift */; };
+		BB11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift */; };
+		BB11CCCCCCCCCCCC00000003 /* PostCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11CCCCCCCCCCCC00000003 /* PostCardRow.swift */; };
+		BB11DDDDDDDDDDDD00000004 /* TimeFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11DDDDDDDDDDDD00000004 /* TimeFormatting.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,6 +61,10 @@
 		C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorDashboardView.swift; sourceTree = "<group>"; };
 		E00A5CBC466AA00FCCA3BF50 /* DomainModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainModels.swift; sourceTree = "<group>"; };
 		FC43643482121E88359B31BF /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		FA11AAAAAAAAAAAA00000001 /* CategoryStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStyle.swift; sourceTree = "<group>"; };
+		FA11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorHelpers.swift; sourceTree = "<group>"; };
+		FA11CCCCCCCCCCCC00000003 /* PostCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCardRow.swift; sourceTree = "<group>"; };
+		FA11DDDDDDDDDDDD00000004 /* TimeFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatting.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -129,6 +137,10 @@
 			isa = PBXGroup;
 			children = (
 				4E5F60718293A4B5C6D7E8F9 /* AccountMenuButton.swift */,
+				FA11AAAAAAAAAAAA00000001 /* CategoryStyle.swift */,
+				FA11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift */,
+				FA11CCCCCCCCCCCC00000003 /* PostCardRow.swift */,
+				FA11DDDDDDDDDDDD00000004 /* TimeFormatting.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -313,6 +325,10 @@
 				E7292CC73D449EC8B24621AA /* SensorViewModel.swift in Sources */,
 				42DD87C45272A5156B3AB1AD /* SessionStore.swift in Sources */,
 				3A5FAD475A52D8BC8A86FD67 /* UserLocationManager.swift in Sources */,
+				BB11AAAAAAAAAAAA00000001 /* CategoryStyle.swift in Sources */,
+				BB11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift in Sources */,
+				BB11CCCCCCCCCCCC00000003 /* PostCardRow.swift in Sources */,
+				BB11DDDDDDDDDDDD00000004 /* TimeFormatting.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
