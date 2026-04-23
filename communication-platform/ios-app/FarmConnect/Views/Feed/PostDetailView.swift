@@ -1,15 +1,20 @@
 import SwiftUI
 
 struct PostDetailView: View {
+    struct FullscreenMediaPayload: Identifiable {
+        let id = UUID()
+        let mediaURLs: [URL]
+        let startIndex: Int
+    }
+
     let post: Post
     @EnvironmentObject private var feedViewModel: FeedViewModel
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var chatViewModel: ChatViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var commentText = ""
-    @State private var isFullscreenPresented = false
-    @State private var fullscreenMediaURLs: [URL] = []
-    @State private var fullscreenStartIndex = 0
+    @State private var fullscreenMedia: FullscreenMediaPayload?
+    @State private var isDeleteConfirmationPresented = false
 
     private var currentPost: Post {
         feedViewModel.posts.first(where: { $0.id == post.id }) ?? post
@@ -19,7 +24,12 @@ struct PostDetailView: View {
         currentPost.userId != session.currentUser?.id
     }
 
+    private var isOwner: Bool {
+        currentPost.userId == session.currentUser?.id
+    }
+
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 if canChatAuthor {
@@ -76,18 +86,7 @@ struct PostDetailView: View {
                 Text(currentPost.body)
                     .foregroundStyle(.secondary)
                 HStack {
-                    Button {
-                        Task {
-                            feedViewModel.selectedCategory = currentPost.category.rawValue
-                            feedViewModel.selectedTimeFilter = .all
-                            await feedViewModel.load()
-                            feedViewModel.refreshTrigger = UUID()
-                            dismiss()
-                        }
-                    } label: {
-                        Label(currentPost.category.rawValue, systemImage: "tag")
-                    }
-                    .buttonStyle(.plain)
+                    Label(currentPost.category.rawValue, systemImage: "tag")
                     Spacer()
                     Button {
                         Task {
@@ -112,18 +111,36 @@ struct PostDetailView: View {
                 } else {
                     ForEach(currentPost.comments) { comment in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(comment.userName)
-                                .font(.caption.bold())
+                            HStack {
+                                Text(comment.userName)
+                                    .font(.caption.bold())
+                                Spacer()
+                                Text(TimeFormatting.relative(from: comment.createdAt))
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                             Text(comment.text)
                                 .font(.body)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                        .id(comment.id)
                     }
+                    // Sentinel so we can always scroll to the same anchor below
+                    // the newest comment, even if its height changes.
+                    Color.clear.frame(height: 1).id(commentsBottomAnchor)
                 }
             }
             .padding()
+        }
+        // When a new comment is added (either by this user or polled later)
+        // jump to the bottom so it's visible.
+        .onChange(of: currentPost.comments.count) { _, _ in
+            withAnimation(.easeOut(duration: 0.2)) {
+                proxy.scrollTo(commentsBottomAnchor, anchor: .bottom)
+            }
+        }
         }
         .safeAreaInset(edge: .bottom) {
             HStack {
@@ -144,17 +161,41 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
-        .fullScreenCover(isPresented: $isFullscreenPresented, onDismiss: {
-            fullscreenMediaURLs = []
-            fullscreenStartIndex = 0
-        }) {
+        .toolbar {
+            if isOwner {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(role: .destructive) {
+                        isDeleteConfirmationPresented = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .accessibilityLabel("Delete post")
+                }
+            }
+        }
+        .alert(
+            "Delete this post?",
+            isPresented: $isDeleteConfirmationPresented
+        ) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    let postId = currentPost.id
+                    let success = await feedViewModel.deletePost(postId: postId)
+                    if success {
+                        dismiss()
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("“\(currentPost.title)” will be permanently removed, along with its comments and likes.")
+        }
+        .fullScreenCover(item: $fullscreenMedia) { payload in
             FullscreenMediaViewer(
-                mediaURLs: fullscreenMediaURLs,
-                initialIndex: fullscreenStartIndex
+                mediaURLs: payload.mediaURLs,
+                initialIndex: payload.startIndex
             ) {
-                isFullscreenPresented = false
-                fullscreenMediaURLs = []
-                fullscreenStartIndex = 0
+                fullscreenMedia = nil
             }
         }
     }
@@ -174,7 +215,7 @@ struct PostDetailView: View {
                 Text(currentPost.userName)
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                Text(relativeTime(currentPost.createdAt))
+                Text(TimeFormatting.relative(from: currentPost.createdAt))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -188,12 +229,7 @@ struct PostDetailView: View {
         }
     }
 
-    private func relativeTime(_ timestampMs: Int64) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
+    private var commentsBottomAnchor: String { "comments-bottom" }
 
     private func formattedCoordinate(_ value: Double) -> String {
         String(format: "%.4f", value)
@@ -205,8 +241,7 @@ struct PostDetailView: View {
 
     private func openFullscreen(mediaUrls: [URL], startIndex: Int) {
         guard !mediaUrls.isEmpty else { return }
-        fullscreenStartIndex = min(max(0, startIndex), mediaUrls.count - 1)
-        fullscreenMediaURLs = mediaUrls
-        isFullscreenPresented = true
+        let clampedIndex = min(max(0, startIndex), mediaUrls.count - 1)
+        fullscreenMedia = FullscreenMediaPayload(mediaURLs: mediaUrls, startIndex: clampedIndex)
     }
 }

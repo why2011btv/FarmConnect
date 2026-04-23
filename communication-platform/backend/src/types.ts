@@ -48,8 +48,15 @@ export type Conversation = {
   groupName?: string;
   participants: string[];
   participantNames: string[];
+  /**
+   * For the list endpoint this contains only the most recent message (or is
+   * empty for brand-new conversations). Thread views should use the dedicated
+   * messages endpoint to fetch the full history.
+   */
   messages: Message[];
+  lastMessage?: Message;
   lastMessageAt: number;
+  unreadCount: number;
 };
 
 export type User = {

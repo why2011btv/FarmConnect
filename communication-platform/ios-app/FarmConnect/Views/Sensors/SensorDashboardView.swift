@@ -24,88 +24,23 @@ struct SensorDashboardView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
 
-                if sensorViewModel.isLoading {
-                    ProgressView("Loading sensors...")
-                        .frame(maxHeight: .infinity)
-                } else if let error = sensorViewModel.errorMessage {
+                if let error = sensorViewModel.errorMessage {
                     Text(error)
+                        .font(.footnote)
                         .foregroundStyle(.red)
-                        .padding()
-                        .frame(maxHeight: .infinity)
-                } else if sensorViewModel.devices.isEmpty {
-                    ContentUnavailableView("No sensor devices", systemImage: "waveform.path.ecg")
-                        .frame(maxHeight: .infinity)
-                } else {
-                    if selectedPanel == .insights {
-                        if sensorViewModel.insights.isEmpty {
-                            ContentUnavailableView("No insights yet", systemImage: "sparkles")
-                                .frame(maxHeight: .infinity)
-                        } else {
-                            List {
-                                ForEach(sensorViewModel.insights) { insight in
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack {
-                                            Text(insight.title)
-                                                .font(.headline)
-                                            Spacer()
-                                            Text(insight.severity.uppercased())
-                                                .font(.caption2.bold())
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .background(severityColor(insight.severity).opacity(0.2), in: Capsule())
-                                        }
-                                        Text(insight.message)
-                                            .font(.footnote)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.vertical, 6)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            pendingInsightToDismiss = insight
-                                            showDismissConfirmation = true
-                                        } label: {
-                                            Label("Dismiss", systemImage: "xmark")
-                                        }
-                                    }
-                                }
-                            }
-                            .listStyle(.insetGrouped)
-                        }
-                    } else {
-                        List {
-                            ForEach(sensorViewModel.devices) { device in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Text(device.name)
-                                            .font(.headline)
-                                        Spacer()
-                                        Text(device.status.uppercased())
-                                            .font(.caption2.bold())
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(
-                                                (device.status == "online" ? Color.green.opacity(0.2) : Color.red.opacity(0.2)),
-                                                in: Capsule()
-                                            )
-                                    }
-                                    Text("\(device.farmName) · \(device.locationLabel)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
-                                    ForEach(device.readings, id: \.sensorType) { reading in
-                                        HStack {
-                                            Text(readableLabel(reading.sensorType))
-                                            Spacer()
-                                            Text("\(reading.value, specifier: "%.1f") \(reading.unit)")
-                                                .bold()
-                                        }
-                                        .font(.footnote)
-                                    }
-                                }
-                                .padding(.vertical, 6)
-                            }
-                        }
-                        .listStyle(.plain)
+                ZStack {
+                    if selectedPanel == .insights {
+                        insightsList
+                    } else {
+                        devicesList
+                    }
+
+                    if sensorViewModel.isLoading && sensorViewModel.devices.isEmpty {
+                        ProgressView("Loading sensors...")
                     }
                 }
             }
@@ -113,11 +48,6 @@ struct SensorDashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     AccountMenuButton()
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Refresh") {
-                        Task { await sensorViewModel.load() }
-                    }
                 }
             }
             .task {
@@ -138,6 +68,87 @@ struct SensorDashboardView: View {
                 }
             } message: { insight in
                 Text("Hide \"\(insight.title)\" from Insights?")
+            }
+        }
+    }
+
+    private var insightsList: some View {
+        List {
+            ForEach(sensorViewModel.insights) { insight in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(insight.title)
+                            .font(.headline)
+                        Spacer()
+                        Text(insight.severity.uppercased())
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(severityColor(insight.severity).opacity(0.2), in: Capsule())
+                    }
+                    Text(insight.message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 6)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        pendingInsightToDismiss = insight
+                        showDismissConfirmation = true
+                    } label: {
+                        Label("Dismiss", systemImage: "xmark")
+                    }
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .refreshable { await sensorViewModel.load() }
+        .overlay {
+            if sensorViewModel.insights.isEmpty && !sensorViewModel.isLoading {
+                ContentUnavailableView("No insights yet", systemImage: "sparkles")
+            }
+        }
+    }
+
+    private var devicesList: some View {
+        List {
+            ForEach(sensorViewModel.devices) { device in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(device.name)
+                            .font(.headline)
+                        Spacer()
+                        Text(device.status.uppercased())
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                (device.status == "online" ? Color.green.opacity(0.2) : Color.red.opacity(0.2)),
+                                in: Capsule()
+                            )
+                    }
+                    Text("\(device.farmName) · \(device.locationLabel)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(device.readings, id: \.sensorType) { reading in
+                        HStack {
+                            Text(readableLabel(reading.sensorType))
+                            Spacer()
+                            Text("\(reading.value, specifier: "%.1f") \(reading.unit)")
+                                .bold()
+                        }
+                        .font(.footnote)
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+        }
+        .listStyle(.plain)
+        .refreshable { await sensorViewModel.load() }
+        .overlay {
+            if sensorViewModel.devices.isEmpty && !sensorViewModel.isLoading {
+                ContentUnavailableView("No sensor devices", systemImage: "waveform.path.ecg")
             }
         }
     }

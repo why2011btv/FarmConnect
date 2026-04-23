@@ -114,32 +114,58 @@ final class APIClient {
     func getPosts(
         query: String,
         category: String,
-        timeFilter: TimeFilter
-    ) async throws -> [Post] {
+        timeFilter: TimeFilter,
+        before: Int64? = nil,
+        limit: Int? = nil
+    ) async throws -> PostPage {
+        try await getPostsPage(
+            visibility: "Public",
+            query: query,
+            category: category,
+            timeFilter: timeFilter,
+            before: before,
+            limit: limit
+        )
+    }
+
+    func getPrivateNotes(
+        query: String = "",
+        timeFilter: TimeFilter = .all,
+        before: Int64? = nil,
+        limit: Int? = nil
+    ) async throws -> PostPage {
+        try await getPostsPage(
+            visibility: "Private",
+            query: query,
+            category: "Note",
+            timeFilter: timeFilter,
+            before: before,
+            limit: limit
+        )
+    }
+
+    private func getPostsPage(
+        visibility: String,
+        query: String,
+        category: String,
+        timeFilter: TimeFilter,
+        before: Int64?,
+        limit: Int?
+    ) async throws -> PostPage {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/posts"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [
+        var items: [URLQueryItem] = [
             URLQueryItem(name: "query", value: query),
             URLQueryItem(name: "category", value: category),
             URLQueryItem(name: "timeFilter", value: timeFilter.rawValue),
-            URLQueryItem(name: "visibility", value: "Public")
+            URLQueryItem(name: "visibility", value: visibility)
         ]
-        guard let url = components?.url else { throw APIError.badURL }
-
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
-
-        return try JSONDecoder().decode(PostListResponse.self, from: data).items
-    }
-
-    func getPrivateNotes(query: String = "", timeFilter: TimeFilter = .all) async throws -> [Post] {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/posts"), resolvingAgainstBaseURL: false)
-        components?.queryItems = [
-            URLQueryItem(name: "query", value: query),
-            URLQueryItem(name: "category", value: "Note"),
-            URLQueryItem(name: "timeFilter", value: timeFilter.rawValue),
-            URLQueryItem(name: "visibility", value: "Private")
-        ]
+        if let before {
+            items.append(URLQueryItem(name: "before", value: String(before)))
+        }
+        if let limit {
+            items.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+        components?.queryItems = items
         guard let url = components?.url else { throw APIError.badURL }
 
         var req = URLRequest(url: url)
@@ -151,12 +177,35 @@ final class APIClient {
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
-        return try JSONDecoder().decode(PostListResponse.self, from: data).items
+
+        let decoded = try JSONDecoder().decode(PostListResponse.self, from: data)
+        let cursor = decoded.nextCursor.flatMap { Int64($0) }
+        return PostPage(items: decoded.items, nextCursor: cursor)
     }
 
     func upvote(postId: String) async throws {
         let req = try authorizedRequest(path: "/v1/posts/\(postId)/upvote", method: "POST")
 
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func deletePost(postId: String) async throws {
+        let req = try authorizedRequest(path: "/v1/posts/\(postId)", method: "DELETE")
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
+    /// Invalidates a session token on the server. Callers pass the token
+    /// explicitly so this can be fired *after* local session state has been
+    /// cleared (i.e. after the shared auth header is unset).
+    func signOutSession(token: String) async throws {
+        var req = URLRequest(url: baseURL.appendingPathComponent("/v1/auth/session"))
+        req.httpMethod = "DELETE"
+        req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (_, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
@@ -192,6 +241,20 @@ final class APIClient {
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
         return try JSONDecoder().decode(MessageListResponse.self, from: data).items
+    }
+
+    func markConversationRead(conversationId: String) async throws {
+        let req = try authorizedRequest(path: "/v1/conversations/\(conversationId)/read", method: "POST")
+        let (_, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
+    }
+
+    func leaveConversation(conversationId: String) async throws {
+        let req = try authorizedRequest(path: "/v1/conversations/\(conversationId)", method: "DELETE")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
     }
 
     func sendMessage(toUserId: String? = nil, conversationId: String? = nil, text: String) async throws {

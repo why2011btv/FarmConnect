@@ -5,6 +5,7 @@ import { requireAuth } from "../auth/requireAuth.js";
 import { ChatRepository } from "../repositories/chatRepository.js";
 import { moderateUserContent } from "../services/moderationService.js";
 import { queuePushNotification } from "../services/notificationService.js";
+import { badRequest } from "../lib/badRequest.js";
 
 const getMessagesQuerySchema = z.object({
   otherUserId: z.string().min(1).optional(),
@@ -40,12 +41,31 @@ export async function chatRoutes(app: FastifyInstance, chatRepository: ChatRepos
     return { items: list };
   });
 
+  app.post("/v1/conversations/:conversationId/read", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+    const { conversationId } = req.params as { conversationId: string };
+    if (!conversationId) return reply.code(400).send({ error: "conversationId is required" });
+    await chatRepository.markConversationRead(conversationId, authUser.id);
+    return reply.code(204).send();
+  });
+
+  app.delete("/v1/conversations/:conversationId", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+    const { conversationId } = req.params as { conversationId: string };
+    if (!conversationId) return reply.code(400).send({ error: "conversationId is required" });
+    const ok = await chatRepository.leaveConversation(conversationId, authUser.id);
+    if (!ok) return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(204).send();
+  });
+
   app.get("/v1/messages", async (req, reply) => {
     const authUser = await requireAuth(req, reply, db);
     if (!authUser) return;
 
     const parsed = getMessagesQuerySchema.safeParse(req.query);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     let items: Awaited<ReturnType<ChatRepository["listMessages"]>>;
     if (parsed.data.conversationId) {
@@ -62,7 +82,7 @@ export async function chatRoutes(app: FastifyInstance, chatRepository: ChatRepos
     const authUser = await requireAuth(req, reply, db);
     if (!authUser) return;
     const parsed = createGroupSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const conversation = await chatRepository.createGroupConversation(
       authUser.id,
@@ -77,7 +97,7 @@ export async function chatRoutes(app: FastifyInstance, chatRepository: ChatRepos
     if (!authUser) return;
 
     const parsed = sendMessageSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const moderation = await moderateUserContent(app.log, {
       text: parsed.data.text,

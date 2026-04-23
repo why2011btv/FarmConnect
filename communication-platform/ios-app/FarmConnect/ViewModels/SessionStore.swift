@@ -66,10 +66,19 @@ final class SessionStore: ObservableObject {
         }
     }
 
+    /// Clears the local session immediately and invalidates the token on the
+    /// server in the background. We don't `await` the server call so that
+    /// logout feels instant even on flaky networks.
     func logout() {
+        let tokenToInvalidate = token
         token = nil
         currentUser = nil
         APIClient.shared.setAuthToken(nil)
         UserDefaults.standard.removeObject(forKey: tokenKey)
+        if let tokenToInvalidate {
+            Task.detached {
+                try? await APIClient.shared.signOutSession(token: tokenToInvalidate)
+            }
+        }
     }
 }

@@ -18,6 +18,8 @@ struct NotesView: View {
     @State private var displayMode: DisplayMode = .list
     @State private var displayedMonth = NotesView.startOfMonth(Date())
     @State private var selectedCalendarDay = Calendar.current.startOfDay(for: Date())
+    @State private var pendingDeletion: Post?
+    @State private var isDeleting = false
 
     var body: some View {
         NavigationStack {
@@ -56,21 +58,34 @@ struct NotesView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                if isLoading {
-                    ProgressView("Loading private notes...")
-                        .frame(maxHeight: .infinity)
-                } else if notes.isEmpty {
-                    ContentUnavailableView("No private notes", systemImage: "note.text")
-                        .frame(maxHeight: .infinity)
-                } else if displayMode == .list {
-                    notesList(notes)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 12) {
-                            calendarView
-                            selectedDayNotesSection
+                ZStack {
+                    if displayMode == .list {
+                        notesList(notes)
+                            .overlay {
+                                if notes.isEmpty && !isLoading {
+                                    ContentUnavailableView("No private notes", systemImage: "note.text")
+                                }
+                            }
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                calendarView
+                                if notes.isEmpty && !isLoading {
+                                    ContentUnavailableView("No private notes", systemImage: "note.text")
+                                        .padding(.top, 24)
+                                } else {
+                                    selectedDayNotesSection
+                                }
+                            }
+                            .padding(.bottom, 12)
                         }
-                        .padding(.bottom, 12)
+                        .refreshable {
+                            await loadNotes()
+                        }
+                    }
+
+                    if isLoading && notes.isEmpty {
+                        ProgressView("Loading private notes...")
                     }
                 }
             }
@@ -113,6 +128,39 @@ struct NotesView: View {
             .navigationDestination(item: $selectedPost) { post in
                 PostDetailView(post: post)
             }
+            .alert(
+                "Delete this note?",
+                isPresented: Binding(
+                    get: { pendingDeletion != nil },
+                    set: { if !$0 { pendingDeletion = nil } }
+                ),
+                presenting: pendingDeletion
+            ) { note in
+                Button("Delete", role: .destructive) {
+                    Task { await deleteNote(note) }
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingDeletion = nil
+                }
+            } message: { note in
+                Text("“\(note.title)” will be permanently removed.")
+            }
+        }
+    }
+
+    private func deleteNote(_ note: Post) async {
+        guard !isDeleting else { return }
+        isDeleting = true
+        defer { isDeleting = false }
+
+        do {
+            try await APIClient.shared.deletePost(postId: note.id)
+            notes.removeAll { $0.id == note.id }
+            pendingDeletion = nil
+            feedViewModel.refreshTrigger = UUID()
+        } catch {
+            errorMessage = "Failed to delete note: \(error.localizedDescription)"
+            pendingDeletion = nil
         }
     }
 
@@ -122,14 +170,17 @@ struct NotesView: View {
         defer { isLoading = false }
 
         do {
-            notes = try await APIClient.shared.getPrivateNotes(
+            // Notes uses a large page size because the calendar/list needs the
+            // full history to render counts per day. If this ever grows too
+            // large we should add an infinite-scroll pattern here too.
+            let page = try await APIClient.shared.getPrivateNotes(
                 query: query,
-                timeFilter: selectedTimeFilter
+                timeFilter: selectedTimeFilter,
+                limit: 100
             )
+            notes = page.items
         } catch {
-            if isCancellation(error) {
-                return
-            }
+            if isCancellationError(error) { return }
             errorMessage = "Failed to load private notes: \(error.localizedDescription)"
         }
     }
@@ -284,8 +335,20 @@ struct NotesView: View {
             } else {
                 ForEach(selectedDayNotes) { note in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(note.title)
-                            .font(.headline)
+                        HStack(alignment: .top) {
+                            Text(note.title)
+                                .font(.headline)
+                            Spacer()
+                            Button {
+                                pendingDeletion = note
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Delete note")
+                        }
                         Text(note.body)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -301,6 +364,7 @@ struct NotesView: View {
                     .padding(10)
                     .background(Color.gray.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                     .padding(.horizontal)
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         selectedPost = note
                     }
@@ -331,6 +395,13 @@ struct NotesView: View {
                 selectedPost = note
             }
             .padding(.vertical, 4)
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                Button(role: .destructive) {
+                    pendingDeletion = note
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
         .listStyle(.plain)
         .refreshable {
@@ -384,19 +455,6 @@ struct NotesView: View {
     }
 
     private func relativeTime(_ timestampMs: Int64) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-
-    private func isCancellation(_ error: Error) -> Bool {
-        if error is CancellationError {
-            return true
-        }
-        if let urlError = error as? URLError, urlError.code == .cancelled {
-            return true
-        }
-        return false
+        TimeFormatting.relative(from: timestampMs)
     }
 }

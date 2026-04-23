@@ -16,6 +16,7 @@ final class SensorViewModel: ObservableObject {
             devices = try await APIClient.shared.getSensorOverview()
             insights = try await APIClient.shared.getSensorInsights()
         } catch {
+            if isCancellationError(error) { return }
             errorMessage = "Failed to load sensors: \(error.localizedDescription)"
         }
     }

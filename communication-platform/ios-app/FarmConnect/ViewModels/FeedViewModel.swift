@@ -7,8 +7,15 @@ final class FeedViewModel: ObservableObject {
     @Published var selectedCategory = "all"
     @Published var selectedTimeFilter: TimeFilter = .all
     @Published var isLoading = false
+    @Published var isLoadingMore = false
     @Published var errorMessage: String?
     @Published var refreshTrigger = UUID()
+
+    /// Cursor for the next page (unix ms of the last visible post). `nil`
+    /// means the currently-loaded set covers everything the server has.
+    private(set) var nextCursor: Int64?
+
+    var hasMorePages: Bool { nextCursor != nil }
 
     func load() async {
         isLoading = true
@@ -16,16 +23,43 @@ final class FeedViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            posts = try await APIClient.shared.getPosts(
+            let page = try await APIClient.shared.getPosts(
                 query: query,
                 category: selectedCategory,
                 timeFilter: selectedTimeFilter
             )
+            posts = page.items
+            nextCursor = page.nextCursor
         } catch {
-            if isCancellation(error) {
-                return
-            }
+            if isCancellationError(error) { return }
             errorMessage = "Failed to load posts: \(error.localizedDescription)"
+        }
+    }
+
+    /// Fetches the next page using the saved cursor. No-op if we're already
+    /// loading or there are no more pages. Safe to call from `.onAppear` of
+    /// the last visible cell.
+    func loadMoreIfNeeded() async {
+        guard let cursor = nextCursor else { return }
+        guard !isLoadingMore && !isLoading else { return }
+
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+
+        do {
+            let page = try await APIClient.shared.getPosts(
+                query: query,
+                category: selectedCategory,
+                timeFilter: selectedTimeFilter,
+                before: cursor
+            )
+            // Deduplicate in case posts shifted between fetches.
+            let existingIds = Set(posts.map(\.id))
+            posts.append(contentsOf: page.items.filter { !existingIds.contains($0.id) })
+            nextCursor = page.nextCursor
+        } catch {
+            if isCancellationError(error) { return }
+            errorMessage = "Failed to load more posts: \(error.localizedDescription)"
         }
     }
 
@@ -35,6 +69,19 @@ final class FeedViewModel: ObservableObject {
             await load()
         } catch {
             errorMessage = "Upvote failed: \(error.localizedDescription)"
+        }
+    }
+
+    @discardableResult
+    func deletePost(postId: String) async -> Bool {
+        do {
+            try await APIClient.shared.deletePost(postId: postId)
+            posts.removeAll { $0.id == postId }
+            refreshTrigger = UUID()
+            return true
+        } catch {
+            errorMessage = "Delete failed: \(error.localizedDescription)"
+            return false
         }
     }
 
@@ -72,9 +119,6 @@ final class FeedViewModel: ObservableObject {
                 city: city,
                 imageUrls: imageUrls
             )
-            query = ""
-            selectedCategory = "all"
-            selectedTimeFilter = .all
             refreshTrigger = UUID()
             await load()
             return true
@@ -84,15 +128,4 @@ final class FeedViewModel: ObservableObject {
         }
     }
 
-    private func isCancellation(_ error: Error) -> Bool {
-        if error is CancellationError {
-            return true
-        }
-
-        if let urlError = error as? URLError, urlError.code == .cancelled {
-            return true
-        }
-
-        return false
-    }
 }

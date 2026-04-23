@@ -3,6 +3,12 @@ import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
 import { compare, hash } from "bcryptjs";
+import { badRequest } from "../lib/badRequest.js";
+
+function extractBearerToken(authHeader?: string): string | null {
+  if (!authHeader) return null;
+  return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+}
 
 const signInSchema = z.object({
   username: z.string().min(1),
@@ -36,7 +42,7 @@ function normalizeUsername(username: string): string {
 export async function authRoutes(app: FastifyInstance, db: Pool) {
   app.post("/v1/auth/login", async (req, reply) => {
     const parsed = signInSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const username = normalizeUsername(parsed.data.username);
     const password = parsed.data.password;
@@ -79,6 +85,12 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
       [token, user.rows[0].id, expiresAt]
     );
 
+    // Opportunistically clean up expired sessions for this user to keep the table bounded.
+    await db.query(
+      "DELETE FROM auth_sessions WHERE user_id = $1 AND expires_at < NOW()",
+      [user.rows[0].id]
+    );
+
     return {
       token,
       user: {
@@ -91,7 +103,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
 
   app.post("/v1/auth/signup", async (req, reply) => {
     const parsed = signUpSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const username = normalizeUsername(parsed.data.username);
     const password = parsed.data.password;
@@ -132,8 +144,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
   });
 
   app.get("/v1/auth/me", async (req, reply) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    const token = extractBearerToken(req.headers.authorization);
     if (!token) return reply.code(401).send({ error: "Missing token" });
 
     const result = await db.query<{ id: string; name: string }>(
@@ -148,5 +159,14 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     );
     if (!result.rows[0]) return reply.code(401).send({ error: "Invalid token" });
     return { user: result.rows[0] };
+  });
+
+  // Logout: invalidates the caller's session token. Idempotent.
+  app.delete("/v1/auth/session", async (req, reply) => {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) return reply.code(401).send({ error: "Missing token" });
+
+    await db.query("DELETE FROM auth_sessions WHERE token = $1", [token]);
+    return reply.code(204).send();
   });
 }

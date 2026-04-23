@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { createId } from "../lib/id.js";
 import { SensorDeviceOverview, SensorInsight } from "../types.js";
+import { badRequest } from "../lib/badRequest.js";
 
 type DeviceRow = {
   id: string;
@@ -121,7 +122,7 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
     }
 
     const parsed = ingestPayloadSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const payload = parsed.data;
     const now = Date.now();

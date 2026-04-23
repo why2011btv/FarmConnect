@@ -8,7 +8,19 @@ type ListPostFilters = {
   timeFilter?: TimeFilter;
   visibility?: "all" | "Public" | "Private";
   userId?: string;
+  /** Exclusive upper bound on `created_at` (ms) for cursor pagination. */
+  before?: number;
+  /** Page size; capped server-side. Default: 30. */
+  limit?: number;
 };
+
+export type ListPostsResult = {
+  items: Post[];
+  nextCursor: string | null;
+};
+
+const DEFAULT_PAGE_SIZE = 30;
+const MAX_PAGE_SIZE = 100;
 
 type CreatePostInput = Omit<Post, "id" | "createdAt" | "upvotes" | "comments">;
 type AddCommentInput = Pick<Comment, "text" | "userId" | "userName">;
@@ -103,14 +115,17 @@ function toComment(row: CommentRow): Comment {
 export class PostRepository {
   constructor(private readonly db: Pool) {}
 
-  async list(filters: ListPostFilters): Promise<Post[]> {
+  async list(filters: ListPostFilters): Promise<ListPostsResult> {
     const {
       query = "",
       category = "all",
       timeFilter = "all",
       visibility = "all",
       userId,
+      before,
     } = filters;
+
+    const limit = Math.min(Math.max(1, filters.limit ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
 
     const clauses: string[] = [];
     const params: unknown[] = [];
@@ -148,7 +163,17 @@ export class PostRepository {
       `);
     }
 
+    if (before != null && Number.isFinite(before)) {
+      params.push(before);
+      clauses.push(`p.created_at < $${params.length}`);
+    }
+
     const whereClause = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+    // Fetch `limit + 1` rows so we can tell whether there's another page
+    // without doing a separate COUNT(*) query.
+    params.push(limit + 1);
+    const limitParamIndex = params.length;
+
     const { rows } = await this.db.query<PostRow>(
       `
       SELECT
@@ -158,12 +183,16 @@ export class PostRepository {
       JOIN users u ON u.id = p.user_id
       ${whereClause}
       ORDER BY p.created_at DESC
+      LIMIT $${limitParamIndex}
       `
     , params);
 
-    if (rows.length === 0) return [];
+    if (rows.length === 0) return { items: [], nextCursor: null };
 
-    const postIds = rows.map((r) => r.id);
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+    const postIds = pageRows.map((r) => r.id);
     const { rows: commentRows } = await this.db.query<CommentRow>(
       `
       SELECT id, post_id, text, user_id, user_name, created_at
@@ -182,7 +211,9 @@ export class PostRepository {
       commentsByPost.set(mapped.postId, list);
     }
 
-    return rows.map((row) => toPost(row, commentsByPost.get(row.id) ?? []));
+    const items = pageRows.map((row) => toPost(row, commentsByPost.get(row.id) ?? []));
+    const nextCursor = hasMore ? String(items[items.length - 1].createdAt) : null;
+    return { items, nextCursor };
   }
 
   async create(input: CreatePostInput): Promise<Post> {
@@ -271,6 +302,27 @@ export class PostRepository {
   async getById(postId: string): Promise<Post | null> {
     const posts = await this.listByIds([postId]);
     return posts[0] ?? null;
+  }
+
+  async delete(
+    postId: string,
+    userId: string
+  ): Promise<{ status: "deleted" | "not_found" | "forbidden"; imageUrls: string[] }> {
+    const { rows } = await this.db.query<{ user_id: string; image_urls: string[] | null; image_url: string | null }>(
+      `SELECT user_id, image_urls, image_url FROM posts WHERE id = $1 LIMIT 1`,
+      [postId]
+    );
+    const row = rows[0];
+    if (!row) return { status: "not_found", imageUrls: [] };
+    if (row.user_id !== userId) return { status: "forbidden", imageUrls: [] };
+
+    await this.db.query(`DELETE FROM posts WHERE id = $1`, [postId]);
+
+    const urls = (row.image_urls ?? []).filter((value) => value.trim().length > 0);
+    if (urls.length === 0 && row.image_url && row.image_url.trim().length > 0) {
+      urls.push(row.image_url);
+    }
+    return { status: "deleted", imageUrls: urls };
   }
 
   private async listByIds(ids: string[]): Promise<Post[]> {

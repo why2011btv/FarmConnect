@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { queuePushNotification } from "../services/notificationService.js";
+import { badRequest } from "../lib/badRequest.js";
 
 const categoryValues = ["Disease", "Pest", "Weather", "Note", "Market"] as const;
 
@@ -78,7 +79,7 @@ export async function notificationRoutes(app: FastifyInstance, db: Pool) {
     if (!authUser) return;
 
     const parsed = registerTokenSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     await db.query(
       `
@@ -115,7 +116,7 @@ export async function notificationRoutes(app: FastifyInstance, db: Pool) {
     if (!authUser) return;
 
     const parsed = notificationPreferencesSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const prefs = parsed.data;
     await db.query(
@@ -160,7 +161,7 @@ export async function notificationRoutes(app: FastifyInstance, db: Pool) {
     if (!authUser) return;
 
     const parsed = sendNotificationSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     // Allow sending only to self in this scaffold endpoint.
     if (parsed.data.userId !== authUser.id) {

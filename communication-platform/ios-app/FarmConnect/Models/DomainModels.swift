@@ -139,12 +139,57 @@ struct Conversation: Codable, Identifiable {
     let groupName: String?
     let participants: [String]
     let participantNames: [String]
+    /// From the list endpoint this contains only the most recent message (or
+    /// is empty). Use the dedicated messages endpoint for the full thread.
     let messages: [Message]
+    let lastMessage: Message?
     let lastMessageAt: Int64
+    /// Number of messages the current user hasn't read yet. Always 0 for
+    /// messages the user sent themselves. Declared `var` so the view model
+    /// can optimistically clear it on open without a full refresh.
+    var unreadCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, type, groupName, participants, participantNames, messages
+        case lastMessage, lastMessageAt, unreadCount
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        type = try c.decode(String.self, forKey: .type)
+        groupName = try c.decodeIfPresent(String.self, forKey: .groupName)
+        participants = try c.decode([String].self, forKey: .participants)
+        participantNames = try c.decode([String].self, forKey: .participantNames)
+        messages = try c.decodeIfPresent([Message].self, forKey: .messages) ?? []
+        lastMessage = try c.decodeIfPresent(Message.self, forKey: .lastMessage)
+        lastMessageAt = try c.decode(Int64.self, forKey: .lastMessageAt)
+        // Keep backward compat with older responses that didn't send unread counts.
+        unreadCount = try c.decodeIfPresent(Int.self, forKey: .unreadCount) ?? 0
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(type, forKey: .type)
+        try c.encodeIfPresent(groupName, forKey: .groupName)
+        try c.encode(participants, forKey: .participants)
+        try c.encode(participantNames, forKey: .participantNames)
+        try c.encode(messages, forKey: .messages)
+        try c.encodeIfPresent(lastMessage, forKey: .lastMessage)
+        try c.encode(lastMessageAt, forKey: .lastMessageAt)
+        try c.encode(unreadCount, forKey: .unreadCount)
+    }
 }
 
 struct PostListResponse: Codable {
     let items: [Post]
+    let nextCursor: String?
+}
+
+struct PostPage {
+    let items: [Post]
+    let nextCursor: Int64?
 }
 
 struct ConversationListResponse: Codable {

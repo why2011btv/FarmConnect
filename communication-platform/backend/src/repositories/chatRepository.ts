@@ -57,9 +57,12 @@ export class ChatRepository {
   constructor(private readonly db: Pool) {}
 
   async listConversations(userId: string): Promise<Conversation[]> {
-    const { rows: convRows } = await this.db.query<ConversationRow>(
+    // Only the conversations this user is actively part of. `last_read_at`
+    // lets us compute unread counts without pulling every message into the
+    // payload, which keeps the list endpoint cheap as history grows.
+    const { rows: convRows } = await this.db.query<ConversationRow & { last_read_at: string }>(
       `
-      SELECT c.id, c.conversation_type, c.group_name, c.last_message_at
+      SELECT c.id, c.conversation_type, c.group_name, c.last_message_at, cp.last_read_at
       FROM conversations c
       JOIN conversation_participants cp ON cp.conversation_id = c.id
       WHERE cp.user_id = $1
@@ -70,7 +73,11 @@ export class ChatRepository {
 
     if (!convRows.length) return [];
     const ids = convRows.map((r) => r.id);
-    return this.loadConversations(ids);
+    const lastReadByConversation = new Map<string, number>();
+    for (const row of convRows) {
+      lastReadByConversation.set(row.id, Number(row.last_read_at));
+    }
+    return this.loadConversations(ids, { requesterUserId: userId, lastReadByConversation });
   }
 
   async listMessages(userA: string, userB: string): Promise<Message[]> {
@@ -114,8 +121,22 @@ export class ChatRepository {
         [messageId, conversationId, input.fromUserId, input.fromUserName, input.toUserId, input.text, now]
       );
 
+      // Sending counts as reading: the sender should never see their own
+      // message as unread.
+      await client.query(
+        `
+        UPDATE conversation_participants
+        SET last_read_at = GREATEST(last_read_at, $3)
+        WHERE conversation_id = $1 AND user_id = $2
+        `,
+        [conversationId, input.fromUserId, now]
+      );
+
       await client.query("COMMIT");
-      const conversation = (await this.loadConversations([conversationId]))[0];
+      const conversation = (await this.loadConversations(
+        [conversationId],
+        { requesterUserId: input.fromUserId, lastReadByConversation: new Map([[conversationId, now]]) }
+      ))[0];
       return {
         message: toMessage(msgRows[0]),
         conversation,
@@ -157,7 +178,10 @@ export class ChatRepository {
         );
       }
       await client.query("COMMIT");
-      const conversation = (await this.loadConversations([conversationId]))[0];
+      const conversation = (await this.loadConversations(
+        [conversationId],
+        { requesterUserId: creatorUserId, lastReadByConversation: new Map([[conversationId, now]]) }
+      ))[0];
       return conversation;
     } catch (error) {
       await client.query("ROLLBACK");
@@ -251,8 +275,22 @@ export class ChatRepository {
         [input.conversationId, now]
       );
 
+      // Same reasoning as in `sendMessage` above: bump the sender's read
+      // cursor so they don't see their outgoing message as unread.
+      await client.query(
+        `
+        UPDATE conversation_participants
+        SET last_read_at = GREATEST(last_read_at, $3)
+        WHERE conversation_id = $1 AND user_id = $2
+        `,
+        [input.conversationId, input.fromUserId, now]
+      );
+
       await client.query("COMMIT");
-      const conversation = (await this.loadConversations([input.conversationId]))[0];
+      const conversation = (await this.loadConversations(
+        [input.conversationId],
+        { requesterUserId: input.fromUserId, lastReadByConversation: new Map([[input.conversationId, now]]) }
+      ))[0];
       return { message: toMessage(msgRows[0]), conversation };
     } catch (error) {
       await client.query("ROLLBACK");
@@ -274,7 +312,53 @@ export class ChatRepository {
     return rows.map((r) => r.user_id);
   }
 
-  private async loadConversations(ids: string[]): Promise<Conversation[]> {
+  async markConversationRead(conversationId: string, userId: string, readAt: number = Date.now()): Promise<void> {
+    await this.db.query(
+      `
+      UPDATE conversation_participants
+      SET last_read_at = GREATEST(last_read_at, $3)
+      WHERE conversation_id = $1 AND user_id = $2
+      `,
+      [conversationId, userId, readAt]
+    );
+  }
+
+  /**
+   * Removes the user from a conversation. For direct chats we drop the
+   * entire conversation so the other side isn't left in a ghost thread; for
+   * groups we only remove the requester so the rest of the group survives.
+   * Returns true if the caller was actually a participant.
+   */
+  async leaveConversation(conversationId: string, userId: string): Promise<boolean> {
+    const { rows } = await this.db.query<{ conversation_type: "direct" | "group" }>(
+      `
+      SELECT c.conversation_type
+      FROM conversations c
+      JOIN conversation_participants cp ON cp.conversation_id = c.id
+      WHERE c.id = $1 AND cp.user_id = $2
+      `,
+      [conversationId, userId]
+    );
+    if (!rows[0]) return false;
+
+    if (rows[0].conversation_type === "direct") {
+      await this.db.query("DELETE FROM conversations WHERE id = $1", [conversationId]);
+    } else {
+      await this.db.query(
+        "DELETE FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2",
+        [conversationId, userId]
+      );
+    }
+    return true;
+  }
+
+  private async loadConversations(
+    ids: string[],
+    options?: {
+      requesterUserId: string;
+      lastReadByConversation: Map<string, number>;
+    }
+  ): Promise<Conversation[]> {
     if (!ids.length) return [];
 
     const { rows: convRows } = await this.db.query<ConversationRow>(
@@ -297,12 +381,16 @@ export class ChatRepository {
       [ids]
     );
 
-    const { rows: messageRows } = await this.db.query<MessageRow>(
+    // For the list endpoint we only need the single most recent message per
+    // conversation for the preview. DISTINCT ON is the cheapest way to get
+    // that in Postgres without correlated subqueries.
+    const { rows: lastMessageRows } = await this.db.query<MessageRow>(
       `
-      SELECT id, conversation_id, from_user_id, from_user_name, to_user_id, text, created_at, read
+      SELECT DISTINCT ON (conversation_id)
+        id, conversation_id, from_user_id, from_user_name, to_user_id, text, created_at, read
       FROM messages
       WHERE conversation_id = ANY($1::text[])
-      ORDER BY created_at ASC
+      ORDER BY conversation_id, created_at DESC
       `,
       [ids]
     );
@@ -314,23 +402,46 @@ export class ChatRepository {
       participantsByConversation.set(row.conversation_id, list);
     }
 
-    const messagesByConversation = new Map<string, Message[]>();
-    for (const row of messageRows) {
-      const list = messagesByConversation.get(row.conversation_id) ?? [];
-      list.push(toMessage(row));
-      messagesByConversation.set(row.conversation_id, list);
+    const lastMessageByConversation = new Map<string, Message>();
+    for (const row of lastMessageRows) {
+      lastMessageByConversation.set(row.conversation_id, toMessage(row));
+    }
+
+    // Unread counts are computed per-user using the stored last_read_at
+    // cursor. Messages the requester sent themselves never count as unread.
+    const unreadByConversation = new Map<string, number>();
+    if (options) {
+      const { rows: unreadRows } = await this.db.query<{ conversation_id: string; unread: string }>(
+        `
+        SELECT m.conversation_id, COUNT(*)::text AS unread
+        FROM messages m
+        JOIN conversation_participants cp
+          ON cp.conversation_id = m.conversation_id AND cp.user_id = $2
+        WHERE m.conversation_id = ANY($1::text[])
+          AND m.from_user_id <> $2
+          AND m.created_at > cp.last_read_at
+        GROUP BY m.conversation_id
+        `,
+        [ids, options.requesterUserId]
+      );
+      for (const row of unreadRows) {
+        unreadByConversation.set(row.conversation_id, Number(row.unread));
+      }
     }
 
     return convRows.map((row) => {
       const participants = participantsByConversation.get(row.id) ?? [];
+      const lastMessage = lastMessageByConversation.get(row.id);
       return {
         id: row.id,
         type: row.conversation_type,
         groupName: row.group_name ?? undefined,
         participants: participants.map((p) => p.user_id).sort(),
         participantNames: participants.map((p) => p.user_name),
-        messages: messagesByConversation.get(row.id) ?? [],
+        messages: lastMessage ? [lastMessage] : [],
+        lastMessage,
         lastMessageAt: Number(row.last_message_at),
+        unreadCount: unreadByConversation.get(row.id) ?? 0,
       };
     });
   }

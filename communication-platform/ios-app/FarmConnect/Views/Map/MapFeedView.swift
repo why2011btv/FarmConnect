@@ -3,7 +3,6 @@ import SwiftUI
 import CoreLocation
 
 struct MapFeedView: View {
-    @EnvironmentObject private var feedViewModel: FeedViewModel
     @StateObject private var locationManager = UserLocationManager()
     @State private var selectedPost: Post?
     @State private var selectedCategory = "all"
@@ -202,14 +201,17 @@ struct MapFeedView: View {
         defer { isLoading = false }
 
         do {
-            let fetched = try await APIClient.shared.getPosts(
+            // The map shows as many pins as fit; request the largest page the
+            // server will give us so pins don't disappear when zoomed out.
+            let page = try await APIClient.shared.getPosts(
                 query: "",
                 category: selectedCategory,
-                timeFilter: selectedTimeFilter
+                timeFilter: selectedTimeFilter,
+                limit: 100
             )
-            posts = fetched
-            feedViewModel.posts = fetched
+            posts = page.items
         } catch {
+            if isCancellationError(error) { return }
             errorMessage = "Failed to load map posts: \(error.localizedDescription)"
         }
     }

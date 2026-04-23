@@ -6,15 +6,20 @@ struct FeedView: View {
         let name: String
     }
 
+    struct FullscreenMediaPayload: Identifiable {
+        let id = UUID()
+        let mediaURLs: [URL]
+        let startIndex: Int
+    }
+
     @EnvironmentObject private var viewModel: FeedViewModel
     @EnvironmentObject private var session: SessionStore
     @EnvironmentObject private var chatViewModel: ChatViewModel
     @State private var isCreatePostOpen = false
     @State private var selectedPost: Post?
     @State private var selectedChatTarget: ChatTarget?
-    @State private var isFullscreenPresented = false
-    @State private var fullscreenMediaURLs: [URL] = []
-    @State private var fullscreenStartIndex = 0
+    @State private var fullscreenMedia: FullscreenMediaPayload?
+    @State private var pendingDeletion: Post?
 
     var body: some View {
         NavigationStack {
@@ -57,136 +62,69 @@ struct FeedView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                if viewModel.isLoading {
-                    ProgressView("Loading posts...")
-                        .frame(maxHeight: .infinity)
-                } else {
-                    List(viewModel.posts) { post in
-                        HStack(alignment: .top, spacing: 10) {
-                            let avatarText = String(post.userName.prefix(1)).uppercased()
-
-                            if post.userId != session.currentUser?.id {
-                                Button {
+                ZStack {
+                    List {
+                        ForEach(viewModel.posts) { post in
+                            PostCardRow(
+                                post: post,
+                                currentUserId: session.currentUser?.id,
+                                onTapPost: { selectedPost = post },
+                                onTapAuthor: {
                                     selectedChatTarget = ChatTarget(id: post.userId, name: post.userName)
-                                } label: {
-                                    Circle()
-                                        .fill(Color.blue.opacity(0.2))
-                                        .frame(width: 34, height: 34)
-                                        .overlay(
-                                            Text(avatarText)
-                                                .font(.caption.bold())
-                                                .foregroundStyle(.blue)
-                                        )
+                                },
+                                onUpvote: {
+                                    Task { await viewModel.upvote(postId: post.id) }
+                                },
+                                onTapMedia: { urls, index in
+                                    openFullscreen(mediaUrls: urls, startIndex: index)
                                 }
-                                .buttonStyle(.plain)
-                            } else {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.2))
-                                    .frame(width: 34, height: 34)
-                                    .overlay(
-                                        Text(avatarText)
-                                            .font(.caption.bold())
-                                            .foregroundStyle(.blue)
-                                    )
-                            }
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack(alignment: .firstTextBaseline) {
-                                        Text(post.userName)
-                                            .font(.caption.bold())
-                                            .foregroundStyle(.primary)
-                                        Spacer()
-                                        Text(relativeTime(post.createdAt))
-                                            .font(.caption2)
-                                            .foregroundStyle(.secondary)
-                                    }
-
-                                    Text(post.title)
-                                        .font(.headline)
-
-                                    let mediaUrls = resolvedMediaURLs(for: post)
-                                    if mediaUrls.count == 1, let url = mediaUrls.first {
-                                        AsyncImage(url: url) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFit()
-                                        } placeholder: {
-                                            Color.gray.opacity(0.2)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .frame(maxHeight: 320)
-                                        .clipped()
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                        .onTapGesture {
-                                            openFullscreen(mediaUrls: [url], startIndex: 0)
-                                        }
-                                    } else if mediaUrls.count > 1 {
-                                        ScrollView(.horizontal, showsIndicators: false) {
-                                            HStack(spacing: 8) {
-                                                ForEach(Array(mediaUrls.enumerated()), id: \.element.absoluteString) { index, url in
-                                                    AsyncImage(url: url) { image in
-                                                        image
-                                                            .resizable()
-                                                            .scaledToFit()
-                                                    } placeholder: {
-                                                        Color.gray.opacity(0.2)
-                                                    }
-                                                    .frame(width: 220, height: 180)
-                                                    .clipped()
-                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                    .onTapGesture {
-                                                        openFullscreen(mediaUrls: mediaUrls, startIndex: index)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Text(post.body)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedPost = post
-                                }
-
-                                HStack {
-                                    Text(post.category.rawValue)
-                                        .font(.caption2.weight(.semibold))
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(categoryTagBackgroundColor(post.category), in: Capsule())
-                                        .foregroundStyle(categoryTagTextColor(post.category))
-                                    Text(post.city)
-                                    Spacer()
-                                    Button {
-                                        Task { await viewModel.upvote(postId: post.id) }
+                            )
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8))
+                            .listRowBackground(Color.clear)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                if post.userId == session.currentUser?.id {
+                                    Button(role: .destructive) {
+                                        pendingDeletion = post
                                     } label: {
-                                        Label("\(post.upvotes)", systemImage: "arrow.up")
+                                        Label("Delete", systemImage: "trash")
                                     }
-                                    .buttonStyle(.borderless)
                                 }
-                                .font(.caption)
+                            }
+                            .onAppear {
+                                // Trigger the next page load as soon as we get
+                                // within a few rows of the bottom.
+                                if shouldTriggerLoadMore(for: post) {
+                                    Task { await viewModel.loadMoreIfNeeded() }
+                                }
                             }
                         }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(categoryBackgroundColor(post.category))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(categoryBorderColor(post.category), lineWidth: 1)
-                        )
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8))
-                        .listRowBackground(Color.clear)
+
+                        if viewModel.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                        }
                     }
                     .listStyle(.plain)
                     .refreshable {
                         await viewModel.load()
+                    }
+
+                    if viewModel.isLoading && viewModel.posts.isEmpty {
+                        ProgressView("Loading posts...")
+                    } else if viewModel.posts.isEmpty && !viewModel.isLoading {
+                        ContentUnavailableView {
+                            Label("No posts yet", systemImage: "leaf")
+                        } description: {
+                            Text("Pull to refresh, or tap + to share what's happening on your farm.")
+                        }
+                        .allowsHitTesting(false)
                     }
                 }
             }
@@ -223,98 +161,48 @@ struct FeedView: View {
                 ChatThreadView(conversationId: nil, otherUserId: target.id, title: target.name)
                     .environmentObject(chatViewModel)
             }
-            .fullScreenCover(isPresented: $isFullscreenPresented, onDismiss: {
-                fullscreenMediaURLs = []
-                fullscreenStartIndex = 0
-            }) {
+            .fullScreenCover(item: $fullscreenMedia) { payload in
                 FullscreenMediaViewer(
-                    mediaURLs: fullscreenMediaURLs,
-                    initialIndex: fullscreenStartIndex
+                    mediaURLs: payload.mediaURLs,
+                    initialIndex: payload.startIndex
                 ) {
-                    isFullscreenPresented = false
-                    fullscreenMediaURLs = []
-                    fullscreenStartIndex = 0
+                    fullscreenMedia = nil
                 }
+            }
+            .alert(
+                "Delete this post?",
+                isPresented: Binding(
+                    get: { pendingDeletion != nil },
+                    set: { if !$0 { pendingDeletion = nil } }
+                ),
+                presenting: pendingDeletion
+            ) { post in
+                Button("Delete", role: .destructive) {
+                    Task {
+                        await viewModel.deletePost(postId: post.id)
+                        pendingDeletion = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingDeletion = nil
+                }
+            } message: { post in
+                Text("“\(post.title)” will be permanently removed, along with its comments and likes.")
             }
         }
     }
 
-    private func relativeTime(_ timestampMs: Int64) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-
-    private func categoryBackgroundColor(_ category: Category) -> Color {
-        switch category {
-        case .note:
-            return .gray.opacity(0.12)
-        case .market:
-            return .green.opacity(0.14)
-        case .disease:
-            return .red.opacity(0.12)
-        case .pest:
-            return .yellow.opacity(0.18)
-        case .weather:
-            return .blue.opacity(0.12)
-        }
-    }
-
-    private func categoryBorderColor(_ category: Category) -> Color {
-        switch category {
-        case .note:
-            return .gray.opacity(0.35)
-        case .market:
-            return .green.opacity(0.35)
-        case .disease:
-            return .red.opacity(0.35)
-        case .pest:
-            return .yellow.opacity(0.45)
-        case .weather:
-            return .blue.opacity(0.35)
-        }
-    }
-
-    private func categoryTagBackgroundColor(_ category: Category) -> Color {
-        switch category {
-        case .note:
-            return .gray.opacity(0.22)
-        case .market:
-            return .green.opacity(0.22)
-        case .disease:
-            return .red.opacity(0.22)
-        case .pest:
-            return .yellow.opacity(0.3)
-        case .weather:
-            return .blue.opacity(0.22)
-        }
-    }
-
-    private func categoryTagTextColor(_ category: Category) -> Color {
-        switch category {
-        case .note:
-            return .gray
-        case .market:
-            return .green
-        case .disease:
-            return .red
-        case .pest:
-            return .orange
-        case .weather:
-            return .blue
-        }
-    }
-
-    private func resolvedMediaURLs(for post: Post) -> [URL] {
-        post.imageUrls.compactMap { APIClient.shared.resolveMediaURL(from: $0) }
-    }
-
     private func openFullscreen(mediaUrls: [URL], startIndex: Int) {
         guard !mediaUrls.isEmpty else { return }
-        fullscreenStartIndex = min(max(0, startIndex), mediaUrls.count - 1)
-        fullscreenMediaURLs = mediaUrls
-        isFullscreenPresented = true
+        let clampedIndex = min(max(0, startIndex), mediaUrls.count - 1)
+        fullscreenMedia = FullscreenMediaPayload(mediaURLs: mediaUrls, startIndex: clampedIndex)
+    }
+
+    /// Returns true if `post` is within the last 5 items of the current list,
+    /// so we can pre-fetch the next page before the user hits the bottom.
+    private func shouldTriggerLoadMore(for post: Post) -> Bool {
+        guard let index = viewModel.posts.firstIndex(where: { $0.id == post.id }) else { return false }
+        return index >= viewModel.posts.count - 5
     }
 }
 

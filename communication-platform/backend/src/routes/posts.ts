@@ -6,6 +6,7 @@ import { PostRepository } from "../repositories/postRepository.js";
 import { moderateUserContent } from "../services/moderationService.js";
 import { queueNearbyPostNotifications, queuePushNotification } from "../services/notificationService.js";
 import { Category, TimeFilter } from "../types.js";
+import { badRequest } from "../lib/badRequest.js";
 
 const categoryValues: Category[] = ["Disease", "Pest", "Weather", "Note", "Market"];
 const timeFilterValues: TimeFilter[] = ["1h", "5h", "1d", "3d", "1w", "3w", "all"];
@@ -16,6 +17,8 @@ const listQuerySchema = z.object({
   timeFilter: z.enum(timeFilterValues).optional(),
   visibility: z.enum(["all", "Public", "Private"]).optional(),
   userId: z.string().optional(),
+  before: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 });
 
 const createPostSchema = z.object({
@@ -39,7 +42,7 @@ const addCommentSchema = z.object({
 export async function postRoutes(app: FastifyInstance, postRepository: PostRepository, db: Pool) {
   app.get("/v1/posts", async (req, reply) => {
     const parsed = listQuerySchema.safeParse(req.query);
-    if (!parsed.success) return app.httpErrors.badRequest(parsed.error.message);
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const query = parsed.data;
     if (query.visibility === "Private") {
@@ -48,8 +51,8 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
       query.userId = authUser.id;
     }
 
-    const list = await postRepository.list(query);
-    return { items: list };
+    const result = await postRepository.list(query);
+    return { items: result.items, nextCursor: result.nextCursor };
   });
 
   app.post("/v1/posts", async (req, reply) => {
@@ -57,7 +60,7 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
     if (!authUser) return;
 
     const parsed = createPostSchema.safeParse(req.body);
-    if (!parsed.success) return app.httpErrors.badRequest(parsed.error.message);
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const moderation = await moderateUserContent(app.log, {
       text: [parsed.data.title, parsed.data.body, parsed.data.crop].join("\n"),
@@ -89,6 +92,17 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
     return { item: post };
   });
 
+  app.delete("/v1/posts/:postId", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
+    const postId = (req.params as { postId: string }).postId;
+    const result = await postRepository.delete(postId, authUser.id);
+    if (result.status === "not_found") return app.httpErrors.notFound("Post not found");
+    if (result.status === "forbidden") return app.httpErrors.forbidden("You can only delete your own posts");
+    return { ok: true, id: postId };
+  });
+
   app.post("/v1/posts/:postId/upvote", async (req, reply) => {
     const authUser = await requireAuth(req, reply, db);
     if (!authUser) return;
@@ -105,7 +119,7 @@ export async function postRoutes(app: FastifyInstance, postRepository: PostRepos
 
     const postId = (req.params as { postId: string }).postId;
     const parsed = addCommentSchema.safeParse(req.body);
-    if (!parsed.success) return app.httpErrors.badRequest(parsed.error.message);
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const moderation = await moderateUserContent(app.log, {
       text: parsed.data.text,

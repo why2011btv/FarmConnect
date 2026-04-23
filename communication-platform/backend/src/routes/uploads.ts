@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { isR2Configured, uploadImageToR2 } from "../services/r2Storage.js";
+import { badRequest } from "../lib/badRequest.js";
 
 const createUploadSchema = z.object({
   fileName: z.string().min(1),
@@ -17,7 +18,7 @@ export async function uploadRoutes(app: FastifyInstance, db: Pool) {
     if (!authUser) return;
 
     const parsed = createUploadSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     // Placeholder for signed URL generation (S3/Supabase Storage/GCS).
     // Replace with storage provider SDK logic in next iteration.
