@@ -27,7 +27,17 @@ struct NewPostView: View {
     @State private var createError: String?
     @State private var showSuccessBanner = false
 
-    private let cropSuggestions = ["Corn", "Wheat", "Apple", "Grape", "Vegetables", "Mixed", "Blueberries"]
+    private let cropSuggestions = [
+        "Cabernet Sauvignon",
+        "Chardonnay",
+        "Pinot Noir",
+        "Merlot",
+        "Sauvignon Blanc",
+        "Syrah",
+        "Zinfandel",
+        "Riesling",
+        "Other"
+    ]
 
     init(
         initialCategory: Category = .disease,
@@ -55,7 +65,7 @@ struct NewPostView: View {
                 }
 
                 Section("Tags") {
-                    TextField("Crop (optional)", text: $crop)
+                    TextField("Varietal (optional)", text: $crop)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(cropSuggestions, id: \.self) { value in

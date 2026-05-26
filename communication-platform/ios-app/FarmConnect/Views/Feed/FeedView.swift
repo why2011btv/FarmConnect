@@ -120,9 +120,9 @@ struct FeedView: View {
                         ProgressView("Loading posts...")
                     } else if viewModel.posts.isEmpty && !viewModel.isLoading {
                         ContentUnavailableView {
-                            Label("No posts yet", systemImage: "leaf")
+                            Label("No vineyard updates yet", systemImage: "leaf")
                         } description: {
-                            Text("Pull to refresh, or tap + to share what's happening on your farm.")
+                            Text("Pull to refresh, or tap + to share what's happening in your vineyard.")
                         }
                         .allowsHitTesting(false)
                     }

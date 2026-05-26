@@ -17,9 +17,9 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("FarmAlert")
+                Text("Persephone's Basket")
                     .font(.largeTitle.bold())
-                Text("Use your account to continue")
+                Text("Sign in to your vineyard dashboard")
                     .foregroundStyle(.secondary)
 
                 Picker("Auth mode", selection: $mode) {
