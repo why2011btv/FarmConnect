@@ -25,7 +25,7 @@ struct NotesView: View {
         NavigationStack {
             VStack(spacing: 12) {
                 HStack {
-                    TextField("Search vineyard notes", text: $query)
+                    TextField("Search private notes", text: $query)
                         .textFieldStyle(.roundedBorder)
                     Button("Go") {
                         Task { await loadNotes() }
@@ -63,7 +63,7 @@ struct NotesView: View {
                         notesList(notes)
                             .overlay {
                                 if notes.isEmpty && !isLoading {
-                                    ContentUnavailableView("No vineyard notes", systemImage: "note.text")
+                                    ContentUnavailableView("No private notes", systemImage: "note.text")
                                 }
                             }
                     } else {
@@ -71,7 +71,7 @@ struct NotesView: View {
                             VStack(spacing: 12) {
                                 calendarView
                                 if notes.isEmpty && !isLoading {
-                                    ContentUnavailableView("No vineyard notes", systemImage: "note.text")
+                                    ContentUnavailableView("No private notes", systemImage: "note.text")
                                         .padding(.top, 24)
                                 } else {
                                     selectedDayNotesSection
@@ -85,7 +85,7 @@ struct NotesView: View {
                     }
 
                     if isLoading && notes.isEmpty {
-                        ProgressView("Loading vineyard notes...")
+                        ProgressView("Loading private notes...")
                     }
                 }
             }

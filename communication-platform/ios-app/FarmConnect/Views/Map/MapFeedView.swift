@@ -154,7 +154,7 @@ struct MapFeedView: View {
                     MapCompass()
                 }
             }
-            .navigationTitle("Vineyards Nearby")
+            .navigationTitle("Nearby Feed Map")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     AccountMenuButton()
