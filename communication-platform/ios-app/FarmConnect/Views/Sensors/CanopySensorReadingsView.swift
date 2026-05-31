@@ -12,7 +12,7 @@ struct CanopySensorReadingsView: View {
                 vineyardOverview
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(.secondarySystemGroupedBackground))
     }
 
@@ -43,8 +43,6 @@ struct CanopySensorReadingsView: View {
                     tint: .mint
                 )
             }
-
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -55,38 +53,35 @@ struct CanopySensorReadingsView: View {
         let highRisk = summaryBlocks.filter { $0.riskLevel == .high }.count
         let online = summaryBlocks.count
 
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Vineyard overview")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Vineyard overview")
+                .font(.subheadline.weight(.semibold))
 
-                Text("Tap a block on the map to view canopy microclimate readings and block-specific recommendations.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            Text("Tap a block on the map for readings and recommendations.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-                HStack(spacing: 10) {
-                    overviewTile(
-                        title: "Canopy nodes",
-                        value: "\(online)",
-                        caption: "All online",
-                        icon: "sensor.tag.radiowaves.forward.fill",
-                        tint: .green
-                    )
-                    overviewTile(
-                        title: "High-risk blocks",
-                        value: "\(highRisk)",
-                        caption: "Fungus pressure",
-                        icon: "leaf.fill",
-                        tint: .red
-                    )
-                }
-
-                riskSummaryRow
+            HStack(spacing: 8) {
+                overviewTile(
+                    title: "Canopy nodes",
+                    value: "\(online)",
+                    caption: "All online",
+                    icon: "sensor.tag.radiowaves.forward.fill",
+                    tint: .green
+                )
+                overviewTile(
+                    title: "High-risk blocks",
+                    value: "\(highRisk)",
+                    caption: "Fungus pressure",
+                    icon: "leaf.fill",
+                    tint: .red
+                )
             }
-            .padding()
+
+            riskSummaryRow
         }
-        .scrollBounceBehavior(.basedOnSize)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 
     private var riskSummaryRow: some View {
@@ -94,16 +89,16 @@ struct CanopySensorReadingsView: View {
         let moderate = allBlocks.filter { $0.riskLevel == .moderate }.count
         let high = allBlocks.filter { $0.riskLevel == .high }.count
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 6) {
             Text("Crop health summary")
-                .font(.subheadline.weight(.semibold))
+                .font(.caption.weight(.semibold))
             HStack(spacing: 12) {
                 riskChip(count: low, label: "Low", color: .green)
                 riskChip(count: moderate, label: "Moderate", color: .orange)
                 riskChip(count: high, label: "High", color: .red)
             }
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
@@ -163,19 +158,19 @@ struct CanopySensorReadingsView: View {
         icon: String,
         tint: Color
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Label(title, systemImage: icon)
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(tint)
             Text(value)
-                .font(.title.bold())
+                .font(.title3.bold())
             Text(caption)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func format(_ value: Double, unit: String) -> String {

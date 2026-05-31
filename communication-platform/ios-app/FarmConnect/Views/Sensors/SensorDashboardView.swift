@@ -123,7 +123,7 @@ struct SensorDashboardView: View {
                 )
                 .frame(width: 360)
             } else {
-                rightPanel(readingsFraction: 0.5, insightsFraction: 0.5)
+                rightPanel()
                     .frame(maxWidth: .infinity)
             }
         }
@@ -149,31 +149,24 @@ struct SensorDashboardView: View {
                 .frame(height: geometry.size.height * 0.45)
             } else {
                 Divider()
-                rightPanel(
-                    readingsFraction: selectedBlock == nil ? 0.38 : 0.52,
-                    insightsFraction: selectedBlock == nil ? 0.62 : 0.48
-                )
+                rightPanel()
             }
         }
     }
 
-    private func rightPanel(readingsFraction: CGFloat, insightsFraction: CGFloat) -> some View {
-        GeometryReader { geo in
-            let readingsHeight = geo.size.height * readingsFraction
-            let insightsHeight = geo.size.height * insightsFraction
+    private func rightPanel() -> some View {
+        VStack(spacing: 0) {
+            CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
 
-            VStack(spacing: 0) {
-                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
-                    .frame(height: readingsHeight)
+            Divider()
 
-                Divider()
-
-                VineyardInsightsPanel(
-                    block: selectedBlock,
-                    insights: activeInsights
-                )
-                .frame(height: insightsHeight)
-            }
+            VineyardInsightsPanel(
+                block: selectedBlock,
+                insights: activeInsights
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
