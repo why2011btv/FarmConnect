@@ -28,18 +28,24 @@ struct SensorDashboardView: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                let sideBySide = geometry.size.width > geometry.size.height
-                    && geometry.size.width >= 700
+            VStack(spacing: 0) {
+                GeometryReader { geometry in
+                    let sideBySide = geometry.size.width > geometry.size.height
+                        && geometry.size.width >= 700
 
-                if sideBySide {
-                    sideBySideLayout
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                } else {
-                    stackedLayout(in: geometry)
+                    if sideBySide {
+                        sideBySideLayout
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                    } else {
+                        stackedLayout(in: geometry)
+                    }
                 }
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Vineyard Sensors")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     AccountMenuButton()

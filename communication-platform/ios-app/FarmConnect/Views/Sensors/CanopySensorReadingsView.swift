@@ -41,6 +41,7 @@ struct CanopySensorReadingsView: View {
             }
             .padding()
         }
+        .scrollBounceBehavior(.basedOnSize)
     }
 
     private var vineyardOverview: some View {
@@ -52,6 +53,7 @@ struct CanopySensorReadingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Vineyard overview")
                     .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("Tap a block on the map to view canopy microclimate readings and block-specific recommendations.")
                     .font(.subheadline)
@@ -78,6 +80,7 @@ struct CanopySensorReadingsView: View {
             }
             .padding()
         }
+        .scrollBounceBehavior(.basedOnSize)
     }
 
     private var riskSummaryRow: some View {

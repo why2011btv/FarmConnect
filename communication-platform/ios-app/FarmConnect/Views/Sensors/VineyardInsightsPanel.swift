@@ -33,6 +33,7 @@ struct VineyardInsightsPanel: View {
                     }
                     .padding()
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
