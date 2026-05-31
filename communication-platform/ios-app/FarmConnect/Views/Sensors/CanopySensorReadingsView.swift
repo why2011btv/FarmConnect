@@ -42,11 +42,9 @@ struct CanopySensorReadingsView: View {
                     tint: .mint
                 )
             }
-            .frame(maxHeight: .infinity, alignment: .top)
-
-            Spacer(minLength: 0)
         }
         .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var vineyardOverview: some View {
@@ -82,10 +80,9 @@ struct CanopySensorReadingsView: View {
             }
 
             riskSummaryRow
-
-            Spacer(minLength: 0)
         }
         .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private var riskSummaryRow: some View {
