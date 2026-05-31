@@ -155,18 +155,29 @@ struct SensorDashboardView: View {
     }
 
     private func rightPanel() -> some View {
-        VStack(spacing: 0) {
-            CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+        GeometryReader { geo in
+            let topHeight = geo.size.height * PanelProportions.readings
+            let bottomHeight = geo.size.height - topHeight
 
-            Divider()
+            VStack(spacing: 0) {
+                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
+                    .frame(height: topHeight)
 
-            VineyardInsightsPanel(
-                block: selectedBlock,
-                insights: activeInsights
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Divider()
+
+                VineyardInsightsPanel(
+                    block: selectedBlock,
+                    insights: activeInsights
+                )
+                .frame(height: bottomHeight)
+            }
         }
     }
+}
+
+// MARK: - Golden ratio (φ ≈ 1.618): readings ≈ 38.2%, insights ≈ 61.8%
+private enum PanelProportions {
+    private static let phi: CGFloat = (1 + sqrt(5)) / 2
+    static let readings: CGFloat = 1 / (1 + phi)
+    static let insights: CGFloat = phi / (1 + phi)
 }

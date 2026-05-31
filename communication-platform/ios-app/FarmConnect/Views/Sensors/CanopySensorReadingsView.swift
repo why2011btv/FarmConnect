@@ -12,40 +12,41 @@ struct CanopySensorReadingsView: View {
                 vineyardOverview
             }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(.secondarySystemGroupedBackground))
     }
 
     private func blockReadings(_ block: VineyardDemoBlock) -> some View {
         let r = block.readings
         let columns = [
-            GridItem(.flexible(), spacing: 6),
-            GridItem(.flexible(), spacing: 6),
-            GridItem(.flexible(), spacing: 6),
+            GridItem(.flexible(), spacing: 10),
+            GridItem(.flexible(), spacing: 10),
         ]
 
-        return VStack(alignment: .leading, spacing: 8) {
-            compactHeader(for: block)
+        return VStack(alignment: .leading, spacing: 12) {
+            blockHeader(for: block)
 
-            LazyVGrid(columns: columns, spacing: 6) {
-                compactMetricCard("Air temp", value: format(r.airTemperatureF, unit: "°F"), icon: "thermometer.medium", tint: .orange)
-                compactMetricCard("Humidity", value: format(r.relativeHumidityPct, unit: "%"), icon: "humidity.fill", tint: .blue)
-                compactMetricCard("Leaf wet", value: format(r.leafWetnessHours, unit: "h"), icon: "drop.fill", tint: .teal)
-                compactMetricCard("Soil moist", value: format(r.soilMoisturePct, unit: "%"), icon: "drop.circle.fill", tint: .brown)
-                compactMetricCard("Soil temp", value: format(r.soilTemperatureF, unit: "°F"), icon: "thermometer.sun.fill", tint: .orange)
-                compactMetricCard("Rain 24h", value: format(r.rainfallInches24h, unit: "in"), icon: "cloud.rain.fill", tint: .indigo)
-                compactMetricCard("Solar", value: format(r.solarExposureMJ, unit: "MJ/m²"), icon: "sun.max.fill", tint: .yellow)
-                compactMetricCard("Wind", value: format(r.windSpeedMph, unit: "mph"), icon: "wind", tint: .cyan)
-                compactMetricCard(
-                    "Wind dir",
-                    value: "\(r.windDirectionLabel) \(Int(r.windDirectionDegrees))°",
+            LazyVGrid(columns: columns, spacing: 10) {
+                metricCard("Air temperature", value: format(r.airTemperatureF, unit: "°F"), icon: "thermometer.medium", tint: .orange)
+                metricCard("Relative humidity", value: format(r.relativeHumidityPct, unit: "%"), icon: "humidity.fill", tint: .blue)
+                metricCard("Leaf wetness", value: format(r.leafWetnessHours, unit: "h"), icon: "drop.fill", tint: .teal)
+                metricCard("Soil moisture", value: format(r.soilMoisturePct, unit: "%"), icon: "drop.circle.fill", tint: .brown)
+                metricCard("Soil temperature", value: format(r.soilTemperatureF, unit: "°F"), icon: "thermometer.sun.fill", tint: .orange)
+                metricCard("Rainfall (24h)", value: format(r.rainfallInches24h, unit: "in"), icon: "cloud.rain.fill", tint: .indigo)
+                metricCard("Solar exposure", value: format(r.solarExposureMJ, unit: "MJ/m²"), icon: "sun.max.fill", tint: .yellow)
+                metricCard("Wind speed", value: format(r.windSpeedMph, unit: "mph"), icon: "wind", tint: .cyan)
+                metricCard(
+                    "Wind direction",
+                    value: "\(r.windDirectionLabel) (\(Int(r.windDirectionDegrees))°)",
                     icon: "location.north.fill",
                     tint: .mint
                 )
             }
+            .frame(maxHeight: .infinity, alignment: .top)
+
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(16)
     }
 
     private var vineyardOverview: some View {
@@ -53,15 +54,17 @@ struct CanopySensorReadingsView: View {
         let highRisk = summaryBlocks.filter { $0.riskLevel == .high }.count
         let online = summaryBlocks.count
 
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("Vineyard overview")
-                .font(.subheadline.weight(.semibold))
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Vineyard overview")
+                    .font(.headline)
+                Text("Tap a block on the map to view canopy readings and tailored recommendations.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-            Text("Tap a block on the map for readings and recommendations.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 overviewTile(
                     title: "Canopy nodes",
                     value: "\(online)",
@@ -79,9 +82,10 @@ struct CanopySensorReadingsView: View {
             }
 
             riskSummaryRow
+
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(16)
     }
 
     private var riskSummaryRow: some View {
@@ -89,16 +93,16 @@ struct CanopySensorReadingsView: View {
         let moderate = allBlocks.filter { $0.riskLevel == .moderate }.count
         let high = allBlocks.filter { $0.riskLevel == .high }.count
 
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: 8) {
             Text("Crop health summary")
-                .font(.caption.weight(.semibold))
-            HStack(spacing: 12) {
+                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 16) {
                 riskChip(count: low, label: "Low", color: .green)
                 riskChip(count: moderate, label: "Moderate", color: .orange)
                 riskChip(count: high, label: "High", color: .red)
             }
         }
-        .padding(10)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
     }
@@ -106,49 +110,47 @@ struct CanopySensorReadingsView: View {
     private func riskChip(count: Int, label: String, color: Color) -> some View {
         HStack(spacing: 6) {
             Text("\(count)")
-                .font(.title3.bold())
+                .font(.title2.bold())
                 .foregroundStyle(color)
             Text(label)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
     }
 
-    private func compactHeader(for block: VineyardDemoBlock) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
+    private func blockHeader(for block: VineyardDemoBlock) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(block.name)
-                    .font(.subheadline.weight(.semibold))
-                Text(block.locationLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .font(.headline)
+                Spacer(minLength: 8)
+                Text(block.riskLevel.label)
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
+                    .foregroundStyle(block.riskLevel.fillColor)
             }
-            Spacer(minLength: 4)
-            Text(block.riskLevel.label)
-                .font(.caption2.weight(.semibold))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
-                .foregroundStyle(block.riskLevel.fillColor)
+            Text(block.locationLabel)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
     }
 
-    private func compactMetricCard(_ title: String, value: String, icon: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+    private func metricCard(_ title: String, value: String, icon: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
             Label(title, systemImage: icon)
-                .font(.caption2.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(tint)
                 .labelStyle(.titleAndIcon)
             Text(value)
-                .font(.caption.weight(.bold))
-                .minimumScaleFactor(0.7)
+                .font(.body.weight(.semibold))
+                .minimumScaleFactor(0.75)
                 .lineLimit(2)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 5)
-        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func overviewTile(
@@ -158,19 +160,19 @@ struct CanopySensorReadingsView: View {
         icon: String,
         tint: Color
     ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Label(title, systemImage: icon)
-                .font(.caption2.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(tint)
             Text(value)
-                .font(.title3.bold())
+                .font(.title.bold())
             Text(caption)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private func format(_ value: Double, unit: String) -> String {
