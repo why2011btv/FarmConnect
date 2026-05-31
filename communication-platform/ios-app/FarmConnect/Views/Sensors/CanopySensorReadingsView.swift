@@ -19,31 +19,33 @@ struct CanopySensorReadingsView: View {
     private func blockReadings(_ block: VineyardDemoBlock) -> some View {
         let r = block.readings
         let columns = [
-            GridItem(.flexible(), spacing: 10),
-            GridItem(.flexible(), spacing: 10),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
         ]
 
-        return VStack(alignment: .leading, spacing: 12) {
-            blockHeader(for: block)
+        return VStack(alignment: .leading, spacing: 10) {
+            compactBlockHeader(for: block)
 
-            LazyVGrid(columns: columns, spacing: 10) {
-                metricCard("Air temperature", value: format(r.airTemperatureF, unit: "°F"), icon: "thermometer.medium", tint: .orange)
-                metricCard("Relative humidity", value: format(r.relativeHumidityPct, unit: "%"), icon: "humidity.fill", tint: .blue)
-                metricCard("Leaf wetness", value: format(r.leafWetnessHours, unit: "h"), icon: "drop.fill", tint: .teal)
-                metricCard("Soil moisture", value: format(r.soilMoisturePct, unit: "%"), icon: "drop.circle.fill", tint: .brown)
-                metricCard("Soil temperature", value: format(r.soilTemperatureF, unit: "°F"), icon: "thermometer.sun.fill", tint: .orange)
-                metricCard("Rainfall (24h)", value: format(r.rainfallInches24h, unit: "in"), icon: "cloud.rain.fill", tint: .indigo)
-                metricCard("Solar exposure", value: format(r.solarExposureMJ, unit: "MJ/m²"), icon: "sun.max.fill", tint: .yellow)
-                metricCard("Wind speed", value: format(r.windSpeedMph, unit: "mph"), icon: "wind", tint: .cyan)
+            LazyVGrid(columns: columns, spacing: 8) {
+                metricCard("Air temp", value: format(r.airTemperatureF, unit: "°F"), icon: "thermometer.medium", tint: .orange)
+                metricCard("Humidity", value: format(r.relativeHumidityPct, unit: "%"), icon: "humidity.fill", tint: .blue)
+                metricCard("Leaf wet", value: format(r.leafWetnessHours, unit: "h"), icon: "drop.fill", tint: .teal)
+                metricCard("Soil moist", value: format(r.soilMoisturePct, unit: "%"), icon: "drop.circle.fill", tint: .brown)
+                metricCard("Soil temp", value: format(r.soilTemperatureF, unit: "°F"), icon: "thermometer.sun.fill", tint: .orange)
+                metricCard("Rain 24h", value: format(r.rainfallInches24h, unit: "in"), icon: "cloud.rain.fill", tint: .indigo)
+                metricCard("Solar", value: format(r.solarExposureMJ, unit: "MJ/m²"), icon: "sun.max.fill", tint: .yellow)
+                metricCard("Wind", value: format(r.windSpeedMph, unit: "mph"), icon: "wind", tint: .cyan)
                 metricCard(
-                    "Wind direction",
-                    value: "\(r.windDirectionLabel) (\(Int(r.windDirectionDegrees))°)",
+                    "Wind dir",
+                    value: "\(r.windDirectionLabel) \(Int(r.windDirectionDegrees))°",
                     icon: "location.north.fill",
                     tint: .mint
                 )
             }
         }
-        .padding(16)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -115,39 +117,41 @@ struct CanopySensorReadingsView: View {
         }
     }
 
-    private func blockHeader(for block: VineyardDemoBlock) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
+    private func compactBlockHeader(for block: VineyardDemoBlock) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(block.name)
-                    .font(.headline)
-                Spacer(minLength: 8)
-                Text(block.riskLevel.label)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
-                    .foregroundStyle(block.riskLevel.fillColor)
+                    .font(.subheadline.weight(.semibold))
+                Text(block.locationLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            Text(block.locationLabel)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Spacer(minLength: 4)
+            Text(block.riskLevel.label)
+                .font(.caption2.weight(.semibold))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
+                .foregroundStyle(block.riskLevel.fillColor)
         }
     }
 
     private func metricCard(_ title: String, value: String, icon: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Label(title, systemImage: icon)
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(tint)
                 .labelStyle(.titleAndIcon)
             Text(value)
-                .font(.body.weight(.semibold))
-                .minimumScaleFactor(0.75)
+                .font(.caption.weight(.bold))
+                .minimumScaleFactor(0.7)
                 .lineLimit(2)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
+        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private func overviewTile(
