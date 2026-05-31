@@ -11,15 +11,15 @@ enum VineyardDemoData {
     static let blocks: [VineyardDemoBlock] = [
         block(
             id: "b1",
-            name: "Block 1",
-            locationLabel: "Northwest canopy row",
+            name: "South Block",
+            locationLabel: "South vertical rows",
             risk: .low,
-            center: coord(41.68085, -71.00105),
+            center: coord(41.67750, -71.00030),
             polygon: quad(
-                (41.68155, -71.00175),
-                (41.68155, -71.00035),
-                (41.68015, -71.00035),
-                (41.68015, -71.00175)
+                (41.67910, -71.00075), // NW
+                (41.67910, -70.99975), // NE
+                (41.67600, -70.99960), // SE
+                (41.67600, -71.00065)  // SW
             ),
             readings: VineyardCanopyReading(
                 airTemperatureF: 74.2,
@@ -43,15 +43,15 @@ enum VineyardDemoData {
         ),
         block(
             id: "b2",
-            name: "Block 2",
-            locationLabel: "Northeast slope",
+            name: "Middle Block",
+            locationLabel: "Main trapezoid section",
             risk: .moderate,
-            center: coord(41.68085, -70.99770),
+            center: coord(41.68060, -71.00080),
             polygon: quad(
-                (41.68155, -70.99840),
-                (41.68155, -70.99700),
-                (41.68015, -70.99700),
-                (41.68015, -70.99840)
+                (41.68210, -71.00160), // NW
+                (41.68205, -70.99980), // NE
+                (41.67910, -70.99975), // SE
+                (41.67910, -71.00075)  // SW
             ),
             readings: VineyardCanopyReading(
                 airTemperatureF: 73.8,
@@ -75,15 +75,15 @@ enum VineyardDemoData {
         ),
         block(
             id: "b3",
-            name: "Block 3",
-            locationLabel: "East upper canopy",
+            name: "North Block",
+            locationLabel: "Upper horizontal rows",
             risk: .high,
-            center: coord(41.67955, -70.99720),
+            center: coord(41.68245, -71.00080),
             polygon: quad(
-                (41.68025, -70.99790),
-                (41.68025, -70.99650),
-                (41.67885, -70.99650),
-                (41.67885, -70.99790)
+                (41.68270, -71.00195), // NW
+                (41.68260, -70.99970), // NE
+                (41.68205, -70.99980), // SE
+                (41.68210, -71.00160)  // SW
             ),
             readings: VineyardCanopyReading(
                 airTemperatureF: 72.4,
@@ -111,179 +111,13 @@ enum VineyardDemoData {
                 )
             ]
         ),
-        block(
-            id: "b4",
-            name: "Block 4",
-            locationLabel: "East lower canopy",
-            risk: .high,
-            center: coord(41.67815, -70.99720),
-            polygon: quad(
-                (41.67885, -70.99790),
-                (41.67885, -70.99650),
-                (41.67745, -70.99650),
-                (41.67745, -70.99790)
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 71.9,
-                relativeHumidityPct: 86,
-                leafWetnessHours: 5.4,
-                soilMoisturePct: 46,
-                soilTemperatureF: 67.2,
-                rainfallInches24h: 0.12,
-                solarExposureMJ: 18.2,
-                windSpeedMph: 3.1,
-                windDirectionDegrees: 70
-            ),
-            insights: [
-                insight(
-                    "b4-i1",
-                    "Powdery mildew pressure building",
-                    "Warm canopy temperatures with sustained humidity support powdery mildew. Scout undersides of leaves on susceptible cultivars.",
-                    "high"
-                )
-            ]
-        ),
-        block(
-            id: "b5",
-            name: "Block 5",
-            locationLabel: "South central rows",
-            risk: .low,
-            center: coord(41.67745, -70.999375),
-            polygon: quad(
-                (41.67815, -71.00008),
-                (41.67815, -70.99867),
-                (41.67675, -70.99867),
-                (41.67675, -71.00008)
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 75.1,
-                relativeHumidityPct: 55,
-                leafWetnessHours: 0.4,
-                soilMoisturePct: 36,
-                soilTemperatureF: 70.8,
-                rainfallInches24h: 0.01,
-                solarExposureMJ: 23.8,
-                windSpeedMph: 9.6,
-                windDirectionDegrees: 255
-            ),
-            insights: [
-                insight(
-                    "b5-i1",
-                    "Low disease pressure",
-                    "Dry canopy and good air movement keep fungal risk low. No spray action needed based on current readings.",
-                    "low"
-                )
-            ]
-        ),
-        block(
-            id: "b6",
-            name: "Block 6",
-            locationLabel: "Southwest canopy",
-            risk: .moderate,
-            center: coord(41.67745, -71.00130),
-            polygon: quad(
-                (41.67815, -71.00200),
-                (41.67815, -71.00060),
-                (41.67675, -71.00060),
-                (41.67675, -71.00200)
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 74.6,
-                relativeHumidityPct: 68,
-                leafWetnessHours: 3.1,
-                soilMoisturePct: 41,
-                soilTemperatureF: 69.9,
-                rainfallInches24h: 0.05,
-                solarExposureMJ: 21.3,
-                windSpeedMph: 6.0,
-                windDirectionDegrees: 225
-            ),
-            insights: [
-                insight(
-                    "b6-i1",
-                    "Irrigation timing note",
-                    "Soil moisture is adequate. Avoid late-evening irrigation that could extend leaf wetness and raise mildew risk.",
-                    "medium"
-                )
-            ]
-        ),
-        block(
-            id: "b7",
-            name: "Block 7",
-            locationLabel: "West lower canopy",
-            risk: .high,
-            center: coord(41.67815, -71.00155),
-            polygon: quad(
-                (41.67885, -71.00225),
-                (41.67885, -71.00085),
-                (41.67745, -71.00085),
-                (41.67745, -71.00225)
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 72.8,
-                relativeHumidityPct: 84,
-                leafWetnessHours: 4.9,
-                soilMoisturePct: 47,
-                soilTemperatureF: 68.1,
-                rainfallInches24h: 0.11,
-                solarExposureMJ: 16.9,
-                windSpeedMph: 3.5,
-                windDirectionDegrees: 90
-            ),
-            insights: [
-                insight(
-                    "b7-i1",
-                    "Spray window recommendation",
-                    "Apply fungicide when wind drops below 10 mph and before the next rain event. Current canopy RH supports infection.",
-                    "high"
-                ),
-                insight(
-                    "b7-i2",
-                    "Harvest planning unaffected",
-                    "Berry sugar accumulation is on track; disease risk is canopy-microclimate driven, not heat stress.",
-                    "low"
-                )
-            ]
-        ),
-        block(
-            id: "b8",
-            name: "Block 8",
-            locationLabel: "West upper canopy",
-            risk: .low,
-            center: coord(41.67955, -71.00155),
-            polygon: quad(
-                (41.68025, -71.00225),
-                (41.68025, -71.00085),
-                (41.67885, -71.00085),
-                (41.67885, -71.00225)
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 74.9,
-                relativeHumidityPct: 61,
-                leafWetnessHours: 1.1,
-                soilMoisturePct: 38,
-                soilTemperatureF: 70.2,
-                rainfallInches24h: 0.03,
-                solarExposureMJ: 22.0,
-                windSpeedMph: 7.8,
-                windDirectionDegrees: 265
-            ),
-            insights: [
-                insight(
-                    "b8-i1",
-                    "Stable microclimate",
-                    "VPD and canopy humidity are in a comfortable range for vine health with minimal fungal pressure.",
-                    "low"
-                )
-            ]
-        ),
     ]
 
     static let generalInsights: [VineyardBlockInsight] = [
         insight(
             "g1",
             "Vineyard-wide disease outlook",
-            "3 of 8 canopy blocks show elevated powdery or downy mildew risk based on humidity, leaf wetness, and airflow. Focus scouting on Blocks 3, 4, and 7.",
+            "1 of 3 canopy blocks shows elevated powdery or downy mildew risk based on humidity, leaf wetness, and airflow. Focus scouting on the North Block.",
             "high"
         ),
         insight(
@@ -295,13 +129,13 @@ enum VineyardDemoData {
         insight(
             "g3",
             "Weather pattern",
-            "Recent light rainfall and calm overnight winds increased canopy moisture in eastern and western rows. Blocks with good air drainage (1, 5, 8) remain in the low-risk zone.",
+            "Recent light rainfall and calm overnight winds increased canopy moisture in the northern rows. The South Block with good air drainage remains in the low-risk zone.",
             "low"
         ),
         insight(
             "g4",
             "Sensor network status",
-            "All 8 canopy nodes are reporting. Tap a block on the map to view block-level microclimate readings and tailored recommendations.",
+            "All 3 canopy nodes are reporting. Tap a block on the map to view block-level microclimate readings and tailored recommendations.",
             "low"
         ),
     ]
