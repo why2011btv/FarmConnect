@@ -153,11 +153,11 @@ struct VineyardBlockLayoutEditor: View {
 
             Section("Size") {
                 if let rect = layoutStore.rectangle(id: id) {
-                    sizeRow("Length (N–S)", value: rect.halfLatitudeSpan * 2) {
-                        layoutStore.updateRectangle(id: id) { $0.growLatitude(by: $1) }
+                    sizeRow("Length (N–S)", value: rect.halfLatitudeSpan * 2) { delta in
+                        layoutStore.updateRectangle(id: id) { $0.growLatitude(by: delta) }
                     }
-                    sizeRow("Width (E–W)", value: rect.halfLongitudeSpan * 2) {
-                        layoutStore.updateRectangle(id: id) { $0.growLongitude(by: $1) }
+                    sizeRow("Width (E–W)", value: rect.halfLongitudeSpan * 2) { delta in
+                        layoutStore.updateRectangle(id: id) { $0.growLongitude(by: delta) }
                     }
                 }
             }
