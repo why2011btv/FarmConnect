@@ -12,11 +12,11 @@ enum VineyardDemoData {
         rect("b1", 41.68262, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
         rect("b2", 41.68242, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
         rect("b3", 41.68222, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
-        rect("b4", 41.68105, -71.00115, halfLat: 0.00038, halfLng: 0.00020),
-        rect("b5", 41.68105, -71.00045, halfLat: 0.00038, halfLng: 0.00020),
-        rect("b6", 41.67955, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
-        rect("b7", 41.67875, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
-        rect("b8", 41.67795, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
+        rect("b4", 41.68105, -71.00115, halfLat: 0.00038, halfLng: 0.00020, rotation: -14),
+        rect("b5", 41.68105, -71.00045, halfLat: 0.00038, halfLng: 0.00020, rotation: -14),
+        rect("b6", 41.67955, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
+        rect("b7", 41.67875, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
+        rect("b8", 41.67795, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
     ]
 
     static let generalInsights: [VineyardBlockInsight] = [
@@ -172,14 +172,16 @@ enum VineyardDemoData {
         _ lat: Double,
         _ lng: Double,
         halfLat: Double,
-        halfLng: Double
+        halfLng: Double,
+        rotation: Double = 0
     ) -> VineyardBlockRectangle {
         VineyardBlockRectangle(
             id: id,
             centerLatitude: lat,
             centerLongitude: lng,
             halfLatitudeSpan: halfLat,
-            halfLongitudeSpan: halfLng
+            halfLongitudeSpan: halfLng,
+            rotationDegrees: rotation
         )
     }
 

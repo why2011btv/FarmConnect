@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct SensorDashboardView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @StateObject private var layoutStore = VineyardBlockLayoutStore()
     @State private var selectedBlockId: String?
     @State private var editingBlockId: String?
     @State private var isEditingLayout = false
-    @State private var showLayoutEditor = false
+    @State private var showLayoutEditorSheet = false
 
     private var blocks: [VineyardDemoBlock] {
         layoutStore.blocks
@@ -18,6 +20,10 @@ struct SensorDashboardView: View {
 
     private var activeInsights: [VineyardBlockInsight] {
         selectedBlock?.insights ?? VineyardDemoData.generalInsights
+    }
+
+    private var useInlineEditor: Bool {
+        horizontalSizeClass == .regular
     }
 
     var body: some View {
@@ -40,25 +46,37 @@ struct SensorDashboardView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(isEditingLayout ? "Done editing" : "Edit blocks") {
-                        if isEditingLayout {
-                            isEditingLayout = false
-                            showLayoutEditor = false
-                        } else {
-                            isEditingLayout = true
-                            editingBlockId = editingBlockId ?? "b1"
-                            showLayoutEditor = true
-                        }
+                        toggleLayoutEditing()
                     }
                 }
             }
-            .sheet(isPresented: $showLayoutEditor, onDismiss: {
+            .sheet(isPresented: $showLayoutEditorSheet, onDismiss: {
                 isEditingLayout = false
                 editingBlockId = nil
             }) {
                 VineyardBlockLayoutEditor(
                     layoutStore: layoutStore,
-                    editingBlockId: $editingBlockId
+                    editingBlockId: $editingBlockId,
+                    style: .sheet,
+                    onDone: {
+                        isEditingLayout = false
+                        editingBlockId = nil
+                    }
                 )
+            }
+        }
+    }
+
+    private func toggleLayoutEditing() {
+        if isEditingLayout {
+            isEditingLayout = false
+            showLayoutEditorSheet = false
+            editingBlockId = nil
+        } else {
+            isEditingLayout = true
+            editingBlockId = editingBlockId ?? "b1"
+            if !useInlineEditor {
+                showLayoutEditorSheet = true
             }
         }
     }
@@ -87,8 +105,21 @@ struct SensorDashboardView: View {
 
             Divider()
 
-            rightPanel(readingsFraction: 0.5, insightsFraction: 0.5)
-                .frame(maxWidth: .infinity)
+            if isEditingLayout, useInlineEditor {
+                VineyardBlockLayoutEditor(
+                    layoutStore: layoutStore,
+                    editingBlockId: $editingBlockId,
+                    style: .sidebar,
+                    onDone: {
+                        isEditingLayout = false
+                        editingBlockId = nil
+                    }
+                )
+                .frame(width: 360)
+            } else {
+                rightPanel(readingsFraction: 0.5, insightsFraction: 0.5)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 
@@ -97,14 +128,26 @@ struct SensorDashboardView: View {
     private func stackedLayout(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             mapView()
-                .frame(height: geometry.size.height * 0.42)
+                .frame(height: geometry.size.height * (isEditingLayout ? 0.55 : 0.42))
 
-            Divider()
-
-            rightPanel(
-                readingsFraction: selectedBlock == nil ? 0.38 : 0.52,
-                insightsFraction: selectedBlock == nil ? 0.62 : 0.48
-            )
+            if isEditingLayout, useInlineEditor {
+                VineyardBlockLayoutEditor(
+                    layoutStore: layoutStore,
+                    editingBlockId: $editingBlockId,
+                    style: .sidebar,
+                    onDone: {
+                        isEditingLayout = false
+                        editingBlockId = nil
+                    }
+                )
+                .frame(height: geometry.size.height * 0.45)
+            } else {
+                Divider()
+                rightPanel(
+                    readingsFraction: selectedBlock == nil ? 0.38 : 0.52,
+                    insightsFraction: selectedBlock == nil ? 0.62 : 0.48
+                )
+            }
         }
     }
 
