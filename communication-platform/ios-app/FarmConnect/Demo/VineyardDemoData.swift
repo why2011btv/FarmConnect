@@ -4,19 +4,19 @@ import MapKit
 
 /// Bundled demo vineyard data (Bristol County, MA coordinates). Generic labels in UI.
 enum VineyardDemoData {
-    static let mapCenter = CLLocationCoordinate2D(latitude: 41.67914, longitude: -70.999375)
-    static let mapSpan = MKCoordinateSpan(latitudeDelta: 0.009, longitudeDelta: 0.014)
+    static let mapCenter = CLLocationCoordinate2D(latitude: 41.68245, longitude: -71.00075)
+    static let mapSpan = MKCoordinateSpan(latitudeDelta: 0.0065, longitudeDelta: 0.0045)
 
-    /// Default rectangles: north = 3 horizontal strips, middle = 2 columns, south = 3 vertical strips.
+    /// Default rectangles aligned to Running Brook vineyard blocks (manual satellite fit).
     static let defaultRectangles: [VineyardBlockRectangle] = [
-        rect("b1", 41.68262, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
-        rect("b2", 41.68242, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
-        rect("b3", 41.68222, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
-        rect("b4", 41.68105, -71.00115, halfLat: 0.00038, halfLng: 0.00020, rotation: -14),
-        rect("b5", 41.68105, -71.00045, halfLat: 0.00038, halfLng: 0.00020, rotation: -14),
-        rect("b6", 41.67955, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
-        rect("b7", 41.67875, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
-        rect("b8", 41.67795, -71.00085, halfLat: 0.00022, halfLng: 0.00016, rotation: -14),
+        rect("b1", 41.684619999999924, -71.00101000000005, halfLat: 0.00023500000000000007, halfLng: 0.0010950000000000016, rotation: 6.5),
+        rect("b2", 41.68409999999994, -71.00093000000003, halfLat: 0.00026500000000000004, halfLng: 0.0010800000000000015, rotation: 6.5),
+        rect("b3", 41.68349999999995, -71.00089000000001, halfLat: 0.000295, halfLng: 0.0009450000000000012, rotation: 7),
+        rect("b4", 41.68260999999994, -71.00036999999975, halfLat: 0.0006050000000000002, halfLng: 0.00036499999999999993, rotation: 1),
+        rect("b5", 41.68254999999994, -71.00113000000022, halfLat: 0.0005149999999999999, halfLng: 0.00036499999999999993, rotation: 0.5),
+        rect("b6", 41.68154999999992, -71.00046999999988, halfLat: 0.0003549999999999999, halfLng: 0.00047499999999999984, rotation: 0),
+        rect("b7", 41.68092999999992, -71.00044999999987, halfLat: 0.00025, halfLng: 0.0004899999999999999, rotation: 0),
+        rect("b8", 41.68020999999992, -71.00044999999987, halfLat: 0.0004299999999999998, halfLng: 0.0005049999999999999, rotation: 0),
     ]
 
     static let generalInsights: [VineyardBlockInsight] = [
