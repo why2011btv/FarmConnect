@@ -38,6 +38,9 @@
 		DD11CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */; };
 		DD11DDDDDDDDDDDD00000004 /* CanopySensorReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22DDDDDDDDDDDD00000004 /* CanopySensorReadingsView.swift */; };
 		DD11EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift */; };
+		DD11FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */; };
+		DD1100000000000100000007 /* VineyardBlockLayoutStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2200000000000100000007 /* VineyardBlockLayoutStore.swift */; };
+		DD1111111111111100000008 /* VineyardBlockLayoutEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +78,9 @@
 		FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardHealthMapView.swift; sourceTree = "<group>"; };
 		FA22DDDDDDDDDDDD00000004 /* CanopySensorReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanopySensorReadingsView.swift; sourceTree = "<group>"; };
 		FA22EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardInsightsPanel.swift; sourceTree = "<group>"; };
+		FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockRectangle.swift; sourceTree = "<group>"; };
+		FA2200000000000100000007 /* VineyardBlockLayoutStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockLayoutStore.swift; sourceTree = "<group>"; };
+		FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockLayoutEditor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -180,6 +186,7 @@
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
 				FA22EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift */,
 				FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */,
+				FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */,
 			);
 			path = Sensors;
 			sourceTree = "<group>";
@@ -187,6 +194,7 @@
 		DEMOGRP0000000000000001 /* Demo */ = {
 			isa = PBXGroup;
 			children = (
+				FA2200000000000100000007 /* VineyardBlockLayoutStore.swift */,
 				FA22BBBBBBBBBBBB00000002 /* VineyardDemoData.swift */,
 			);
 			path = Demo;
@@ -222,6 +230,7 @@
 			children = (
 				E00A5CBC466AA00FCCA3BF50 /* DomainModels.swift */,
 				FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */,
+				FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -357,6 +366,9 @@
 				DD11CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift in Sources */,
 				DD11DDDDDDDDDDDD00000004 /* CanopySensorReadingsView.swift in Sources */,
 				DD11EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift in Sources */,
+				DD11FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift in Sources */,
+				DD1100000000000100000007 /* VineyardBlockLayoutStore.swift in Sources */,
+				DD1111111111111100000008 /* VineyardBlockLayoutEditor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

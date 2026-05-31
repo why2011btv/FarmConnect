@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CanopySensorReadingsView: View {
     let block: VineyardDemoBlock?
+    var allBlocks: [VineyardDemoBlock] = []
 
     var body: some View {
         Group {
@@ -43,9 +44,9 @@ struct CanopySensorReadingsView: View {
     }
 
     private var vineyardOverview: some View {
-        let blocks = VineyardDemoData.blocks
-        let highRisk = blocks.filter { $0.riskLevel == .high }.count
-        let online = blocks.count
+        let summaryBlocks = allBlocks.isEmpty ? [] : allBlocks
+        let highRisk = summaryBlocks.filter { $0.riskLevel == .high }.count
+        let online = summaryBlocks.count
 
         return ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -80,10 +81,9 @@ struct CanopySensorReadingsView: View {
     }
 
     private var riskSummaryRow: some View {
-        let blocks = VineyardDemoData.blocks
-        let low = blocks.filter { $0.riskLevel == .low }.count
-        let moderate = blocks.filter { $0.riskLevel == .moderate }.count
-        let high = blocks.filter { $0.riskLevel == .high }.count
+        let low = allBlocks.filter { $0.riskLevel == .low }.count
+        let moderate = allBlocks.filter { $0.riskLevel == .moderate }.count
+        let high = allBlocks.filter { $0.riskLevel == .high }.count
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("Crop health summary")

@@ -1,9 +1,15 @@
 import SwiftUI
 
 struct SensorDashboardView: View {
+    @StateObject private var layoutStore = VineyardBlockLayoutStore()
     @State private var selectedBlockId: String?
+    @State private var editingBlockId: String?
+    @State private var isEditingLayout = false
+    @State private var showLayoutEditor = false
 
-    private let blocks = VineyardDemoData.blocks
+    private var blocks: [VineyardDemoBlock] {
+        layoutStore.blocks
+    }
 
     private var selectedBlock: VineyardDemoBlock? {
         guard let selectedBlockId else { return nil }
@@ -32,19 +38,52 @@ struct SensorDashboardView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     AccountMenuButton()
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(isEditingLayout ? "Done editing" : "Edit blocks") {
+                        if isEditingLayout {
+                            isEditingLayout = false
+                            showLayoutEditor = false
+                        } else {
+                            isEditingLayout = true
+                            editingBlockId = editingBlockId ?? "b1"
+                            showLayoutEditor = true
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showLayoutEditor, onDismiss: {
+                isEditingLayout = false
+                editingBlockId = nil
+            }) {
+                VineyardBlockLayoutEditor(
+                    layoutStore: layoutStore,
+                    editingBlockId: $editingBlockId
+                )
             }
         }
+    }
+
+    private func mapView() -> some View {
+        VineyardHealthMapView(
+            blocks: blocks,
+            selectedBlockId: $selectedBlockId,
+            isEditingLayout: isEditingLayout,
+            editingBlockId: $editingBlockId,
+            onMoveBlock: { id, lat, lng in
+                layoutStore.updateRectangle(id: id) {
+                    $0.centerLatitude = lat
+                    $0.centerLongitude = lng
+                }
+            }
+        )
     }
 
     // MARK: - iPad landscape / wide
 
     private var sideBySideLayout: some View {
         HStack(spacing: 0) {
-            VineyardHealthMapView(
-                blocks: blocks,
-                selectedBlockId: $selectedBlockId
-            )
-            .frame(maxWidth: .infinity)
+            mapView()
+                .frame(maxWidth: .infinity)
 
             Divider()
 
@@ -57,11 +96,8 @@ struct SensorDashboardView: View {
 
     private func stackedLayout(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            VineyardHealthMapView(
-                blocks: blocks,
-                selectedBlockId: $selectedBlockId
-            )
-            .frame(height: geometry.size.height * 0.42)
+            mapView()
+                .frame(height: geometry.size.height * 0.42)
 
             Divider()
 
@@ -78,7 +114,7 @@ struct SensorDashboardView: View {
             let insightsHeight = geo.size.height * insightsFraction
 
             VStack(spacing: 0) {
-                CanopySensorReadingsView(block: selectedBlock)
+                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
                     .frame(height: readingsHeight)
 
                 Divider()

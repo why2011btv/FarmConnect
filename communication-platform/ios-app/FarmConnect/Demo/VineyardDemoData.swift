@@ -4,120 +4,26 @@ import MapKit
 
 /// Bundled demo vineyard data (Bristol County, MA coordinates). Generic labels in UI.
 enum VineyardDemoData {
-    // Running Brook Vineyard area — used only for map framing, not shown by name.
     static let mapCenter = CLLocationCoordinate2D(latitude: 41.67914, longitude: -70.999375)
     static let mapSpan = MKCoordinateSpan(latitudeDelta: 0.009, longitudeDelta: 0.014)
 
-    static let blocks: [VineyardDemoBlock] = [
-        block(
-            id: "b1",
-            name: "South Block",
-            locationLabel: "South vertical rows",
-            risk: .low,
-            center: coord(41.67750, -71.00030),
-            polygon: quad(
-                (41.67910, -71.00075), // NW
-                (41.67910, -70.99975), // NE
-                (41.67600, -70.99960), // SE
-                (41.67600, -71.00065)  // SW
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 74.2,
-                relativeHumidityPct: 58,
-                leafWetnessHours: 0.6,
-                soilMoisturePct: 39,
-                soilTemperatureF: 69.5,
-                rainfallInches24h: 0.02,
-                solarExposureMJ: 22.4,
-                windSpeedMph: 8.2,
-                windDirectionDegrees: 240
-            ),
-            insights: [
-                insight(
-                    "b1-i1",
-                    "Canopy conditions favorable",
-                    "Humidity and leaf wetness are below thresholds for powdery and downy mildew development.",
-                    "low"
-                )
-            ]
-        ),
-        block(
-            id: "b2",
-            name: "Middle Block",
-            locationLabel: "Main trapezoid section",
-            risk: .moderate,
-            center: coord(41.68060, -71.00080),
-            polygon: quad(
-                (41.68210, -71.00160), // NW
-                (41.68205, -70.99980), // NE
-                (41.67910, -70.99975), // SE
-                (41.67910, -71.00075)  // SW
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 73.8,
-                relativeHumidityPct: 72,
-                leafWetnessHours: 2.8,
-                soilMoisturePct: 44,
-                soilTemperatureF: 68.8,
-                rainfallInches24h: 0.08,
-                solarExposureMJ: 20.1,
-                windSpeedMph: 5.4,
-                windDirectionDegrees: 210
-            ),
-            insights: [
-                insight(
-                    "b2-i1",
-                    "Monitor overnight humidity",
-                    "Extended leaf wetness after dew may elevate downy mildew risk if RH stays above 75% tonight.",
-                    "medium"
-                )
-            ]
-        ),
-        block(
-            id: "b3",
-            name: "North Block",
-            locationLabel: "Upper horizontal rows",
-            risk: .high,
-            center: coord(41.68245, -71.00080),
-            polygon: quad(
-                (41.68270, -71.00195), // NW
-                (41.68260, -70.99970), // NE
-                (41.68205, -70.99980), // SE
-                (41.68210, -71.00160)  // SW
-            ),
-            readings: VineyardCanopyReading(
-                airTemperatureF: 72.4,
-                relativeHumidityPct: 88,
-                leafWetnessHours: 6.2,
-                soilMoisturePct: 48,
-                soilTemperatureF: 67.9,
-                rainfallInches24h: 0.14,
-                solarExposureMJ: 17.6,
-                windSpeedMph: 2.8,
-                windDirectionDegrees: 55
-            ),
-            insights: [
-                insight(
-                    "b3-i1",
-                    "Elevated downy mildew risk",
-                    "High RH, recent rain, and low airflow in the canopy favor downy mildew. Consider a protectant spray within 48 hours.",
-                    "high"
-                ),
-                insight(
-                    "b3-i2",
-                    "Leaf wetness accumulation",
-                    "Canopy sensors logged over 6 hours of leaf wetness in the last 24 hours — above the typical infection threshold.",
-                    "high"
-                )
-            ]
-        ),
+    /// Default rectangles: north = 3 horizontal strips, middle = 2 columns, south = 3 vertical strips.
+    static let defaultRectangles: [VineyardBlockRectangle] = [
+        rect("b1", 41.68262, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
+        rect("b2", 41.68242, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
+        rect("b3", 41.68222, -71.00085, halfLat: 0.00007, halfLng: 0.00042),
+        rect("b4", 41.68105, -71.00115, halfLat: 0.00038, halfLng: 0.00020),
+        rect("b5", 41.68105, -71.00045, halfLat: 0.00038, halfLng: 0.00020),
+        rect("b6", 41.67955, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
+        rect("b7", 41.67875, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
+        rect("b8", 41.67795, -71.00085, halfLat: 0.00022, halfLng: 0.00016),
     ]
 
     static let generalInsights: [VineyardBlockInsight] = [
         insight(
             "g1",
             "Vineyard-wide disease outlook",
-            "1 of 3 canopy blocks shows elevated powdery or downy mildew risk based on humidity, leaf wetness, and airflow. Focus scouting on the North Block.",
+            "3 of 8 canopy blocks show elevated powdery or downy mildew risk based on humidity, leaf wetness, and airflow. Focus scouting on Blocks 3, 4, and 7.",
             "high"
         ),
         insight(
@@ -129,30 +35,179 @@ enum VineyardDemoData {
         insight(
             "g3",
             "Weather pattern",
-            "Recent light rainfall and calm overnight winds increased canopy moisture in the northern rows. The South Block with good air drainage remains in the low-risk zone.",
+            "Recent light rainfall and calm overnight winds increased canopy moisture in eastern and western rows. Blocks with good air drainage (1, 5, 8) remain in the low-risk zone.",
             "low"
         ),
         insight(
             "g4",
             "Sensor network status",
-            "All 3 canopy nodes are reporting. Tap a block on the map to view block-level microclimate readings and tailored recommendations.",
+            "All 8 canopy nodes are reporting. Tap a block on the map to view block-level microclimate readings and tailored recommendations.",
             "low"
+        ),
+    ]
+
+    static func makeBlocks(rectangles: [VineyardBlockRectangle]) -> [VineyardDemoBlock] {
+        rectangles.compactMap { rectangle in
+            guard let template = blockTemplates[rectangle.id] else { return nil }
+            return VineyardDemoBlock(
+                id: rectangle.id,
+                name: template.name,
+                locationLabel: template.locationLabel,
+                polygon: rectangle.polygon,
+                center: rectangle.center,
+                riskLevel: template.risk,
+                readings: template.readings,
+                insights: template.insights
+            )
+        }
+    }
+
+    static var mapRegion: MKCoordinateRegion {
+        MKCoordinateRegion(center: mapCenter, span: mapSpan)
+    }
+
+    // MARK: - Block metadata (readings / risk do not depend on map position)
+
+    private struct BlockTemplate {
+        let name: String
+        let locationLabel: String
+        let risk: VineyardRiskLevel
+        let readings: VineyardCanopyReading
+        let insights: [VineyardBlockInsight]
+    }
+
+    private static let blockTemplates: [String: BlockTemplate] = [
+        "b1": template(
+            name: "Block 1",
+            locationLabel: "North rows (upper)",
+            risk: .low,
+            readings: readings(
+                temp: 74.2, rh: 58, leafWet: 0.6, soilMoist: 39, soilTemp: 69.5,
+                rain: 0.02, solar: 22.4, wind: 8.2, windDir: 240
+            ),
+            insights: [insight("b1-i1", "Canopy conditions favorable", "Humidity and leaf wetness are below thresholds for powdery and downy mildew development.", "low")]
+        ),
+        "b2": template(
+            name: "Block 2",
+            locationLabel: "North rows (middle)",
+            risk: .moderate,
+            readings: readings(
+                temp: 73.8, rh: 72, leafWet: 2.8, soilMoist: 44, soilTemp: 68.8,
+                rain: 0.08, solar: 20.1, wind: 5.4, windDir: 210
+            ),
+            insights: [insight("b2-i1", "Monitor overnight humidity", "Extended leaf wetness after dew may elevate downy mildew risk if RH stays above 75% tonight.", "medium")]
+        ),
+        "b3": template(
+            name: "Block 3",
+            locationLabel: "North rows (lower)",
+            risk: .high,
+            readings: readings(
+                temp: 72.4, rh: 88, leafWet: 6.2, soilMoist: 48, soilTemp: 67.9,
+                rain: 0.14, solar: 17.6, wind: 2.8, windDir: 55
+            ),
+            insights: [
+                insight("b3-i1", "Elevated downy mildew risk", "High RH, recent rain, and low airflow in the canopy favor downy mildew. Consider a protectant spray within 48 hours.", "high"),
+                insight("b3-i2", "Leaf wetness accumulation", "Canopy sensors logged over 6 hours of leaf wetness in the last 24 hours.", "high"),
+            ]
+        ),
+        "b4": template(
+            name: "Block 4",
+            locationLabel: "Middle section (west)",
+            risk: .high,
+            readings: readings(
+                temp: 71.9, rh: 86, leafWet: 5.4, soilMoist: 46, soilTemp: 67.2,
+                rain: 0.12, solar: 18.2, wind: 3.1, windDir: 70
+            ),
+            insights: [insight("b4-i1", "Powdery mildew pressure building", "Warm canopy temperatures with sustained humidity support powdery mildew. Scout undersides of leaves.", "high")]
+        ),
+        "b5": template(
+            name: "Block 5",
+            locationLabel: "Middle section (east)",
+            risk: .low,
+            readings: readings(
+                temp: 75.1, rh: 55, leafWet: 0.4, soilMoist: 36, soilTemp: 70.8,
+                rain: 0.01, solar: 23.8, wind: 9.6, windDir: 255
+            ),
+            insights: [insight("b5-i1", "Low disease pressure", "Dry canopy and good air movement keep fungal risk low.", "low")]
+        ),
+        "b6": template(
+            name: "Block 6",
+            locationLabel: "South rows (upper)",
+            risk: .moderate,
+            readings: readings(
+                temp: 74.6, rh: 68, leafWet: 3.1, soilMoist: 41, soilTemp: 69.9,
+                rain: 0.05, solar: 21.3, wind: 6.0, windDir: 225
+            ),
+            insights: [insight("b6-i1", "Irrigation timing note", "Avoid late-evening irrigation that could extend leaf wetness and raise mildew risk.", "medium")]
+        ),
+        "b7": template(
+            name: "Block 7",
+            locationLabel: "South rows (middle)",
+            risk: .high,
+            readings: readings(
+                temp: 72.8, rh: 84, leafWet: 4.9, soilMoist: 47, soilTemp: 68.1,
+                rain: 0.11, solar: 16.9, wind: 3.5, windDir: 90
+            ),
+            insights: [
+                insight("b7-i1", "Spray window recommendation", "Apply fungicide when wind drops below 10 mph and before the next rain event.", "high"),
+                insight("b7-i2", "Harvest planning unaffected", "Berry sugar accumulation is on track; disease risk is canopy-microclimate driven.", "low"),
+            ]
+        ),
+        "b8": template(
+            name: "Block 8",
+            locationLabel: "South rows (lower)",
+            risk: .low,
+            readings: readings(
+                temp: 74.9, rh: 61, leafWet: 1.1, soilMoist: 38, soilTemp: 70.2,
+                rain: 0.03, solar: 22.0, wind: 7.8, windDir: 265
+            ),
+            insights: [insight("b8-i1", "Stable microclimate", "VPD and canopy humidity are in a comfortable range with minimal fungal pressure.", "low")]
         ),
     ]
 
     // MARK: - Helpers
 
-    private static func coord(_ lat: Double, _ lng: Double) -> CLLocationCoordinate2D {
-        CLLocationCoordinate2D(latitude: lat, longitude: lng)
+    private static func rect(
+        _ id: String,
+        _ lat: Double,
+        _ lng: Double,
+        halfLat: Double,
+        halfLng: Double
+    ) -> VineyardBlockRectangle {
+        VineyardBlockRectangle(
+            id: id,
+            centerLatitude: lat,
+            centerLongitude: lng,
+            halfLatitudeSpan: halfLat,
+            halfLongitudeSpan: halfLng
+        )
     }
 
-    private static func quad(
-        _ nw: (Double, Double),
-        _ ne: (Double, Double),
-        _ se: (Double, Double),
-        _ sw: (Double, Double)
-    ) -> [CLLocationCoordinate2D] {
-        [coord(nw.0, nw.1), coord(ne.0, ne.1), coord(se.0, se.1), coord(sw.0, sw.1)]
+    private static func template(
+        name: String,
+        locationLabel: String,
+        risk: VineyardRiskLevel,
+        readings: VineyardCanopyReading,
+        insights: [VineyardBlockInsight]
+    ) -> BlockTemplate {
+        BlockTemplate(name: name, locationLabel: locationLabel, risk: risk, readings: readings, insights: insights)
+    }
+
+    private static func readings(
+        temp: Double, rh: Double, leafWet: Double, soilMoist: Double, soilTemp: Double,
+        rain: Double, solar: Double, wind: Double, windDir: Double
+    ) -> VineyardCanopyReading {
+        VineyardCanopyReading(
+            airTemperatureF: temp,
+            relativeHumidityPct: rh,
+            leafWetnessHours: leafWet,
+            soilMoisturePct: soilMoist,
+            soilTemperatureF: soilTemp,
+            rainfallInches24h: rain,
+            solarExposureMJ: solar,
+            windSpeedMph: wind,
+            windDirectionDegrees: windDir
+        )
     }
 
     private static func insight(
@@ -162,31 +217,5 @@ enum VineyardDemoData {
         _ severity: String
     ) -> VineyardBlockInsight {
         VineyardBlockInsight(id: id, title: title, message: message, severity: severity)
-    }
-
-    private static func block(
-        id: String,
-        name: String,
-        locationLabel: String,
-        risk: VineyardRiskLevel,
-        center: CLLocationCoordinate2D,
-        polygon: [CLLocationCoordinate2D],
-        readings: VineyardCanopyReading,
-        insights: [VineyardBlockInsight]
-    ) -> VineyardDemoBlock {
-        VineyardDemoBlock(
-            id: id,
-            name: name,
-            locationLabel: locationLabel,
-            polygon: polygon,
-            center: center,
-            riskLevel: risk,
-            readings: readings,
-            insights: insights
-        )
-    }
-
-    static var mapRegion: MKCoordinateRegion {
-        MKCoordinateRegion(center: mapCenter, span: mapSpan)
     }
 }
