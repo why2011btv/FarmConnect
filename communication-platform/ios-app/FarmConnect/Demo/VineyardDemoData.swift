@@ -351,10 +351,8 @@ enum VineyardDemoData {
             insights: insights
         )
     }
-}
 
-extension VineyardDemoData {
-    static var initialCamera: MapCameraPosition {
-        .region(MKCoordinateRegion(center: mapCenter, span: mapSpan))
+    static var mapRegion: MKCoordinateRegion {
+        MKCoordinateRegion(center: mapCenter, span: mapSpan)
     }
 }

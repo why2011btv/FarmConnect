@@ -4,7 +4,7 @@ import SwiftUI
 struct VineyardHealthMapView: View {
     let blocks: [VineyardDemoBlock]
     @Binding var selectedBlockId: String?
-    @State private var mapPosition: MapCameraPosition = VineyardDemoData.initialCamera
+    @State private var mapPosition = MapCameraPosition.region(VineyardDemoData.mapRegion)
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
