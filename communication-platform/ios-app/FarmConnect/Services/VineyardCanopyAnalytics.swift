@@ -25,10 +25,8 @@ enum VineyardCanopyAnalytics {
         )
     }
 
-    static func insights(
-        for block: VineyardDemoBlock,
-        analytics: VineyardCanopyAnalyticsSummary
-    ) -> [VineyardBlockInsight] {
+    static func insights(for block: VineyardDemoBlock) -> [VineyardBlockInsight] {
+        let analytics = block.analytics
         let variety = block.grapeVariety
         var items: [VineyardBlockInsight] = []
 
