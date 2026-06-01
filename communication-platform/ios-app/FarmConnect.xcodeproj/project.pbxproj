@@ -43,6 +43,12 @@
 		DD1111111111111100000008 /* VineyardBlockLayoutEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */; };
 		DD1122222222222200000009 /* GrapeVariety.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2222222222222200000009 /* GrapeVariety.swift */; };
 		DD1133333333333300000010 /* VineyardCanopyAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */; };
+		DD33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift */; };
+		DD33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift */; };
+		DD33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift */; };
+		DD33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift */; };
+		DD33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift */; };
+		DD33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +91,12 @@
 		FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockLayoutEditor.swift; sourceTree = "<group>"; };
 		FA2222222222222200000009 /* GrapeVariety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrapeVariety.swift; sourceTree = "<group>"; };
 		FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardCanopyAnalytics.swift; sourceTree = "<group>"; };
+		FA33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogModels.swift; sourceTree = "<group>"; };
+		FA33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogDemoData.swift; sourceTree = "<group>"; };
+		FA33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogStore.swift; sourceTree = "<group>"; };
+		FA33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogCard.swift; sourceTree = "<group>"; };
+		FA33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogDetailView.swift; sourceTree = "<group>"; };
+		FA33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewVineyardLogEntryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -201,6 +213,8 @@
 			children = (
 				FA2200000000000100000007 /* VineyardBlockLayoutStore.swift */,
 				FA22BBBBBBBBBBBB00000002 /* VineyardDemoData.swift */,
+				FA33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift */,
+				FA33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift */,
 			);
 			path = Demo;
 			sourceTree = "<group>";
@@ -209,6 +223,9 @@
 			isa = PBXGroup;
 			children = (
 				9D2E3F405162738495A6B7C8 /* NotesView.swift */,
+				FA33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift */,
+				FA33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift */,
+				FA33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift */,
 			);
 			path = Notes;
 			sourceTree = "<group>";
@@ -237,6 +254,7 @@
 				FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */,
 				FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */,
 				FA2222222222222200000009 /* GrapeVariety.swift */,
+				FA33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -377,6 +395,12 @@
 				DD1111111111111100000008 /* VineyardBlockLayoutEditor.swift in Sources */,
 				DD1122222222222200000009 /* GrapeVariety.swift in Sources */,
 				DD1133333333333300000010 /* VineyardCanopyAnalytics.swift in Sources */,
+				DD33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift in Sources */,
+				DD33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift in Sources */,
+				DD33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift in Sources */,
+				DD33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift in Sources */,
+				DD33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift in Sources */,
+				DD33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
