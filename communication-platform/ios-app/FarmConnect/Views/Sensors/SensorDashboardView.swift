@@ -19,7 +19,10 @@ struct SensorDashboardView: View {
     }
 
     private var activeInsights: [VineyardBlockInsight] {
-        selectedBlock?.insights ?? VineyardDemoData.generalInsights
+        if let selectedBlock {
+            return selectedBlock.insights
+        }
+        return VineyardCanopyAnalytics.vineyardWideInsights(blocks: blocks)
     }
 
     private var useInlineEditor: Bool {

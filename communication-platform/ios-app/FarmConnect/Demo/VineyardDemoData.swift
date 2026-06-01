@@ -46,19 +46,61 @@ enum VineyardDemoData {
         ),
     ]
 
-    static func makeBlocks(rectangles: [VineyardBlockRectangle]) -> [VineyardDemoBlock] {
+    static let defaultBlockSettings: [String: VineyardBlockSettings] = [
+        "b1": VineyardBlockSettings(grapeVariety: GrapeVariety.cabernetFranc.rawValue),
+        "b2": VineyardBlockSettings(grapeVariety: GrapeVariety.merlot.rawValue),
+        "b3": VineyardBlockSettings(grapeVariety: GrapeVariety.pinotGris.rawValue),
+        "b4": VineyardBlockSettings(grapeVariety: GrapeVariety.merlot.rawValue),
+        "b5": VineyardBlockSettings(grapeVariety: GrapeVariety.chardonnay.rawValue),
+        "b6": VineyardBlockSettings(grapeVariety: GrapeVariety.cabernetFranc.rawValue),
+        "b7": VineyardBlockSettings(grapeVariety: GrapeVariety.pinotGris.rawValue),
+        "b8": VineyardBlockSettings(grapeVariety: GrapeVariety.riesling.rawValue),
+    ]
+
+    static func makeBlocks(
+        rectangles: [VineyardBlockRectangle],
+        settings: [String: VineyardBlockSettings] = defaultBlockSettings
+    ) -> [VineyardDemoBlock] {
         rectangles.compactMap { rectangle in
             guard let template = blockTemplates[rectangle.id] else { return nil }
-            return VineyardDemoBlock(
+            let variety = settings[rectangle.id]?.variety ?? .notSpecified
+            let analytics = VineyardCanopyAnalytics.summarize(readings: template.readings)
+            let risk = riskLevel(from: analytics)
+
+            let block = VineyardDemoBlock(
                 id: rectangle.id,
                 name: template.name,
                 locationLabel: template.locationLabel,
                 polygon: rectangle.polygon,
                 center: rectangle.center,
-                riskLevel: template.risk,
+                riskLevel: risk,
                 readings: template.readings,
-                insights: template.insights
+                grapeVariety: variety,
+                analytics: analytics,
+                insights: []
             )
+            let insights = VineyardCanopyAnalytics.insights(for: block)
+            return VineyardDemoBlock(
+                id: block.id,
+                name: block.name,
+                locationLabel: block.locationLabel,
+                polygon: block.polygon,
+                center: block.center,
+                riskLevel: block.riskLevel,
+                readings: block.readings,
+                grapeVariety: block.grapeVariety,
+                analytics: block.analytics,
+                insights: insights
+            )
+        }
+    }
+
+    static func riskLevel(from analytics: VineyardCanopyAnalyticsSummary) -> VineyardRiskLevel {
+        let peak = max(analytics.powderyMildewIndex, analytics.downyMildewIndex)
+        switch peak {
+        case 70...: return .high
+        case 40..<70: return .moderate
+        default: return .low
         }
     }
 
@@ -71,97 +113,73 @@ enum VineyardDemoData {
     private struct BlockTemplate {
         let name: String
         let locationLabel: String
-        let risk: VineyardRiskLevel
         let readings: VineyardCanopyReading
-        let insights: [VineyardBlockInsight]
     }
 
     private static let blockTemplates: [String: BlockTemplate] = [
         "b1": template(
             name: "Block 1",
             locationLabel: "North rows (upper)",
-            risk: .low,
             readings: readings(
                 temp: 74.2, rh: 58, leafWet: 0.6, soilMoist: 39, soilTemp: 69.5,
                 rain: 0.02, solar: 22.4, wind: 8.2, windDir: 240
-            ),
-            insights: [insight("b1-i1", "Canopy conditions favorable", "Humidity and leaf wetness are below thresholds for powdery and downy mildew development.", "low")]
+            )
         ),
         "b2": template(
             name: "Block 2",
             locationLabel: "North rows (middle)",
-            risk: .moderate,
             readings: readings(
                 temp: 73.8, rh: 72, leafWet: 2.8, soilMoist: 44, soilTemp: 68.8,
                 rain: 0.08, solar: 20.1, wind: 5.4, windDir: 210
-            ),
-            insights: [insight("b2-i1", "Monitor overnight humidity", "Extended leaf wetness after dew may elevate downy mildew risk if RH stays above 75% tonight.", "medium")]
+            )
         ),
         "b3": template(
             name: "Block 3",
             locationLabel: "North rows (lower)",
-            risk: .high,
             readings: readings(
                 temp: 72.4, rh: 88, leafWet: 6.2, soilMoist: 48, soilTemp: 67.9,
                 rain: 0.14, solar: 17.6, wind: 2.8, windDir: 55
-            ),
-            insights: [
-                insight("b3-i1", "Elevated downy mildew risk", "High RH, recent rain, and low airflow in the canopy favor downy mildew. Consider a protectant spray within 48 hours.", "high"),
-                insight("b3-i2", "Leaf wetness accumulation", "Canopy sensors logged over 6 hours of leaf wetness in the last 24 hours.", "high"),
-            ]
+            )
         ),
         "b4": template(
             name: "Block 4",
             locationLabel: "Middle section (west)",
-            risk: .high,
             readings: readings(
                 temp: 71.9, rh: 86, leafWet: 5.4, soilMoist: 46, soilTemp: 67.2,
                 rain: 0.12, solar: 18.2, wind: 3.1, windDir: 70
-            ),
-            insights: [insight("b4-i1", "Powdery mildew pressure building", "Warm canopy temperatures with sustained humidity support powdery mildew. Scout undersides of leaves.", "high")]
+            )
         ),
         "b5": template(
             name: "Block 5",
             locationLabel: "Middle section (east)",
-            risk: .low,
             readings: readings(
                 temp: 75.1, rh: 55, leafWet: 0.4, soilMoist: 36, soilTemp: 70.8,
                 rain: 0.01, solar: 23.8, wind: 9.6, windDir: 255
-            ),
-            insights: [insight("b5-i1", "Low disease pressure", "Dry canopy and good air movement keep fungal risk low.", "low")]
+            )
         ),
         "b6": template(
             name: "Block 6",
             locationLabel: "South rows (upper)",
-            risk: .moderate,
             readings: readings(
                 temp: 74.6, rh: 68, leafWet: 3.1, soilMoist: 41, soilTemp: 69.9,
                 rain: 0.05, solar: 21.3, wind: 6.0, windDir: 225
-            ),
-            insights: [insight("b6-i1", "Irrigation timing note", "Avoid late-evening irrigation that could extend leaf wetness and raise mildew risk.", "medium")]
+            )
         ),
         "b7": template(
             name: "Block 7",
             locationLabel: "South rows (middle)",
-            risk: .high,
             readings: readings(
                 temp: 72.8, rh: 84, leafWet: 4.9, soilMoist: 47, soilTemp: 68.1,
                 rain: 0.11, solar: 16.9, wind: 3.5, windDir: 90
-            ),
-            insights: [
-                insight("b7-i1", "Spray window recommendation", "Apply fungicide when wind drops below 10 mph and before the next rain event.", "high"),
-                insight("b7-i2", "Harvest planning unaffected", "Berry sugar accumulation is on track; disease risk is canopy-microclimate driven.", "low"),
-            ]
+            )
         ),
         "b8": template(
             name: "Block 8",
             locationLabel: "South rows (lower)",
-            risk: .low,
             readings: readings(
                 temp: 74.9, rh: 61, leafWet: 1.1, soilMoist: 38, soilTemp: 70.2,
                 rain: 0.03, solar: 22.0, wind: 7.8, windDir: 265
-            ),
-            insights: [insight("b8-i1", "Stable microclimate", "VPD and canopy humidity are in a comfortable range with minimal fungal pressure.", "low")]
+            )
         ),
     ]
 
@@ -188,11 +206,9 @@ enum VineyardDemoData {
     private static func template(
         name: String,
         locationLabel: String,
-        risk: VineyardRiskLevel,
-        readings: VineyardCanopyReading,
-        insights: [VineyardBlockInsight]
+        readings: VineyardCanopyReading
     ) -> BlockTemplate {
-        BlockTemplate(name: name, locationLabel: locationLabel, risk: risk, readings: readings, insights: insights)
+        BlockTemplate(name: name, locationLabel: locationLabel, readings: readings)
     }
 
     private static func readings(
@@ -212,12 +228,4 @@ enum VineyardDemoData {
         )
     }
 
-    private static func insight(
-        _ id: String,
-        _ title: String,
-        _ message: String,
-        _ severity: String
-    ) -> VineyardBlockInsight {
-        VineyardBlockInsight(id: id, title: title, message: message, severity: severity)
-    }
 }

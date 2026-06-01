@@ -118,23 +118,39 @@ struct CanopySensorReadingsView: View {
     }
 
     private func compactBlockHeader(for block: VineyardDemoBlock) -> some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(block.name)
-                    .font(.subheadline.weight(.semibold))
-                Text(block.locationLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(block.name)
+                        .font(.subheadline.weight(.semibold))
+                    Text(block.locationLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    if block.grapeVariety != .notSpecified {
+                        Text(block.grapeVariety.displayName)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.primary)
+                    }
+                }
+                Spacer(minLength: 4)
+                Text(block.riskLevel.label)
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
+                    .foregroundStyle(block.riskLevel.fillColor)
             }
-            Spacer(minLength: 4)
-            Text(block.riskLevel.label)
-                .font(.caption2.weight(.semibold))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
-                .foregroundStyle(block.riskLevel.fillColor)
+
+            Text(analyticsSummaryLine(block.analytics))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
         }
+    }
+
+    private func analyticsSummaryLine(_ analytics: VineyardCanopyAnalyticsSummary) -> String {
+        "GDD \(Int(analytics.gddBase50F)) · VPD \(String(format: "%.2f", analytics.vpdKPa)) kPa · Powdery \(analytics.powderyMildewIndex) · Downy \(analytics.downyMildewIndex)"
     }
 
     private func metricCard(_ title: String, value: String, icon: String, tint: Color) -> some View {

@@ -62,6 +62,8 @@ struct VineyardDemoBlock: Identifiable {
     let center: CLLocationCoordinate2D
     let riskLevel: VineyardRiskLevel
     let readings: VineyardCanopyReading
+    let grapeVariety: GrapeVariety
+    let analytics: VineyardCanopyAnalyticsSummary
     let insights: [VineyardBlockInsight]
 }
 

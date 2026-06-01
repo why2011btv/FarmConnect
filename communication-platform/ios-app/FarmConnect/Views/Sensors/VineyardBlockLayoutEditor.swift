@@ -121,6 +121,17 @@ struct VineyardBlockLayoutEditor: View {
 
     private func selectedBlockSection(id: String) -> some View {
         Group {
+            Section("Grape variety — \(blockTitle(id))") {
+                Picker("Variety", selection: varietyBinding(id: id)) {
+                    ForEach(GrapeVariety.allCases) { variety in
+                        Text(variety.displayName).tag(variety)
+                    }
+                }
+                Text("Used for variety-aware mildew analysis and future AI recommendations.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Move — \(blockTitle(id))") {
                 nudgePad(id: id)
             }
@@ -240,6 +251,13 @@ struct VineyardBlockLayoutEditor: View {
             set: { newValue in
                 layoutStore.updateRectangle(id: id) { $0.rotationDegrees = newValue }
             }
+        )
+    }
+
+    private func varietyBinding(id: String) -> Binding<GrapeVariety> {
+        Binding(
+            get: { layoutStore.settings(for: id).variety },
+            set: { layoutStore.setGrapeVariety(blockId: id, variety: $0) }
         )
     }
 
