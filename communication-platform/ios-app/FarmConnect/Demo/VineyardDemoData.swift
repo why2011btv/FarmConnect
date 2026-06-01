@@ -61,13 +61,14 @@ enum VineyardDemoData {
         rectangles: [VineyardBlockRectangle],
         settings: [String: VineyardBlockSettings] = defaultBlockSettings
     ) -> [VineyardDemoBlock] {
-        rectangles.compactMap { rectangle in
-            guard let template = blockTemplates[rectangle.id] else { return nil }
+        var blocks: [VineyardDemoBlock] = []
+        for rectangle in rectangles {
+            guard let template = blockTemplates[rectangle.id] else { continue }
             let variety = settings[rectangle.id]?.variety ?? .notSpecified
             let analytics = VineyardCanopyAnalytics.summarize(readings: template.readings)
             let risk = riskLevel(from: analytics)
 
-            let block = VineyardDemoBlock(
+            let draft = VineyardDemoBlock(
                 id: rectangle.id,
                 name: template.name,
                 locationLabel: template.locationLabel,
@@ -79,20 +80,23 @@ enum VineyardDemoData {
                 analytics: analytics,
                 insights: []
             )
-            let insights = VineyardCanopyAnalytics.insights(for: block)
-            return VineyardDemoBlock(
-                id: block.id,
-                name: block.name,
-                locationLabel: block.locationLabel,
-                polygon: block.polygon,
-                center: block.center,
-                riskLevel: block.riskLevel,
-                readings: block.readings,
-                grapeVariety: block.grapeVariety,
-                analytics: block.analytics,
-                insights: insights
+            let insights = VineyardCanopyAnalytics.insights(for: draft)
+            blocks.append(
+                VineyardDemoBlock(
+                    id: draft.id,
+                    name: draft.name,
+                    locationLabel: draft.locationLabel,
+                    polygon: draft.polygon,
+                    center: draft.center,
+                    riskLevel: draft.riskLevel,
+                    readings: draft.readings,
+                    grapeVariety: draft.grapeVariety,
+                    analytics: draft.analytics,
+                    insights: insights
+                )
             )
         }
+        return blocks
     }
 
     static func riskLevel(from analytics: VineyardCanopyAnalyticsSummary) -> VineyardRiskLevel {
@@ -228,4 +232,12 @@ enum VineyardDemoData {
         )
     }
 
+    private static func insight(
+        _ id: String,
+        _ title: String,
+        _ message: String,
+        _ severity: String
+    ) -> VineyardBlockInsight {
+        VineyardBlockInsight(id: id, title: title, message: message, severity: severity)
+    }
 }
