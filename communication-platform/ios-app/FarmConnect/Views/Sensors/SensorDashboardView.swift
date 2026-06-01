@@ -33,14 +33,13 @@ struct SensorDashboardView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 GeometryReader { geometry in
-                    let sideBySide = geometry.size.width > geometry.size.height
-                        && geometry.size.width >= 700
+                    let wide = isWideLayout(geometry)
 
-                    if sideBySide {
-                        sideBySideLayout
+                    if wide {
+                        wideLayout
                             .frame(width: geometry.size.width, height: geometry.size.height)
                     } else {
-                        stackedLayout(in: geometry)
+                        phoneLayout(in: geometry)
                     }
                 }
             }
@@ -57,6 +56,7 @@ struct SensorDashboardView: View {
                     Button(isEditingLayout ? "Done editing" : "Edit blocks") {
                         toggleLayoutEditing()
                     }
+                    .font(horizontalSizeClass == .compact ? .subheadline : .body)
                 }
             }
             .sheet(isPresented: $showLayoutEditorSheet, onDismiss: {
@@ -74,6 +74,10 @@ struct SensorDashboardView: View {
                 )
             }
         }
+    }
+
+    private func isWideLayout(_ geometry: GeometryProxy) -> Bool {
+        geometry.size.width > geometry.size.height && geometry.size.width >= 700
     }
 
     private func toggleLayoutEditing() {
@@ -107,7 +111,7 @@ struct SensorDashboardView: View {
 
     // MARK: - iPad landscape / wide
 
-    private var sideBySideLayout: some View {
+    private var wideLayout: some View {
         HStack(spacing: 0) {
             mapView()
                 .frame(maxWidth: .infinity)
@@ -126,18 +130,34 @@ struct SensorDashboardView: View {
                 )
                 .frame(width: 360)
             } else {
-                rightPanel()
+                wideRightPanel()
                     .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func wideRightPanel() -> some View {
+        GeometryReader { geo in
+            let topHeight = geo.size.height * PanelProportions.readings
+
+            VStack(spacing: 0) {
+                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks, layout: .regular)
+                    .frame(height: topHeight)
+
+                Divider()
+
+                VineyardInsightsPanel(block: selectedBlock, insights: activeInsights)
+                    .frame(height: geo.size.height - topHeight)
             }
         }
     }
 
     // MARK: - iPhone / portrait
 
-    private func stackedLayout(in geometry: GeometryProxy) -> some View {
+    private func phoneLayout(in geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             mapView()
-                .frame(height: geometry.size.height * (isEditingLayout ? 0.55 : 0.42))
+                .frame(height: geometry.size.height * 0.34)
 
             if isEditingLayout, useInlineEditor {
                 VineyardBlockLayoutEditor(
@@ -149,30 +169,20 @@ struct SensorDashboardView: View {
                         editingBlockId = nil
                     }
                 )
-                .frame(height: geometry.size.height * 0.45)
             } else {
-                Divider()
-                rightPanel()
-            }
-        }
-    }
+                VStack(spacing: 0) {
+                    CanopySensorReadingsView(
+                        block: selectedBlock,
+                        allBlocks: blocks,
+                        layout: .compact
+                    )
+                    .frame(maxHeight: geometry.size.height * 0.36)
 
-    private func rightPanel() -> some View {
-        GeometryReader { geo in
-            let topHeight = geo.size.height * PanelProportions.readings
-            let bottomHeight = geo.size.height - topHeight
+                    Divider()
 
-            VStack(spacing: 0) {
-                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks)
-                    .frame(height: topHeight)
-
-                Divider()
-
-                VineyardInsightsPanel(
-                    block: selectedBlock,
-                    insights: activeInsights
-                )
-                .frame(height: bottomHeight)
+                    VineyardInsightsPanel(block: selectedBlock, insights: activeInsights)
+                        .frame(maxHeight: .infinity)
+                }
             }
         }
     }
@@ -182,5 +192,4 @@ struct SensorDashboardView: View {
 private enum PanelProportions {
     private static let phi: CGFloat = (1 + sqrt(5)) / 2
     static let readings: CGFloat = 1 / (1 + phi)
-    static let insights: CGFloat = phi / (1 + phi)
 }

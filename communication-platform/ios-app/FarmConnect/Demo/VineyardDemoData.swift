@@ -125,64 +125,64 @@ enum VineyardDemoData {
             name: "Block 1",
             locationLabel: "North rows (upper)",
             readings: readings(
-                temp: 74.2, rh: 58, leafWet: 0.6, soilMoist: 39, soilTemp: 69.5,
-                rain: 0.02, solar: 22.4, wind: 8.2, windDir: 240
+                temp: 78, rh: 52, leafWet: 0.4, soilMoist: 39, soilTemp: 70,
+                rain: 0.01, solar: 24, wind: 10, windDir: 240
             )
         ),
         "b2": template(
             name: "Block 2",
             locationLabel: "North rows (middle)",
             readings: readings(
-                temp: 73.8, rh: 72, leafWet: 2.8, soilMoist: 44, soilTemp: 68.8,
-                rain: 0.08, solar: 20.1, wind: 5.4, windDir: 210
+                temp: 77, rh: 54, leafWet: 0.6, soilMoist: 41, soilTemp: 69,
+                rain: 0.02, solar: 23, wind: 9, windDir: 210
             )
         ),
         "b3": template(
             name: "Block 3",
             locationLabel: "North rows (lower)",
             readings: readings(
-                temp: 72.4, rh: 88, leafWet: 6.2, soilMoist: 48, soilTemp: 67.9,
-                rain: 0.14, solar: 17.6, wind: 2.8, windDir: 55
+                temp: 72, rh: 88, leafWet: 6.2, soilMoist: 48, soilTemp: 68,
+                rain: 0.14, solar: 17, wind: 2.5, windDir: 55
             )
         ),
         "b4": template(
             name: "Block 4",
             locationLabel: "Middle section (west)",
             readings: readings(
-                temp: 71.9, rh: 86, leafWet: 5.4, soilMoist: 46, soilTemp: 67.2,
-                rain: 0.12, solar: 18.2, wind: 3.1, windDir: 70
+                temp: 74, rh: 66, leafWet: 2.2, soilMoist: 44, soilTemp: 68,
+                rain: 0.04, solar: 20, wind: 6.5, windDir: 70
             )
         ),
         "b5": template(
             name: "Block 5",
             locationLabel: "Middle section (east)",
             readings: readings(
-                temp: 75.1, rh: 55, leafWet: 0.4, soilMoist: 36, soilTemp: 70.8,
-                rain: 0.01, solar: 23.8, wind: 9.6, windDir: 255
+                temp: 79, rh: 50, leafWet: 0.3, soilMoist: 36, soilTemp: 71,
+                rain: 0.0, solar: 25, wind: 11, windDir: 255
             )
         ),
         "b6": template(
             name: "Block 6",
             locationLabel: "South rows (upper)",
             readings: readings(
-                temp: 74.6, rh: 68, leafWet: 3.1, soilMoist: 41, soilTemp: 69.9,
-                rain: 0.05, solar: 21.3, wind: 6.0, windDir: 225
+                temp: 76, rh: 64, leafWet: 2.4, soilMoist: 41, soilTemp: 69,
+                rain: 0.03, solar: 21, wind: 7, windDir: 225
             )
         ),
         "b7": template(
             name: "Block 7",
             locationLabel: "South rows (middle)",
             readings: readings(
-                temp: 72.8, rh: 84, leafWet: 4.9, soilMoist: 47, soilTemp: 68.1,
-                rain: 0.11, solar: 16.9, wind: 3.5, windDir: 90
+                temp: 75, rh: 56, leafWet: 0.8, soilMoist: 40, soilTemp: 69,
+                rain: 0.02, solar: 22, wind: 8, windDir: 90
             )
         ),
         "b8": template(
             name: "Block 8",
             locationLabel: "South rows (lower)",
             readings: readings(
-                temp: 74.9, rh: 61, leafWet: 1.1, soilMoist: 38, soilTemp: 70.2,
-                rain: 0.03, solar: 22.0, wind: 7.8, windDir: 265
+                temp: 76, rh: 58, leafWet: 0.5, soilMoist: 38, soilTemp: 70,
+                rain: 0.01, solar: 23, wind: 9, windDir: 265
             )
         ),
     ]
