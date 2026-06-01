@@ -23,7 +23,7 @@ enum VineyardDemoData {
         insight(
             "g1",
             "Vineyard-wide disease outlook",
-            "3 of 8 canopy blocks show elevated powdery or downy mildew risk based on humidity, leaf wetness, and airflow. Focus scouting on Blocks 3, 4, and 7.",
+            "5 of 8 canopy blocks are in the low-risk band; Blocks 4 and 6 are moderate. Block 3 is high—prioritize scouting and spray timing there.",
             "high"
         ),
         insight(
@@ -35,7 +35,7 @@ enum VineyardDemoData {
         insight(
             "g3",
             "Weather pattern",
-            "Recent light rainfall and calm overnight winds increased canopy moisture in eastern and western rows. Blocks with good air drainage (1, 5, 8) remain in the low-risk zone.",
+            "Recent light rainfall increased canopy moisture in Block 3. Blocks with good air drainage and lower humidity (1, 2, 5, 7, 8) remain in the low-risk zone.",
             "low"
         ),
         insight(
@@ -133,7 +133,7 @@ enum VineyardDemoData {
             name: "Block 2",
             locationLabel: "North rows (middle)",
             readings: readings(
-                temp: 77, rh: 54, leafWet: 0.6, soilMoist: 41, soilTemp: 69,
+                temp: 77, rh: 53, leafWet: 0.6, soilMoist: 41, soilTemp: 69,
                 rain: 0.02, solar: 23, wind: 9, windDir: 210
             )
         ),
@@ -173,7 +173,7 @@ enum VineyardDemoData {
             name: "Block 7",
             locationLabel: "South rows (middle)",
             readings: readings(
-                temp: 75, rh: 56, leafWet: 0.8, soilMoist: 40, soilTemp: 69,
+                temp: 75, rh: 52, leafWet: 0.8, soilMoist: 40, soilTemp: 69,
                 rain: 0.02, solar: 22, wind: 8, windDir: 90
             )
         ),
@@ -181,7 +181,7 @@ enum VineyardDemoData {
             name: "Block 8",
             locationLabel: "South rows (lower)",
             readings: readings(
-                temp: 76, rh: 58, leafWet: 0.5, soilMoist: 38, soilTemp: 70,
+                temp: 76, rh: 53, leafWet: 0.5, soilMoist: 38, soilTemp: 70,
                 rain: 0.01, solar: 23, wind: 9, windDir: 265
             )
         ),
