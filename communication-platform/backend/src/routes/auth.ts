@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
-import { compare, hash } from "bcryptjs";
+import { hash } from "bcryptjs";
 import { badRequest } from "../lib/badRequest.js";
 
 function extractBearerToken(authHeader?: string): string | null {
@@ -12,7 +12,6 @@ function extractBearerToken(authHeader?: string): string | null {
 
 const signInSchema = z.object({
   username: z.string().min(1),
-  password: z.string().min(6),
 });
 
 const signUpSchema = z.object({
@@ -45,19 +44,17 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
     const username = normalizeUsername(parsed.data.username);
-    const password = parsed.data.password;
     if (!username) return reply.code(400).send({ error: "Username is required" });
-    if (!password) return reply.code(400).send({ error: "Password is required" });
 
-    let user = await db.query<{ id: string; name: string; username: string; password_hash: string | null }>(
-      "SELECT id, name, username, password_hash FROM users WHERE username = $1 LIMIT 1",
+    let user = await db.query<{ id: string; name: string; username: string }>(
+      "SELECT id, name, username FROM users WHERE username = $1 LIMIT 1",
       [username]
     );
 
     // Backward compatibility for older clients that still type display name in the username box.
     if (!user.rows[0]) {
-      const fallback = await db.query<{ id: string; name: string; username: string; password_hash: string | null }>(
-        "SELECT id, name, username, password_hash FROM users WHERE LOWER(name) = LOWER($1)",
+      const fallback = await db.query<{ id: string; name: string; username: string }>(
+        "SELECT id, name, username FROM users WHERE LOWER(name) = LOWER($1)",
         [parsed.data.username.trim()]
       );
       if (fallback.rows.length === 1) {
@@ -66,16 +63,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     }
 
     if (!user.rows[0]) {
-      return reply.code(401).send({ error: "Invalid username or password" });
-    }
-
-    if (!user.rows[0].password_hash) {
-      return reply.code(401).send({ error: "Account requires signup completion. Please sign up again." });
-    }
-
-    const matches = await compare(password, user.rows[0].password_hash);
-    if (!matches) {
-      return reply.code(401).send({ error: "Invalid username or password" });
+      return reply.code(401).send({ error: "Invalid username" });
     }
 
     const token = createToken();

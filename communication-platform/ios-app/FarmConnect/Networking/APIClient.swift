@@ -72,12 +72,11 @@ final class APIClient {
         return .badStatus(statusCode)
     }
 
-    func signIn(username: String, password: String) async throws -> AuthResponse {
+    func signIn(username: String) async throws -> AuthResponse {
         var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         let payload: [String: Any] = [
-            "username": username,
-            "password": password
+            "username": username
         ]
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
 

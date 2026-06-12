@@ -32,18 +32,18 @@ final class SessionStore: ObservableObject {
         }
     }
 
-    func signIn(username: String, password: String) async {
+    func signIn(username: String) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            let auth = try await APIClient.shared.signIn(username: username, password: password)
+            let auth = try await APIClient.shared.signIn(username: username)
             token = auth.token
             currentUser = auth.user
             APIClient.shared.setAuthToken(auth.token)
             UserDefaults.standard.set(auth.token, forKey: tokenKey)
         } catch {
-            errorMessage = "Sign in failed: check username/password and try again."
+            errorMessage = "Sign in failed: check username and try again."
         }
     }
 

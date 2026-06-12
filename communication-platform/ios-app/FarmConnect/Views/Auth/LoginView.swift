@@ -33,11 +33,11 @@ struct LoginView: View {
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
-
                 if mode == .signUp {
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+
                     TextField("Display name", text: $displayName)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.words)
@@ -59,10 +59,7 @@ struct LoginView: View {
                     Task {
                         let normalizedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
                         if mode == .signIn {
-                            await session.signIn(
-                                username: normalizedUsername,
-                                password: password
-                            )
+                            await session.signIn(username: normalizedUsername)
                         } else {
                             await session.signUp(
                                 username: normalizedUsername,
@@ -82,7 +79,7 @@ struct LoginView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(
                     username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    || password.count < 6
+                    || (mode == .signUp && password.count < 6)
                     || (mode == .signUp && displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     || session.isLoading
                 )
