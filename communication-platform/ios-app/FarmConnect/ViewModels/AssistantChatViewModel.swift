@@ -3,118 +3,173 @@ import Foundation
 @MainActor
 final class AssistantChatViewModel: ObservableObject {
     @Published private(set) var sessions: [AssistantChatSession] = []
-    @Published var selectedSessionId: UUID?
+    @Published var selectedSessionId: String?
     @Published var isLoading = false
+    @Published var isSending = false
     @Published var errorMessage: String?
-
-    private let storageKey = "assistant_chat_sessions_v1"
-
-    init() {
-        loadSessions()
-        if sessions.isEmpty {
-            _ = createNewSession()
-        } else if selectedSessionId == nil {
-            selectedSessionId = sessions.first?.id
-        }
-    }
 
     var selectedSession: AssistantChatSession? {
         guard let selectedSessionId else { return nil }
         return sessions.first(where: { $0.id == selectedSessionId })
     }
 
-    func createNewSession() -> Bool {
+    func loadSessions() async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        do {
+            let items = try await APIClient.shared.getAssistantSessions()
+            sessions = items
+            if let selectedSessionId,
+               sessions.contains(where: { $0.id == selectedSessionId }) {
+                await loadSessionMessages(sessionId: selectedSessionId)
+            } else {
+                selectedSessionId = sessions.first?.id
+                if let selectedSessionId {
+                    await loadSessionMessages(sessionId: selectedSessionId)
+                }
+            }
+            if sessions.isEmpty {
+                _ = try await createNewSession()
+            }
+        } catch {
+            if isCancellationError(error) { return }
+            errorMessage = friendlyChatErrorMessage(for: error)
+        }
+    }
+
+    func loadSessionMessages(sessionId: String) async {
+        do {
+            let session = try await APIClient.shared.getAssistantSession(id: sessionId)
+            if let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index] = session
+            } else {
+                sessions.insert(session, at: 0)
+            }
+        } catch {
+            if isCancellationError(error) { return }
+            errorMessage = friendlyChatErrorMessage(for: error)
+        }
+    }
+
+    @discardableResult
+    func createNewSession() async throws -> AssistantChatSession {
         if let selectedSessionId,
            let index = sessions.firstIndex(where: { $0.id == selectedSessionId }),
            sessions[index].messages.isEmpty {
-            return false
+            return sessions[index]
         }
 
-        let session = AssistantChatSession()
+        let session = try await APIClient.shared.createAssistantSession()
         sessions.insert(session, at: 0)
         selectedSessionId = session.id
         errorMessage = nil
-        persistSessions()
-        return true
+        return session
     }
 
-    func selectSession(_ id: UUID) {
+    func selectSession(_ id: String) {
         selectedSessionId = id
-    }
-
-    func deleteSession(_ id: UUID) {
-        sessions.removeAll { $0.id == id }
-        if selectedSessionId == id {
-            selectedSessionId = sessions.first?.id
-        }
-        if sessions.isEmpty {
-            _ = createNewSession()
-        }
-        persistSessions()
-    }
-
-    func sendMessage(text: String, imageDataUrls: [String] = []) async {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty || !imageDataUrls.isEmpty else { return }
-        guard let sessionId = selectedSessionId,
-              let index = sessions.firstIndex(where: { $0.id == sessionId }) else { return }
-
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-
-        let userMessage = AssistantChatMessage(
-            role: .user,
-            text: trimmed,
-            imageDataUrls: imageDataUrls
-        )
-        sessions[index].messages.append(userMessage)
-        sessions[index].updatedAt = Date()
-        updateTitleIfNeeded(at: index, from: trimmed)
-        persistSessions()
-
-        do {
-            let history = sessions[index].messages.map { message in
-                AssistantChatRequest.Message(
-                    role: message.role.rawValue,
-                    content: message.text,
-                    imageDataUrls: message.imageDataUrls.isEmpty ? nil : message.imageDataUrls
-                )
+        Task {
+            if let index = sessions.firstIndex(where: { $0.id == id }),
+               sessions[index].messages.isEmpty {
+                await loadSessionMessages(sessionId: id)
             }
-            let reply = try await APIClient.shared.sendAssistantChat(messages: history)
-            let assistantMessage = AssistantChatMessage(role: .assistant, text: reply)
-            sessions[index].messages.append(assistantMessage)
-            sessions[index].updatedAt = Date()
-            persistSessions()
+        }
+    }
+
+    func deleteSession(_ id: String) async {
+        do {
+            try await APIClient.shared.deleteAssistantSession(id: id)
+            sessions.removeAll { $0.id == id }
+            if selectedSessionId == id {
+                selectedSessionId = sessions.first?.id
+            }
+            if sessions.isEmpty {
+                _ = try await createNewSession()
+            }
         } catch {
             if isCancellationError(error) { return }
-            errorMessage = error.localizedDescription
+            errorMessage = friendlyChatErrorMessage(for: error)
         }
     }
 
-    private func updateTitleIfNeeded(at index: Int, from text: String) {
-        guard sessions[index].title == "New chat" else { return }
-        let title = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !title.isEmpty else { return }
+    func sendMessage(text: String, imageData: Data? = nil) async {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty || imageData != nil else { return }
+
+        errorMessage = nil
+        isSending = true
+        defer { isSending = false }
+
+        do {
+            if selectedSessionId == nil {
+                _ = try await createNewSession()
+            }
+            guard let sessionId = selectedSessionId else { return }
+
+            var imageUrls: [String] = []
+            if let imageData {
+                imageUrls.append(
+                    try await APIClient.shared.uploadImage(
+                        data: imageData,
+                        fileName: "chat-\(UUID().uuidString).jpg",
+                        mimeType: "image/jpeg"
+                    )
+                )
+            }
+
+            let response = try await APIClient.shared.sendAssistantChat(
+                sessionId: sessionId,
+                text: trimmed,
+                imageUrls: imageUrls.isEmpty ? nil : imageUrls
+            )
+
+            if let session = response.session,
+               let index = sessions.firstIndex(where: { $0.id == session.id }) {
+                sessions[index] = session
+            } else if let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index].messages.append(response.userMessage)
+                sessions[index].messages.append(response.assistantMessage)
+                sessions[index].updatedAt = response.assistantMessage.createdAt
+                if sessions[index].title == "New chat", !trimmed.isEmpty {
+                    sessions[index].title = deriveTitle(from: trimmed)
+                }
+            }
+
+            resortSessions()
+        } catch {
+            if isCancellationError(error) { return }
+            if let sessionId = selectedSessionId {
+                await loadSessionMessages(sessionId: sessionId)
+            }
+            errorMessage = friendlyChatErrorMessage(for: error)
+        }
+    }
+
+    private func resortSessions() {
+        sessions.sort { $0.updatedAt > $1.updatedAt }
+    }
+
+    private func deriveTitle(from text: String) -> String {
         let maxLength = 40
-        sessions[index].title = title.count > maxLength
-            ? String(title.prefix(maxLength)) + "…"
-            : title
+        return text.count > maxLength ? String(text.prefix(maxLength)) + "…" : text
     }
 
-    private func loadSessions() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        guard let decoded = try? decoder.decode([AssistantChatSession].self, from: data) else { return }
-        sessions = decoded.sorted { $0.updatedAt > $1.updatedAt }
-        selectedSessionId = sessions.first?.id
-    }
-
-    private func persistSessions() {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        guard let data = try? encoder.encode(sessions) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
+    private func friendlyChatErrorMessage(for error: Error) -> String {
+        if let apiError = error as? APIError {
+            return apiError.localizedDescription
+        }
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .networkConnectionLost, .notConnectedToInternet:
+                return "Connection lost. Check your network and try again."
+            case .timedOut:
+                return "The request timed out. Please try again."
+            default:
+                return urlError.localizedDescription
+            }
+        }
+        return error.localizedDescription
     }
 }

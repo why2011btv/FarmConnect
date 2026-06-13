@@ -6,69 +6,139 @@ enum AssistantMessageRole: String, Codable {
 }
 
 struct AssistantChatMessage: Identifiable, Codable, Equatable {
-    let id: UUID
+    let id: String
     let role: AssistantMessageRole
     var text: String
-    var imageDataUrls: [String]
+    var imageUrls: [String]
     let createdAt: Date
 
     init(
-        id: UUID = UUID(),
+        id: String,
         role: AssistantMessageRole,
         text: String,
-        imageDataUrls: [String] = [],
-        createdAt: Date = Date()
+        imageUrls: [String] = [],
+        createdAt: Date
     ) {
         self.id = id
         self.role = role
         self.text = text
-        self.imageDataUrls = imageDataUrls
+        self.imageUrls = imageUrls
         self.createdAt = createdAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        role = try container.decode(AssistantMessageRole.self, forKey: .role)
+        text = try container.decode(String.self, forKey: .content)
+        imageUrls = try container.decodeIfPresent([String].self, forKey: .imageUrls) ?? []
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(role, forKey: .role)
+        try container.encode(text, forKey: .content)
+        try container.encode(imageUrls, forKey: .imageUrls)
+        try container.encode(createdAt, forKey: .createdAt)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, role, content, imageUrls, createdAt
     }
 }
 
 struct AssistantChatSession: Identifiable, Codable, Equatable {
-    let id: UUID
+    let id: String
     var title: String
     var messages: [AssistantChatMessage]
     let createdAt: Date
     var updatedAt: Date
+    var preview: String?
 
     init(
-        id: UUID = UUID(),
-        title: String = "New chat",
+        id: String,
+        title: String,
         messages: [AssistantChatMessage] = [],
-        createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        createdAt: Date,
+        updatedAt: Date,
+        preview: String? = nil
     ) {
         self.id = id
         self.title = title
         self.messages = messages
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.preview = preview
     }
 
-    var preview: String {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        messages = try container.decodeIfPresent([AssistantChatMessage].self, forKey: .messages) ?? []
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        preview = try container.decodeIfPresent(String.self, forKey: .preview)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, messages, createdAt, updatedAt, preview
+    }
+
+    var displayPreview: String {
+        if let preview, !preview.isEmpty {
+            return preview
+        }
         if let last = messages.last(where: { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
             return last.text
         }
-        if messages.contains(where: { !$0.imageDataUrls.isEmpty }) {
+        if messages.contains(where: { !$0.imageUrls.isEmpty }) {
             return "Image"
         }
         return "No messages yet"
     }
 }
 
-struct AssistantChatRequest: Encodable {
-    struct Message: Encodable {
-        let role: String
-        let content: String
-        let imageDataUrls: [String]?
-    }
-
-    let messages: [Message]
+struct AssistantSessionListResponse: Decodable {
+    let items: [AssistantChatSession]
 }
 
-struct AssistantChatResponse: Decodable {
+struct AssistantSessionResponse: Decodable {
+    let item: AssistantChatSession
+}
+
+struct AssistantChatSendRequest: Encodable {
+    let sessionId: String?
+    let text: String
+    let imageUrls: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionId, text, imageUrls
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(sessionId, forKey: .sessionId)
+        try container.encode(text, forKey: .text)
+        if let imageUrls, !imageUrls.isEmpty {
+            try container.encode(imageUrls, forKey: .imageUrls)
+        }
+    }
+}
+
+struct AssistantChatSendResponse: Decodable {
+    let session: AssistantChatSession?
+    let userMessage: AssistantChatMessage
+    let assistantMessage: AssistantChatMessage
     let reply: String
+}
+
+struct CreateAssistantSessionRequest: Encodable {
+    let title: String?
+}
+
+struct CreateAssistantSessionResponse: Decodable {
+    let item: AssistantChatSession
 }

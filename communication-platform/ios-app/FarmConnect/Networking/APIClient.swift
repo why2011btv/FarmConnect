@@ -53,7 +53,8 @@ final class APIClient {
     }
 
     private func authorizedRequest(path: String, method: String = "GET") throws -> URLRequest {
-        let url = baseURL.appendingPathComponent(path)
+        let trimmedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        let url = baseURL.appendingPathComponent(trimmedPath)
         var req = URLRequest(url: url)
         req.httpMethod = method
         if let token = authToken {
@@ -439,14 +440,67 @@ final class APIClient {
         return dashboard.insights
     }
 
-    func sendAssistantChat(messages: [AssistantChatRequest.Message]) async throws -> String {
+    func sendAssistantChat(
+        sessionId: String?,
+        text: String,
+        imageUrls: [String]? = nil
+    ) async throws -> AssistantChatSendResponse {
         var req = try authorizedRequest(path: "/v1/ai/chat", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONEncoder().encode(AssistantChatRequest(messages: messages))
+        req.timeoutInterval = 120
+        req.httpBody = try makeJSONEncoder().encode(
+            AssistantChatSendRequest(sessionId: sessionId, text: text, imageUrls: imageUrls)
+        )
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
-        return try JSONDecoder().decode(AssistantChatResponse.self, from: data).reply
+        return try makeJSONDecoder().decode(AssistantChatSendResponse.self, from: data)
+    }
+
+    func getAssistantSessions() async throws -> [AssistantChatSession] {
+        let req = try authorizedRequest(path: "/v1/ai/sessions")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try makeJSONDecoder().decode(AssistantSessionListResponse.self, from: data).items
+    }
+
+    func getAssistantSession(id: String) async throws -> AssistantChatSession {
+        let req = try authorizedRequest(path: "/v1/ai/sessions/\(id)")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try makeJSONDecoder().decode(AssistantSessionResponse.self, from: data).item
+    }
+
+    func createAssistantSession(title: String? = nil) async throws -> AssistantChatSession {
+        var req = try authorizedRequest(path: "/v1/ai/sessions", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try makeJSONEncoder().encode(CreateAssistantSessionRequest(title: title))
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try makeJSONDecoder().decode(CreateAssistantSessionResponse.self, from: data).item
+    }
+
+    func deleteAssistantSession(id: String) async throws {
+        let req = try authorizedRequest(path: "/v1/ai/sessions/\(id)", method: "DELETE")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
+    private func makeJSONDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+
+    private func makeJSONEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
     }
 }

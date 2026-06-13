@@ -6,7 +6,7 @@ struct AssistantChatView: View {
     @EnvironmentObject private var viewModel: AssistantChatViewModel
     @State private var draft = ""
     @State private var selectedPhoto: PhotosPickerItem?
-    @State private var pendingImageDataUrl: String?
+    @State private var pendingImageData: Data?
     @State private var isSessionListPresented = false
 
     var body: some View {
@@ -18,8 +18,8 @@ struct AssistantChatView: View {
                     emptyState
                 }
 
-                if let pendingImageDataUrl {
-                    pendingImagePreview(pendingImageDataUrl)
+                if let pendingImageData {
+                    pendingImagePreview(pendingImageData)
                 }
 
                 inputBar
@@ -43,6 +43,14 @@ struct AssistantChatView: View {
             }
             .onChange(of: selectedPhoto) { _, item in
                 Task { await loadSelectedPhoto(item) }
+            }
+            .task {
+                await viewModel.loadSessions()
+            }
+            .overlay {
+                if viewModel.isLoading && viewModel.sessions.isEmpty {
+                    ProgressView("Loading chats…")
+                }
             }
         }
     }
@@ -75,7 +83,7 @@ struct AssistantChatView: View {
                         messageRow(message)
                             .id(message.id)
                     }
-                    if viewModel.isLoading {
+                    if viewModel.isSending {
                         typingIndicator
                             .id("typing")
                     }
@@ -87,7 +95,7 @@ struct AssistantChatView: View {
             .onChange(of: session.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy, session: session)
             }
-            .onChange(of: viewModel.isLoading) { _, loading in
+            .onChange(of: viewModel.isSending) { _, loading in
                 if loading {
                     withAnimation {
                         proxy.scrollTo("typing", anchor: .bottom)
@@ -111,14 +119,24 @@ struct AssistantChatView: View {
             }
 
             VStack(alignment: isUser ? .trailing : .leading, spacing: 8) {
-                if !message.imageDataUrls.isEmpty {
-                    ForEach(Array(message.imageDataUrls.enumerated()), id: \.offset) { _, dataUrl in
-                        if let image = imageFromDataUrl(dataUrl) {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: 220, maxHeight: 180)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                if !message.imageUrls.isEmpty {
+                    ForEach(Array(message.imageUrls.enumerated()), id: \.offset) { _, imageUrl in
+                        if let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                case .failure:
+                                    Image(systemName: "photo")
+                                        .foregroundStyle(.secondary)
+                                default:
+                                    ProgressView()
+                                }
+                            }
+                            .frame(maxWidth: 220, maxHeight: 180)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
                 }
@@ -176,7 +194,7 @@ struct AssistantChatView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 36, height: 36)
                 }
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isSending)
 
                 TextField("Message", text: $draft, axis: .vertical)
                     .textFieldStyle(.plain)
@@ -193,7 +211,7 @@ struct AssistantChatView: View {
                         .symbolRenderingMode(.palette)
                         .foregroundStyle(.white, canSend ? Color.accentColor : Color.gray.opacity(0.4))
                 }
-                .disabled(!canSend || viewModel.isLoading)
+                .disabled(!canSend || viewModel.isSending)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -202,10 +220,10 @@ struct AssistantChatView: View {
     }
 
     @ViewBuilder
-    private func pendingImagePreview(_ dataUrl: String) -> some View {
+    private func pendingImagePreview(_ data: Data) -> some View {
         HStack {
-            if let image = imageFromDataUrl(dataUrl) {
-                image
+            if let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 56, height: 56)
@@ -216,7 +234,7 @@ struct AssistantChatView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Button("Remove") {
-                pendingImageDataUrl = nil
+                pendingImageData = nil
                 selectedPhoto = nil
             }
             .font(.caption)
@@ -238,7 +256,7 @@ struct AssistantChatView: View {
                             Text(session.title)
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(session.preview)
+                            Text(session.displayPreview)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -251,7 +269,8 @@ struct AssistantChatView: View {
                 }
                 .onDelete { indexSet in
                     for index in indexSet {
-                        viewModel.deleteSession(viewModel.sessions[index].id)
+                        let id = viewModel.sessions[index].id
+                        Task { await viewModel.deleteSession(id) }
                     }
                 }
             }
@@ -263,8 +282,10 @@ struct AssistantChatView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("New chat") {
-                        _ = viewModel.createNewSession()
-                        isSessionListPresented = false
+                        Task {
+                            try? await viewModel.createNewSession()
+                            isSessionListPresented = false
+                        }
                     }
                 }
             }
@@ -272,29 +293,27 @@ struct AssistantChatView: View {
     }
 
     private var canSend: Bool {
-        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || pendingImageDataUrl != nil
+        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || pendingImageData != nil
     }
 
     private func sendMessage() {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        let images = pendingImageDataUrl.map { [$0] } ?? []
-        guard !text.isEmpty || !images.isEmpty else { return }
+        let imageData = pendingImageData
+        guard !text.isEmpty || imageData != nil else { return }
 
         draft = ""
-        pendingImageDataUrl = nil
+        pendingImageData = nil
         selectedPhoto = nil
 
         Task {
-            await viewModel.sendMessage(text: text, imageDataUrls: images)
+            await viewModel.sendMessage(text: text, imageData: imageData)
         }
     }
 
     private func loadSelectedPhoto(_ item: PhotosPickerItem?) async {
         guard let item else { return }
         guard let data = try? await item.loadTransferable(type: Data.self) else { return }
-        let compressed = compressImageData(data) ?? data
-        let base64 = compressed.base64EncodedString()
-        pendingImageDataUrl = "data:image/jpeg;base64,\(base64)"
+        pendingImageData = compressImageData(data) ?? data
     }
 
     private func compressImageData(_ data: Data) -> Data? {
@@ -308,15 +327,6 @@ struct AssistantChatView: View {
             image.draw(in: CGRect(origin: .zero, size: newSize))
         }
         return resized.jpegData(compressionQuality: 0.8)
-    }
-
-    private func imageFromDataUrl(_ dataUrl: String) -> Image? {
-        guard dataUrl.hasPrefix("data:image"),
-              let commaIndex = dataUrl.firstIndex(of: ",") else { return nil }
-        let base64 = String(dataUrl[dataUrl.index(after: commaIndex)...])
-        guard let data = Data(base64Encoded: base64),
-              let uiImage = UIImage(data: data) else { return nil }
-        return Image(uiImage: uiImage)
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy, session: AssistantChatSession) {

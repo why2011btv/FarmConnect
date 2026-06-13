@@ -7,6 +7,7 @@ type OpenRouterMessageContentPart =
 export type ChatMessageInput = {
   role: "user" | "assistant";
   content: string;
+  imageUrls?: string[];
   imageDataUrls?: string[];
 };
 
@@ -25,7 +26,12 @@ function readConfig() {
 }
 
 function toOpenRouterMessage(message: ChatMessageInput): OpenRouterChatMessage {
-  const imageUrls = (message.imageDataUrls ?? []).filter((v) => v.trim().length > 0).slice(0, 5);
+  const imageUrls = [
+    ...(message.imageUrls ?? []),
+    ...(message.imageDataUrls ?? []),
+  ]
+    .filter((v) => v.trim().length > 0)
+    .slice(0, 5);
 
   if (message.role === "assistant" || imageUrls.length === 0) {
     return { role: message.role, content: message.content };

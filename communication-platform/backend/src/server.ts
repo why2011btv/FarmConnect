@@ -19,6 +19,7 @@ import { aiRoutes } from "./routes/ai.js";
 
 const app = Fastify({
   logger: true,
+  bodyLimit: 10 * 1024 * 1024,
 });
 
 await app.register(cors, {
