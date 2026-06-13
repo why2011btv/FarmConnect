@@ -8,6 +8,7 @@ struct AssistantChatView: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var pendingImageData: Data?
     @State private var isSessionListPresented = false
+    @State private var imagePreview: ChatImagePreview?
 
     var body: some View {
         NavigationStack {
@@ -51,6 +52,19 @@ struct AssistantChatView: View {
             .overlay {
                 if viewModel.isLoading && viewModel.sessions.isEmpty {
                     ProgressView("Loading chats…")
+                }
+            }
+            .fullScreenCover(item: $imagePreview) { preview in
+                if let urls = preview.remoteURLs {
+                    FullscreenMediaViewer(
+                        mediaURLs: urls,
+                        initialIndex: preview.startIndex,
+                        onClose: { imagePreview = nil }
+                    )
+                } else if let image = preview.localImage {
+                    ChatLocalImageViewer(image: image) {
+                        imagePreview = nil
+                    }
                 }
             }
         }
@@ -128,8 +142,12 @@ struct AssistantChatView: View {
                         .scaledToFill()
                         .frame(maxWidth: 220, maxHeight: 180)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .contentShape(RoundedRectangle(cornerRadius: 12))
+                        .onTapGesture {
+                            imagePreview = .local(uiImage)
+                        }
                 } else if !message.imageUrls.isEmpty {
-                    ForEach(Array(message.imageUrls.enumerated()), id: \.offset) { _, imageUrl in
+                    ForEach(Array(message.imageUrls.enumerated()), id: \.offset) { index, imageUrl in
                         if let url = URL(string: imageUrl) {
                             AsyncImage(url: url) { phase in
                                 switch phase {
@@ -146,6 +164,10 @@ struct AssistantChatView: View {
                             }
                             .frame(maxWidth: 220, maxHeight: 180)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .contentShape(RoundedRectangle(cornerRadius: 12))
+                            .onTapGesture {
+                                openImagePreview(for: message, startIndex: index)
+                            }
                         }
                     }
                 }
@@ -365,6 +387,74 @@ struct AssistantChatView: View {
         guard let lastId = session.messages.last?.id else { return }
         withAnimation(.easeOut(duration: 0.2)) {
             proxy.scrollTo(lastId, anchor: .bottom)
+        }
+    }
+
+    private func openImagePreview(for message: AssistantChatMessage, startIndex: Int) {
+        let urls = message.imageUrls.compactMap { URL(string: $0) }
+        guard !urls.isEmpty else { return }
+        imagePreview = .remote(urls: urls, startIndex: min(startIndex, urls.count - 1))
+    }
+}
+
+private struct ChatImagePreview: Identifiable {
+    let id = UUID()
+    let remoteURLs: [URL]?
+    let startIndex: Int
+    let localImage: UIImage?
+
+    static func remote(urls: [URL], startIndex: Int) -> ChatImagePreview {
+        ChatImagePreview(remoteURLs: urls, startIndex: startIndex, localImage: nil)
+    }
+
+    static func local(_ image: UIImage) -> ChatImagePreview {
+        ChatImagePreview(remoteURLs: nil, startIndex: 0, localImage: image)
+    }
+}
+
+private struct ChatLocalImageViewer: View {
+    let image: UIImage
+    let onClose: () -> Void
+    @State private var zoomScale: CGFloat = 1
+    @State private var committedZoomScale: CGFloat = 1
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .scaleEffect(zoomScale)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .gesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            let proposed = committedZoomScale * value
+                            zoomScale = min(max(proposed, 1), 4)
+                        }
+                        .onEnded { _ in
+                            committedZoomScale = zoomScale
+                        }
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if zoomScale > 1.1 {
+                            zoomScale = 1
+                            committedZoomScale = 1
+                        } else {
+                            zoomScale = 2.5
+                            committedZoomScale = 2.5
+                        }
+                    }
+                }
+
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .padding()
         }
     }
 }
