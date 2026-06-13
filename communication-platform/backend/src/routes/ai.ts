@@ -32,7 +32,8 @@ export async function aiRoutes(app: FastifyInstance, db: Pool) {
       return { reply: replyText };
     } catch (error) {
       app.log.error({ error }, "AI chat failed");
-      return reply.code(502).send({ error: "Failed to get AI response" });
+      const message = error instanceof Error ? error.message : "Failed to get AI response";
+      return reply.code(502).send({ error: message });
     }
   });
 }

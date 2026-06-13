@@ -35,13 +35,6 @@ struct AssistantChatView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.createNewSession()
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
                     AccountMenuButton()
                 }
             }
@@ -60,7 +53,7 @@ struct AssistantChatView: View {
             Image(systemName: "leaf.circle.fill")
                 .font(.system(size: 56))
                 .foregroundStyle(.green.opacity(0.7))
-            Text("Farm Assistant")
+            Text("The answer is in the basket!")
                 .font(.title2.bold())
             Text("Ask about crops, pests, diseases, or upload a photo for help.")
                 .font(.subheadline)
@@ -269,11 +262,9 @@ struct AssistantChatView: View {
                     Button("Done") { isSessionListPresented = false }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.createNewSession()
+                    Button("New chat") {
+                        _ = viewModel.createNewSession()
                         isSessionListPresented = false
-                    } label: {
-                        Image(systemName: "square.and.pencil")
                     }
                 }
             }

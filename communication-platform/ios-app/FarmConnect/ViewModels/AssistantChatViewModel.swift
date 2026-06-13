@@ -12,7 +12,7 @@ final class AssistantChatViewModel: ObservableObject {
     init() {
         loadSessions()
         if sessions.isEmpty {
-            createNewSession()
+            _ = createNewSession()
         } else if selectedSessionId == nil {
             selectedSessionId = sessions.first?.id
         }
@@ -23,11 +23,19 @@ final class AssistantChatViewModel: ObservableObject {
         return sessions.first(where: { $0.id == selectedSessionId })
     }
 
-    func createNewSession() {
+    func createNewSession() -> Bool {
+        if let selectedSessionId,
+           let index = sessions.firstIndex(where: { $0.id == selectedSessionId }),
+           sessions[index].messages.isEmpty {
+            return false
+        }
+
         let session = AssistantChatSession()
         sessions.insert(session, at: 0)
         selectedSessionId = session.id
+        errorMessage = nil
         persistSessions()
+        return true
     }
 
     func selectSession(_ id: UUID) {
@@ -40,7 +48,7 @@ final class AssistantChatViewModel: ObservableObject {
             selectedSessionId = sessions.first?.id
         }
         if sessions.isEmpty {
-            createNewSession()
+            _ = createNewSession()
         }
         persistSessions()
     }
