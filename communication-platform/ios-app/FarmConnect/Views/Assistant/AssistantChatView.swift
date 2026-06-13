@@ -91,6 +91,7 @@ struct AssistantChatView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
+            .scrollDismissesKeyboard(.interactively)
             .background(Color(.systemGroupedBackground))
             .onChange(of: session.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy, session: session)
