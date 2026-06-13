@@ -10,8 +10,7 @@ enum TimeFormatting {
     }
 
     /// Short time-of-day for today's timestamps, or medium date style otherwise.
-    static func listPreview(from timestampMs: Int64, now: Date = Date()) -> String {
-        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
+    static func listPreview(from date: Date, now: Date = Date()) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
             let formatter = DateFormatter()
@@ -30,5 +29,11 @@ enum TimeFormatting {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         return formatter.string(from: date)
+    }
+
+    /// Short time-of-day for today's timestamps, or medium date style otherwise.
+    static func listPreview(from timestampMs: Int64, now: Date = Date()) -> String {
+        let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
+        return listPreview(from: date, now: now)
     }
 }

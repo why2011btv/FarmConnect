@@ -49,6 +49,9 @@
 		DD33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift */; };
 		DD33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift */; };
 		DD33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift */; };
+		AA11AAAAAAAAAAAA00000001 /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA44AAAAAAAAAAAA00000001 /* AssistantChatView.swift */; };
+		AA11BBBBBBBBBBBB00000002 /* AssistantChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA44BBBBBBBBBBBB00000002 /* AssistantChatViewModel.swift */; };
+		AA11CCCCCCCCCCCC00000003 /* AssistantChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA44CCCCCCCCCCCC00000003 /* AssistantChatModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +100,9 @@
 		FA33DDDDDDDDDDDD00000004 /* VineyardFieldLogCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogCard.swift; sourceTree = "<group>"; };
 		FA33EEEEEEEEEEEE00000005 /* VineyardFieldLogDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogDetailView.swift; sourceTree = "<group>"; };
 		FA33FFFFFFFFFFFF00000006 /* NewVineyardLogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewVineyardLogEntryView.swift; sourceTree = "<group>"; };
+		FA44AAAAAAAAAAAA00000001 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
+		FA44BBBBBBBBBBBB00000002 /* AssistantChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatViewModel.swift; sourceTree = "<group>"; };
+		FA44CCCCCCCCCCCC00000003 /* AssistantChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -153,6 +159,7 @@
 		5FD1B9BF62152DBE1B922225 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AA11DDDDDDDDDDDD00000004 /* Assistant */,
 				D7E8F90123456789A0B1C2D3 /* Common */,
 				33C96ADFFC67303EFEAD4EC5 /* Auth */,
 				335D0C7CD9BCDA17E682FBBC /* Chat */,
@@ -250,6 +257,7 @@
 		C14A69201840CCB750FCEFD8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				FA44CCCCCCCCCCCC00000003 /* AssistantChatModels.swift */,
 				E00A5CBC466AA00FCCA3BF50 /* DomainModels.swift */,
 				FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */,
 				FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */,
@@ -279,12 +287,21 @@
 		D56BE55B5B683627AC772E40 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				FA44BBBBBBBBBBBB00000002 /* AssistantChatViewModel.swift */,
 				C03385AD637416062FCF000E /* ChatViewModel.swift */,
 				1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */,
 				3117FAD7A857F17CAF3990DE /* SensorViewModel.swift */,
 				8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AA11DDDDDDDDDDDD00000004 /* Assistant */ = {
+			isa = PBXGroup;
+			children = (
+				FA44AAAAAAAAAAAA00000001 /* AssistantChatView.swift */,
+			);
+			path = Assistant;
 			sourceTree = "<group>";
 		};
 		E0CB9F2344C3A33B40DA11BF /* Networking */ = {
@@ -360,6 +377,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA11AAAAAAAAAAAA00000001 /* AssistantChatView.swift in Sources */,
+				AA11BBBBBBBBBBBB00000002 /* AssistantChatViewModel.swift in Sources */,
+				AA11CCCCCCCCCCCC00000003 /* AssistantChatModels.swift in Sources */,
 				BE32AE3EA30923DF043F2EEA /* APIClient.swift in Sources */,
 				62856BA206121F8A9264F0F0 /* ChatThreadView.swift in Sources */,
 				3E8FA09A79296FD488D8E734 /* ChatView.swift in Sources */,

@@ -1,37 +1,24 @@
 import SwiftUI
 
 struct RootTabView: View {
-    @EnvironmentObject private var feedViewModel: FeedViewModel
     @State private var selectedTab = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            FeedView()
+            AssistantChatView()
                 .tag(0)
                 .tabItem {
-                    Label("Feed", systemImage: "list.bullet.rectangle")
-                }
-
-            MapFeedView()
-                .tag(1)
-                .tabItem {
-                    Label("Map", systemImage: "map")
+                    Label("Chat", systemImage: "bubble.left.and.bubble.right")
                 }
 
             NotesView()
-                .tag(2)
+                .tag(1)
                 .tabItem {
                     Label("Notes", systemImage: "note.text")
                 }
 
-            ChatView()
-                .tag(3)
-                .tabItem {
-                    Label("Chat", systemImage: "message")
-                }
-
             SensorDashboardView()
-                .tag(4)
+                .tag(2)
                 .tabItem {
                     Label("Sensors", systemImage: "waveform.path.ecg")
                 }

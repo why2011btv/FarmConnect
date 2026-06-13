@@ -10,7 +10,6 @@ struct PostDetailView: View {
     let post: Post
     @EnvironmentObject private var feedViewModel: FeedViewModel
     @EnvironmentObject private var session: SessionStore
-    @EnvironmentObject private var chatViewModel: ChatViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var commentText = ""
     @State private var fullscreenMedia: FullscreenMediaPayload?
@@ -18,10 +17,6 @@ struct PostDetailView: View {
 
     private var currentPost: Post {
         feedViewModel.posts.first(where: { $0.id == post.id }) ?? post
-    }
-
-    private var canChatAuthor: Bool {
-        currentPost.userId != session.currentUser?.id
     }
 
     private var isOwner: Bool {
@@ -32,17 +27,7 @@ struct PostDetailView: View {
         ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                if canChatAuthor {
-                    NavigationLink {
-                        ChatThreadView(conversationId: nil, otherUserId: currentPost.userId, title: currentPost.userName)
-                            .environmentObject(chatViewModel)
-                    } label: {
-                        authorHeader
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    authorHeader
-                }
+                authorHeader
 
                 Text(currentPost.title)
                     .font(.title3.bold())

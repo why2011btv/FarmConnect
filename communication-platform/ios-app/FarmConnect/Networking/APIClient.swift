@@ -438,4 +438,15 @@ final class APIClient {
         let dashboard = try await getSensorDashboard()
         return dashboard.insights
     }
+
+    func sendAssistantChat(messages: [AssistantChatRequest.Message]) async throws -> String {
+        var req = try authorizedRequest(path: "/v1/ai/chat", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(AssistantChatRequest(messages: messages))
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try JSONDecoder().decode(AssistantChatResponse.self, from: data).reply
+    }
 }

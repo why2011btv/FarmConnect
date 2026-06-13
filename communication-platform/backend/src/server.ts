@@ -15,6 +15,7 @@ import { notificationRoutes } from "./routes/notifications.js";
 import { postRoutes } from "./routes/posts.js";
 import { sensorRoutes } from "./routes/sensors.js";
 import { uploadRoutes } from "./routes/uploads.js";
+import { aiRoutes } from "./routes/ai.js";
 
 const app = Fastify({
   logger: true,
@@ -51,6 +52,7 @@ await chatRoutes(app, chatRepository, pool);
 await uploadRoutes(app, pool);
 await notificationRoutes(app, pool);
 await sensorRoutes(app, pool);
+await aiRoutes(app, pool);
 
 const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? "0.0.0.0";

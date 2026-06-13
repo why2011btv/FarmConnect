@@ -6,7 +6,7 @@ struct FarmConnectApp: App {
     @UIApplicationDelegateAdaptor(PushNotificationManager.self) private var pushManager
     @StateObject private var sessionStore = SessionStore()
     @StateObject private var feedViewModel = FeedViewModel()
-    @StateObject private var chatViewModel = ChatViewModel()
+    @StateObject private var assistantChatViewModel = AssistantChatViewModel()
     @StateObject private var sensorViewModel = SensorViewModel()
 
     var body: some Scene {
@@ -20,7 +20,7 @@ struct FarmConnectApp: App {
             }
             .environmentObject(sessionStore)
             .environmentObject(feedViewModel)
-            .environmentObject(chatViewModel)
+            .environmentObject(assistantChatViewModel)
             .environmentObject(sensorViewModel)
             .task {
                 await sessionStore.restoreSessionIfPossible()
