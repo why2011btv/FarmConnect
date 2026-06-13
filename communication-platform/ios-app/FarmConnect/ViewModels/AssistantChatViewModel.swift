@@ -102,11 +102,30 @@ final class AssistantChatViewModel: ObservableObject {
         isSending = true
         defer { isSending = false }
 
+        var sessionId = selectedSessionId
+
         do {
-            if selectedSessionId == nil {
-                _ = try await createNewSession()
+            if sessionId == nil {
+                let session = try await createNewSession()
+                sessionId = session.id
             }
-            guard let sessionId = selectedSessionId else { return }
+            guard let sessionId,
+                  let index = sessions.firstIndex(where: { $0.id == sessionId }) else { return }
+
+            let pendingId = "pending-\(UUID().uuidString)"
+            sessions[index].messages.append(
+                AssistantChatMessage(
+                    id: pendingId,
+                    role: .user,
+                    text: trimmed,
+                    createdAt: Date(),
+                    localImageData: imageData
+                )
+            )
+            sessions[index].updatedAt = Date()
+            if sessions[index].title == "New chat", !trimmed.isEmpty {
+                sessions[index].title = deriveTitle(from: trimmed)
+            }
 
             var imageUrls: [String] = []
             if let imageData {
@@ -129,18 +148,20 @@ final class AssistantChatViewModel: ObservableObject {
                let index = sessions.firstIndex(where: { $0.id == session.id }) {
                 sessions[index] = session
             } else if let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index].messages.removeAll { $0.id.hasPrefix("pending-") }
                 sessions[index].messages.append(response.userMessage)
                 sessions[index].messages.append(response.assistantMessage)
                 sessions[index].updatedAt = response.assistantMessage.createdAt
-                if sessions[index].title == "New chat", !trimmed.isEmpty {
-                    sessions[index].title = deriveTitle(from: trimmed)
-                }
             }
 
             resortSessions()
         } catch {
             if isCancellationError(error) { return }
-            if let sessionId = selectedSessionId {
+            if let sessionId,
+               let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index].messages.removeAll { $0.id.hasPrefix("pending-") }
+            }
+            if let sessionId {
                 await loadSessionMessages(sessionId: sessionId)
             }
             errorMessage = friendlyChatErrorMessage(for: error)

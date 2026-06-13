@@ -11,19 +11,23 @@ struct AssistantChatMessage: Identifiable, Codable, Equatable {
     var text: String
     var imageUrls: [String]
     let createdAt: Date
+    /// Local-only image bytes for optimistic messages before upload completes.
+    var localImageData: Data?
 
     init(
         id: String,
         role: AssistantMessageRole,
         text: String,
         imageUrls: [String] = [],
-        createdAt: Date
+        createdAt: Date,
+        localImageData: Data? = nil
     ) {
         self.id = id
         self.role = role
         self.text = text
         self.imageUrls = imageUrls
         self.createdAt = createdAt
+        self.localImageData = localImageData
     }
 
     init(from decoder: Decoder) throws {

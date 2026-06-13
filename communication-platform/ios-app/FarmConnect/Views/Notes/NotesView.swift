@@ -1,10 +1,20 @@
 import SwiftUI
 
 struct NotesView: View {
-    enum NotesSource: String, CaseIterable, Identifiable {
-        case fieldLog = "Field log"
-        case privateNotes = "Private notes"
+    enum NotesFilter: String, CaseIterable, Identifiable {
+        case all = "All"
+        case spray = "Spray"
+        case scouting = "Scouting"
+        case notes = "Notes"
         var id: String { rawValue }
+
+        var fieldLogKind: VineyardLogKind? {
+            switch self {
+            case .all, .notes: return nil
+            case .spray: return .spray
+            case .scouting: return .scouting
+            }
+        }
     }
 
     enum DisplayMode: String, CaseIterable, Identifiable {
@@ -13,17 +23,22 @@ struct NotesView: View {
         var id: String { rawValue }
     }
 
-    enum FieldLogFilter: String, CaseIterable, Identifiable {
-        case all = "All"
-        case spray = "Spray"
-        case scouting = "Scouting"
-        var id: String { rawValue }
+    private enum TimelineItem: Identifiable {
+        case field(VineyardFieldLogEntry)
+        case note(Post)
 
-        var kind: VineyardLogKind? {
+        var id: String {
             switch self {
-            case .all: return nil
-            case .spray: return .spray
-            case .scouting: return .scouting
+            case .field(let entry): return "field-\(entry.id)"
+            case .note(let post): return "note-\(post.id)"
+            }
+        }
+
+        var sortDate: Date {
+            switch self {
+            case .field(let entry): return entry.createdAt
+            case .note(let post):
+                return Date(timeIntervalSince1970: Double(post.createdAt) / 1000)
             }
         }
     }
@@ -37,9 +52,7 @@ struct NotesView: View {
     @State private var selectedPost: Post?
     @State private var selectedFieldEntry: VineyardFieldLogEntry?
     @State private var query = ""
-    @State private var selectedTimeFilter: TimeFilter = .all
-    @State private var notesSource: NotesSource = .fieldLog
-    @State private var fieldLogFilter: FieldLogFilter = .all
+    @State private var notesFilter: NotesFilter = .all
     @State private var isCreateNoteOpen = false
     @State private var isCreateFieldLogOpen = false
     @State private var displayMode: DisplayMode = .list
@@ -49,7 +62,7 @@ struct NotesView: View {
     @State private var isDeleting = false
 
     private var filteredFieldEntries: [VineyardFieldLogEntry] {
-        let base = fieldLogStore.entries(kind: fieldLogFilter.kind)
+        let base = fieldLogStore.entries(kind: notesFilter.fieldLogKind)
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return base }
         return base.filter {
@@ -61,46 +74,47 @@ struct NotesView: View {
         }
     }
 
+    private var filteredPrivateNotes: [Post] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return notes }
+        return notes.filter {
+            $0.title.localizedCaseInsensitiveContains(trimmed)
+                || $0.body.localizedCaseInsensitiveContains(trimmed)
+                || $0.city.localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
+    private var timelineItems: [TimelineItem] {
+        switch notesFilter {
+        case .all:
+            let fields = filteredFieldEntries.map { TimelineItem.field($0) }
+            let noteItems = filteredPrivateNotes.map { TimelineItem.note($0) }
+            return (fields + noteItems).sorted { $0.sortDate > $1.sortDate }
+        case .spray, .scouting:
+            return filteredFieldEntries
+                .map { TimelineItem.field($0) }
+                .sorted { $0.sortDate > $1.sortDate }
+        case .notes:
+            return filteredPrivateNotes
+                .map { TimelineItem.note($0) }
+                .sorted { $0.sortDate > $1.sortDate }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
-                Picker("Source", selection: $notesSource) {
-                    ForEach(NotesSource.allCases) { source in
-                        Text(source.rawValue).tag(source)
+                TextField("Search notes and field log", text: $query)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+
+                Picker("Filter", selection: $notesFilter) {
+                    ForEach(NotesFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
                     }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
-
-                HStack {
-                    TextField(notesSource == .fieldLog ? "Search field log" : "Search private notes", text: $query)
-                        .textFieldStyle(.roundedBorder)
-                    if notesSource == .privateNotes {
-                        Button("Go") {
-                            Task { await loadNotes() }
-                        }
-                    }
-                }
-                .padding(.horizontal)
-
-                if notesSource == .fieldLog {
-                    Picker("Type", selection: $fieldLogFilter) {
-                        ForEach(FieldLogFilter.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                } else {
-                    Picker("Time", selection: $selectedTimeFilter) {
-                        ForEach(TimeFilter.allCases) { filter in
-                            Text(filter.title).tag(filter)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .padding(.horizontal)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
 
                 Picker("Mode", selection: $displayMode) {
                     ForEach(DisplayMode.allCases) { mode in
@@ -119,14 +133,32 @@ struct NotesView: View {
                 }
 
                 ZStack {
-                    if notesSource == .fieldLog {
-                        fieldLogContent
+                    if displayMode == .list {
+                        unifiedList
+                            .overlay {
+                                if timelineItems.isEmpty && !isLoading {
+                                    ContentUnavailableView(
+                                        emptyTitle,
+                                        systemImage: "note.text",
+                                        description: Text(emptyDescription)
+                                    )
+                                }
+                            }
                     } else {
-                        privateNotesContent
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                calendarView
+                                selectedDaySection
+                            }
+                            .padding(.bottom, 12)
+                        }
+                        .refreshable {
+                            await reloadAll()
+                        }
                     }
 
-                    if isLoading && notes.isEmpty && notesSource == .privateNotes {
-                        ProgressView("Loading private notes...")
+                    if isLoading && notes.isEmpty {
+                        ProgressView("Loading notes...")
                     }
                 }
             }
@@ -136,26 +168,27 @@ struct NotesView: View {
                     AccountMenuButton()
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        if notesSource == .fieldLog {
+                    Menu {
+                        Button {
                             isCreateFieldLogOpen = true
-                        } else {
+                        } label: {
+                            Label("Field log entry", systemImage: "leaf.arrow.triangle.circlepath")
+                        }
+                        Button {
                             isCreateNoteOpen = true
+                        } label: {
+                            Label("Quick note", systemImage: "note.text")
                         }
                     } label: {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel(notesSource == .fieldLog ? "Add field log entry" : "Create Note")
+                    .accessibilityLabel("Add note")
                 }
             }
             .task {
-                fieldLogStore.reload()
-                await loadNotes()
+                await reloadAll()
             }
             .onChange(of: feedViewModel.refreshTrigger) { _, _ in
-                Task { await loadNotes() }
-            }
-            .onChange(of: selectedTimeFilter) { _, _ in
                 Task { await loadNotes() }
             }
             .onChange(of: selectedCalendarDay) { _, newValue in
@@ -165,7 +198,7 @@ struct NotesView: View {
                 NewPostView(
                     initialCategory: .note,
                     initialVisibility: "Private",
-                    screenTitle: "Create Note",
+                    screenTitle: "Quick Note",
                     publishButtonTitle: "Save Note",
                     successMessage: "Note saved"
                 )
@@ -208,79 +241,47 @@ struct NotesView: View {
         }
     }
 
-    // MARK: - Field log
-
-    @ViewBuilder
-    private var fieldLogContent: some View {
-        if displayMode == .list {
-            fieldLogList
-                .overlay {
-                    if filteredFieldEntries.isEmpty {
-                        ContentUnavailableView(
-                            "No field log entries",
-                            systemImage: "leaf.arrow.triangle.circlepath",
-                            description: Text("Demo spray and scouting records appear here. Tap + to add your own.")
-                        )
-                    }
-                }
-        } else {
-            ScrollView {
-                VStack(spacing: 12) {
-                    fieldLogSummaryBanner
-                    calendarView(entriesByDay: fieldEntriesByDay)
-                    selectedDayFieldLogSection
-                }
-                .padding(.bottom, 12)
-            }
+    private var emptyTitle: String {
+        switch notesFilter {
+        case .all: return "No notes yet"
+        case .spray: return "No spray records"
+        case .scouting: return "No scouting notes"
+        case .notes: return "No quick notes"
         }
     }
 
-    private var fieldLogSummaryBanner: some View {
-        let sprays = fieldLogStore.entries.filter { $0.kind == .spray }.count
-        let scouts = fieldLogStore.entries.filter { $0.kind == .scouting }.count
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("Vineyard field log")
-                .font(.subheadline.weight(.semibold))
-            Text("\(sprays) spray records · \(scouts) scouting notes · block + row detail")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private var emptyDescription: String {
+        switch notesFilter {
+        case .all:
+            return "Add a field log entry for spray or scouting, or jot a quick private note."
+        case .spray, .scouting:
+            return "Tap + to add a structured field log entry."
+        case .notes:
+            return "Tap + to save a quick private note."
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
     }
 
-    private var fieldLogList: some View {
+    // MARK: - Unified list
+
+    private var unifiedList: some View {
         List {
-            if fieldLogFilter == .all {
-                fieldLogSection(
-                    title: "Spray applications",
-                    entries: filteredFieldEntries.filter { $0.kind == .spray }
-                )
-                fieldLogSection(
-                    title: "Scouting & issues",
-                    entries: filteredFieldEntries.filter { $0.kind == .scouting }
-                )
-            } else {
-                fieldLogRows(filteredFieldEntries)
+            ForEach(timelineItems) { item in
+                timelineRow(item)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    .listRowSeparator(.hidden)
             }
         }
         .listStyle(.plain)
-    }
-
-    @ViewBuilder
-    private func fieldLogSection(title: String, entries: [VineyardFieldLogEntry]) -> some View {
-        if !entries.isEmpty {
-            Section(title) {
-                fieldLogRows(entries)
-            }
+        .refreshable {
+            await reloadAll()
         }
     }
 
-    private func fieldLogRows(_ items: [VineyardFieldLogEntry]) -> some View {
-        ForEach(items) { entry in
+    @ViewBuilder
+    private func timelineRow(_ item: TimelineItem) -> some View {
+        switch item {
+        case .field(let entry):
             VineyardFieldLogCard(entry: entry)
-                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                .listRowSeparator(.hidden)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     selectedFieldEntry = entry
@@ -294,74 +295,110 @@ struct NotesView: View {
                         }
                     }
                 }
+        case .note(let note):
+            privateNoteRow(note)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        pendingDeletion = note
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
         }
     }
 
-    private var fieldEntriesByDay: [Date: [VineyardFieldLogEntry]] {
-        Dictionary(grouping: filteredFieldEntries) { entry in
-            Calendar.current.startOfDay(for: entry.createdAt)
+    private func privateNoteRow(_ note: Post) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "note.text")
+                    .font(.subheadline)
+                    .foregroundStyle(.blue)
+                Text("Quick note")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(relativeTime(note.createdAt))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Text(note.title)
+                .font(.headline)
+            if !note.body.isEmpty {
+                Text(note.body)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+        }
+        .padding(12)
+        .background(Color.gray.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedPost = note
         }
     }
 
-    private var selectedDayFieldEntries: [VineyardFieldLogEntry] {
-        (fieldEntriesByDay[selectedCalendarDay] ?? []).sorted { $0.createdAt > $1.createdAt }
+    // MARK: - Calendar
+
+    private var entriesByDay: [Date: [TimelineItem]] {
+        Dictionary(grouping: timelineItems) { item in
+            Calendar.current.startOfDay(for: item.sortDate)
+        }
     }
 
-    private var selectedDayFieldLogSection: some View {
+    private var selectedDayItems: [TimelineItem] {
+        (entriesByDay[selectedCalendarDay] ?? []).sorted { $0.sortDate > $1.sortDate }
+    }
+
+    private var selectedDaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Entries on \(dayTitle(for: selectedCalendarDay))")
                 .font(.headline)
                 .padding(.horizontal)
 
-            if selectedDayFieldEntries.isEmpty {
-                Text("No entries on this date.")
+            if selectedDayItems.isEmpty {
+                Text("Nothing on this date.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
             } else {
-                ForEach(selectedDayFieldEntries) { entry in
-                    VineyardFieldLogCard(entry: entry)
+                ForEach(selectedDayItems) { item in
+                    timelineRow(item)
                         .padding(.horizontal)
-                        .onTapGesture {
-                            selectedFieldEntry = entry
-                        }
                 }
             }
         }
     }
 
-    // MARK: - Private notes (API)
+    private var calendarView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            calendarHeader
 
-    @ViewBuilder
-    private var privateNotesContent: some View {
-        if displayMode == .list {
-            notesList(notes)
-                .overlay {
-                    if notes.isEmpty && !isLoading {
-                        ContentUnavailableView(
-                            "No private notes",
-                            systemImage: "note.text",
-                            description: Text("Use Field log for structured spray and scouting records.")
-                        )
-                    }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                ForEach(weekdaySymbols(), id: \.self) { day in
+                    Text(day)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
                 }
-        } else {
-            ScrollView {
-                VStack(spacing: 12) {
-                    calendarView(entriesByDay: nil)
-                    if notes.isEmpty && !isLoading {
-                        ContentUnavailableView("No private notes", systemImage: "note.text")
-                            .padding(.top, 24)
+
+                ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
+                    if let date {
+                        dayCell(for: date, hasEntries: entriesByDay[date] != nil)
                     } else {
-                        selectedDayNotesSection
+                        Color.clear.frame(height: 34)
                     }
                 }
-                .padding(.bottom, 12)
             }
-            .refreshable {
-                await loadNotes()
-            }
+            .padding(.horizontal)
         }
+    }
+
+    // MARK: - Data
+
+    private func reloadAll() async {
+        fieldLogStore.reload()
+        await loadNotes()
     }
 
     private func deleteNote(_ note: Post) async {
@@ -387,21 +424,14 @@ struct NotesView: View {
 
         do {
             let page = try await APIClient.shared.getPrivateNotes(
-                query: query,
-                timeFilter: selectedTimeFilter,
+                query: "",
+                timeFilter: .all,
                 limit: 100
             )
             notes = page.items
         } catch {
             if isCancellationError(error) { return }
-            errorMessage = "Failed to load private notes: \(error.localizedDescription)"
-        }
-    }
-
-    private var notesByDay: [Date: [Post]] {
-        Dictionary(grouping: notes) { note in
-            let date = Date(timeIntervalSince1970: Double(note.createdAt) / 1000)
-            return Calendar.current.startOfDay(for: date)
+            errorMessage = "Failed to load notes: \(error.localizedDescription)"
         }
     }
 
@@ -421,52 +451,14 @@ struct NotesView: View {
         return items
     }
 
-    private var selectedDayNotes: [Post] {
-        (notesByDay[selectedCalendarDay] ?? []).sorted { $0.createdAt > $1.createdAt }
-    }
-
     private var availableYears: [Int] {
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: Date())
-        let sources: [Date] = notesSource == .fieldLog
-            ? filteredFieldEntries.map(\.createdAt)
-            : notes.map { Date(timeIntervalSince1970: Double($0.createdAt) / 1000) }
-        let noteYears = sources.map { calendar.component(.year, from: $0) }
-        let minimum = min(noteYears.min() ?? currentYear, currentYear - 3)
-        let maximum = max(noteYears.max() ?? currentYear, currentYear + 3)
+        let dates = timelineItems.map(\.sortDate)
+        let years = dates.map { calendar.component(.year, from: $0) }
+        let minimum = min(years.min() ?? currentYear, currentYear - 3)
+        let maximum = max(years.max() ?? currentYear, currentYear + 3)
         return Array(minimum...maximum)
-    }
-
-    private func calendarView(entriesByDay: [Date: [VineyardFieldLogEntry]]?) -> some View {
-        let hasEntry: (Date) -> Bool = { date in
-            if let entriesByDay {
-                return entriesByDay[date] != nil
-            }
-            return notesByDay[date] != nil
-        }
-        let dotColor: Color = notesSource == .fieldLog ? .green : .blue
-
-        return VStack(alignment: .leading, spacing: 10) {
-            calendarHeader
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                ForEach(weekdaySymbols(), id: \.self) { day in
-                    Text(day)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                }
-
-                ForEach(Array(monthDays.enumerated()), id: \.offset) { _, date in
-                    if let date {
-                        dayCell(for: date, hasNotes: hasEntry(date), accent: dotColor)
-                    } else {
-                        Color.clear.frame(height: 34)
-                    }
-                }
-            }
-            .padding(.horizontal)
-        }
     }
 
     private var calendarHeader: some View {
@@ -522,19 +514,19 @@ struct NotesView: View {
         .padding(.horizontal)
     }
 
-    private func dayCell(for date: Date, hasNotes: Bool, accent: Color) -> some View {
+    private func dayCell(for date: Date, hasEntries: Bool) -> some View {
         let isSelected = Calendar.current.isDate(date, inSameDayAs: selectedCalendarDay)
         return Button {
             selectedCalendarDay = date
         } label: {
             Text("\(Calendar.current.component(.day, from: date))")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(hasNotes ? .white : .primary)
+                .foregroundStyle(hasEntries ? .white : .primary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 34)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(hasNotes ? accent : Color.gray.opacity(0.2))
+                        .fill(hasEntries ? Color.accentColor : Color.gray.opacity(0.2))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
@@ -542,93 +534,6 @@ struct NotesView: View {
                 )
         }
         .buttonStyle(.plain)
-    }
-
-    private var selectedDayNotesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Notes on \(dayTitle(for: selectedCalendarDay))")
-                .font(.headline)
-                .padding(.horizontal)
-
-            if selectedDayNotes.isEmpty {
-                Text("No notes on this date.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-            } else {
-                ForEach(selectedDayNotes) { note in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(alignment: .top) {
-                            Text(note.title)
-                                .font(.headline)
-                            Spacer()
-                            Button {
-                                pendingDeletion = note
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.footnote)
-                                    .foregroundStyle(.red)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        Text(note.body)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(3)
-                        HStack {
-                            Text(note.city)
-                            Spacer()
-                            Text(relativeTime(note.createdAt))
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                    .padding(10)
-                    .background(Color.gray.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-                    .padding(.horizontal)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedPost = note
-                    }
-                }
-            }
-        }
-    }
-
-    private func notesList(_ notes: [Post]) -> some View {
-        List(notes) { note in
-            VStack(alignment: .leading, spacing: 6) {
-                Text(note.title)
-                    .font(.headline)
-                Text(note.body)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                HStack {
-                    Text(note.city)
-                    Spacer()
-                    Text(relativeTime(note.createdAt))
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                selectedPost = note
-            }
-            .padding(.vertical, 4)
-            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                Button(role: .destructive) {
-                    pendingDeletion = note
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-        }
-        .listStyle(.plain)
-        .refreshable {
-            await loadNotes()
-        }
     }
 
     private func weekdaySymbols() -> [String] {

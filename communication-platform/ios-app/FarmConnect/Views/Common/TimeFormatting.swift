@@ -36,4 +36,19 @@ enum TimeFormatting {
         let date = Date(timeIntervalSince1970: Double(timestampMs) / 1000)
         return listPreview(from: date, now: now)
     }
+
+    /// Compact timestamp for individual chat messages.
+    static func messageSent(at date: Date) -> String {
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        if calendar.isDateInToday(date) {
+            return formatter.string(from: date)
+        }
+        if calendar.isDateInYesterday(date) {
+            return "Yesterday, \(formatter.string(from: date))"
+        }
+        formatter.dateStyle = .short
+        return formatter.string(from: date)
+    }
 }

@@ -12,7 +12,8 @@ struct AssistantChatView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if let session = viewModel.selectedSession, !session.messages.isEmpty {
+                if let session = viewModel.selectedSession,
+                   !session.messages.isEmpty || viewModel.isSending {
                     messagesList(session: session)
                 } else {
                     emptyState
@@ -119,8 +120,15 @@ struct AssistantChatView: View {
                     .frame(width: 28, height: 28)
             }
 
-            VStack(alignment: isUser ? .trailing : .leading, spacing: 8) {
-                if !message.imageUrls.isEmpty {
+            VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
+                if let localImageData = message.localImageData,
+                   let uiImage = UIImage(data: localImageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: 220, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else if !message.imageUrls.isEmpty {
                     ForEach(Array(message.imageUrls.enumerated()), id: \.offset) { _, imageUrl in
                         if let url = URL(string: imageUrl) {
                             AsyncImage(url: url) { phase in
@@ -142,9 +150,7 @@ struct AssistantChatView: View {
                     }
                 }
                 if !message.text.isEmpty {
-                    Text(message.text)
-                        .font(.body)
-                        .foregroundStyle(isUser ? .white : .primary)
+                    messageTextContent(message.text, isUser: isUser)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(
@@ -152,9 +158,34 @@ struct AssistantChatView: View {
                             in: RoundedRectangle(cornerRadius: 18)
                         )
                 }
+
+                Text(TimeFormatting.messageSent(at: message.createdAt))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 6)
             }
 
             if !isUser { Spacer(minLength: 48) }
+        }
+    }
+
+    @ViewBuilder
+    private func messageTextContent(_ text: String, isUser: Bool) -> some View {
+        if isUser {
+            Text(text)
+                .font(.body)
+                .foregroundStyle(.white)
+        } else if let attributed = try? AttributedString(
+            markdown: text,
+            options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) {
+            Text(attributed)
+                .font(.body)
+                .foregroundStyle(.primary)
+        } else {
+            Text(text)
+                .font(.body)
+                .foregroundStyle(.primary)
         }
     }
 
