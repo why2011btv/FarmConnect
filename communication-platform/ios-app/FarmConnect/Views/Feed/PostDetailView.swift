@@ -206,11 +206,6 @@ struct PostDetailView: View {
             }
 
             Spacer()
-            if canChatAuthor {
-                Image(systemName: "message")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
     }
 
