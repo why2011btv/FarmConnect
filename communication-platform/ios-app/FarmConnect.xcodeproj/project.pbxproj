@@ -27,6 +27,12 @@
 		AA11CCCCCCCCCCCC00000003 /* AssistantChatModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA44CCCCCCCCCCCC00000003 /* AssistantChatModels.swift */; };
 		AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC4BD82888633215B07B2A7 /* FeedView.swift */; };
 		B830E3AB16B56BE3721B5DE0 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A888FAD16E4369D43BC994F /* PostDetailView.swift */; };
+		B88DCD4E2FEDD937008D4A2E /* VineyardLayoutMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD4D2FEDD937008D4A2E /* VineyardLayoutMode.swift */; };
+		B88DCD4F2FEDD937008D4A2E /* VineyardAnalyzeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD4C2FEDD937008D4A2E /* VineyardAnalyzeModels.swift */; };
+		B88DCD522FEDD963008D4A2E /* VineyardLayoutGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD502FEDD963008D4A2E /* VineyardLayoutGenerator.swift */; };
+		B88DCD532FEDD963008D4A2E /* VineyardMapSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD512FEDD963008D4A2E /* VineyardMapSnapshot.swift */; };
+		B88DCD562FEDD98B008D4A2E /* BoundaryEditorMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD542FEDD98B008D4A2E /* BoundaryEditorMap.swift */; };
+		B88DCD572FEDD98B008D4A2E /* VineyardGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88DCD552FEDD98B008D4A2E /* VineyardGeneratorView.swift */; };
 		BB11AAAAAAAAAAAA00000001 /* CategoryStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11AAAAAAAAAAAA00000001 /* CategoryStyle.swift */; };
 		BB11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift */; };
 		BB11CCCCCCCCCCCC00000003 /* PostCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA11CCCCCCCCCCCC00000003 /* PostCardRow.swift */; };
@@ -73,12 +79,12 @@
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		B5C6D7E8F90123456789A0B1 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		B7E0FCB47A55D55BBA048109 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		B88DCD462FEDD345008D4A2E /* VineyardAnalyzeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardAnalyzeModels.swift; sourceTree = "<group>"; };
-		B88DCD472FEDD345008D4A2E /* VineyardLayoutMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardLayoutMode.swift; sourceTree = "<group>"; };
-		B88DCD482FEDD38D008D4A2E /* VineyardLayoutGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VineyardLayoutGenerator.swift; path = FarmConnect/Services/VineyardLayoutGenerator.swift; sourceTree = "<group>"; };
-		B88DCD492FEDD38D008D4A2E /* VineyardMapSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VineyardMapSnapshot.swift; path = FarmConnect/Services/VineyardMapSnapshot.swift; sourceTree = "<group>"; };
-		B88DCD4A2FEDD3AD008D4A2E /* BoundaryEditorMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BoundaryEditorMap.swift; path = FarmConnect/Views/Sensors/BoundaryEditorMap.swift; sourceTree = "<group>"; };
-		B88DCD4B2FEDD3AD008D4A2E /* VineyardGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VineyardGeneratorView.swift; path = FarmConnect/Views/Sensors/VineyardGeneratorView.swift; sourceTree = "<group>"; };
+		B88DCD4C2FEDD937008D4A2E /* VineyardAnalyzeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardAnalyzeModels.swift; sourceTree = "<group>"; };
+		B88DCD4D2FEDD937008D4A2E /* VineyardLayoutMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardLayoutMode.swift; sourceTree = "<group>"; };
+		B88DCD502FEDD963008D4A2E /* VineyardLayoutGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardLayoutGenerator.swift; sourceTree = "<group>"; };
+		B88DCD512FEDD963008D4A2E /* VineyardMapSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardMapSnapshot.swift; sourceTree = "<group>"; };
+		B88DCD542FEDD98B008D4A2E /* BoundaryEditorMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundaryEditorMap.swift; sourceTree = "<group>"; };
+		B88DCD552FEDD98B008D4A2E /* VineyardGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardGeneratorView.swift; sourceTree = "<group>"; };
 		BDC4BD82888633215B07B2A7 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
 		C03385AD637416062FCF000E /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		C1188FF971B4192ACB1F07E9 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
@@ -115,12 +121,6 @@
 		1664E1D30A49913DFDC7FE6F = {
 			isa = PBXGroup;
 			children = (
-				B88DCD4A2FEDD3AD008D4A2E /* BoundaryEditorMap.swift */,
-				B88DCD4B2FEDD3AD008D4A2E /* VineyardGeneratorView.swift */,
-				B88DCD482FEDD38D008D4A2E /* VineyardLayoutGenerator.swift */,
-				B88DCD492FEDD38D008D4A2E /* VineyardMapSnapshot.swift */,
-				B88DCD462FEDD345008D4A2E /* VineyardAnalyzeModels.swift */,
-				B88DCD472FEDD345008D4A2E /* VineyardLayoutMode.swift */,
 				250ACD424D6736DD12482FCE /* FarmConnect */,
 				C8C3A3E8A037821420778A02 /* Products */,
 			);
@@ -188,6 +188,8 @@
 		646181D2DC076639E15B15B9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B88DCD502FEDD963008D4A2E /* VineyardLayoutGenerator.swift */,
+				B88DCD512FEDD963008D4A2E /* VineyardMapSnapshot.swift */,
 				2D021C17C055DFBA2E76DAC8 /* PushNotificationManager.swift */,
 				770E037D2A141A178276DB57 /* UserLocationManager.swift */,
 				FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */,
@@ -208,6 +210,8 @@
 			children = (
 				FA22DDDDDDDDDDDD00000004 /* CanopySensorReadingsView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
+				B88DCD542FEDD98B008D4A2E /* BoundaryEditorMap.swift */,
+				B88DCD552FEDD98B008D4A2E /* VineyardGeneratorView.swift */,
 				FA22EEEEEEEEEEEE00000005 /* VineyardInsightsPanel.swift */,
 				FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */,
 				FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */,
@@ -247,6 +251,8 @@
 			isa = PBXGroup;
 			children = (
 				FA44CCCCCCCCCCCC00000003 /* AssistantChatModels.swift */,
+				B88DCD4C2FEDD937008D4A2E /* VineyardAnalyzeModels.swift */,
+				B88DCD4D2FEDD937008D4A2E /* VineyardLayoutMode.swift */,
 				E00A5CBC466AA00FCCA3BF50 /* DomainModels.swift */,
 				FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */,
 				FA22FFFFFFFFFFFF00000006 /* VineyardBlockRectangle.swift */,
@@ -407,14 +413,20 @@
 				3CBA481DE1662E4CA5E46E5C /* NewPostView.swift in Sources */,
 				A4B1C2D3E4F506172839405A /* NotificationSettingsView.swift in Sources */,
 				B830E3AB16B56BE3721B5DE0 /* PostDetailView.swift in Sources */,
+				B88DCD4E2FEDD937008D4A2E /* VineyardLayoutMode.swift in Sources */,
+				B88DCD4F2FEDD937008D4A2E /* VineyardAnalyzeModels.swift in Sources */,
 				6F4FD44C09E5EC7F711EB1F9 /* PushNotificationManager.swift in Sources */,
 				EF834883A902B1EC0A89FABC /* RootTabView.swift in Sources */,
 				739D028B6F301E0299BADBED /* SensorDashboardView.swift in Sources */,
+				B88DCD562FEDD98B008D4A2E /* BoundaryEditorMap.swift in Sources */,
+				B88DCD572FEDD98B008D4A2E /* VineyardGeneratorView.swift in Sources */,
 				E7292CC73D449EC8B24621AA /* SensorViewModel.swift in Sources */,
 				42DD87C45272A5156B3AB1AD /* SessionStore.swift in Sources */,
 				3A5FAD475A52D8BC8A86FD67 /* UserLocationManager.swift in Sources */,
 				BB11AAAAAAAAAAAA00000001 /* CategoryStyle.swift in Sources */,
 				BB11BBBBBBBBBBBB00000002 /* ErrorHelpers.swift in Sources */,
+				B88DCD522FEDD963008D4A2E /* VineyardLayoutGenerator.swift in Sources */,
+				B88DCD532FEDD963008D4A2E /* VineyardMapSnapshot.swift in Sources */,
 				BB11CCCCCCCCCCCC00000003 /* PostCardRow.swift in Sources */,
 				BB11DDDDDDDDDDDD00000004 /* TimeFormatting.swift in Sources */,
 				DD11AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift in Sources */,
