@@ -62,8 +62,11 @@ enum VineyardDemoData {
         settings: [String: VineyardBlockSettings] = defaultBlockSettings
     ) -> [VineyardDemoBlock] {
         var blocks: [VineyardDemoBlock] = []
-        for rectangle in rectangles {
-            guard let template = blockTemplates[rectangle.id] else { continue }
+        for (index, rectangle) in rectangles.enumerated() {
+            // Curated demo blocks (b1..b8) use their hand-authored readings; auto-generated
+            // blocks (e.g. "gen-1") get a deterministic synthetic template so they still
+            // render with a believable risk spread in Planning mode.
+            let template = blockTemplates[rectangle.id] ?? syntheticTemplate(id: rectangle.id, index: index)
             let variety = settings[rectangle.id]?.variety ?? .notSpecified
             let analytics = VineyardCanopyAnalytics.summarize(readings: template.readings)
             let risk = riskLevel(from: analytics)
@@ -110,6 +113,11 @@ enum VineyardDemoData {
 
     static var mapRegion: MKCoordinateRegion {
         MKCoordinateRegion(center: mapCenter, span: mapSpan)
+    }
+
+    /// The curated, farmer-facing layout shipped out of the box (hand-tuned Running Brook blocks).
+    static var defaultDemoSlot: LayoutSlot {
+        LayoutSlot(rectangles: defaultRectangles, blockSettings: defaultBlockSettings, profile: nil)
     }
 
     // MARK: - Block metadata (readings / risk do not depend on map position)
@@ -239,5 +247,48 @@ enum VineyardDemoData {
         _ severity: String
     ) -> VineyardBlockInsight {
         VineyardBlockInsight(id: id, title: title, message: message, severity: severity)
+    }
+
+    // MARK: - Synthetic templates for auto-generated blocks
+
+    /// Deterministic, plausible readings for an auto-generated block id (e.g. "gen-3").
+    /// Seeded by a STABLE hash of the id (never `String.hashValue`, which is randomized per
+    /// launch and would make Planning-mode readings/risk flicker on every app start).
+    private static func syntheticTemplate(id: String, index: Int) -> BlockTemplate {
+        let seed = stableHash(id)
+        // Map the seed onto [0, 1) for repeatable pseudo-variation.
+        let t = Double(seed % 1000) / 1000.0
+        let t2 = Double((seed / 1000) % 1000) / 1000.0
+
+        // Spread readings so the auto-arranged layout shows a realistic mix of low/moderate/high
+        // risk (peak mildew index <40 low, 40–69 moderate, ≥70 high — see VineyardCanopyAnalytics).
+        let temp = 70 + t * 12               // 70–82°F (within the 60–85 powdery-favorable band)
+        let rh = 48 + t2 * 42                // 48–90% RH
+        let leafWet = (t2 > 0.6) ? (t2 - 0.6) * 12 : 0.3   // mostly dry, occasionally wet
+        let soilMoist = 36 + t * 14          // 36–50%
+        let soilTemp = 66 + t2 * 6           // 66–72°F
+        let rain = (t > 0.7) ? (t - 0.7) * 0.4 : 0.0
+        let solar = 16 + (1 - t2) * 9        // 16–25 MJ
+        let wind = 2 + t * 9                 // 2–11 mph
+        let windDir = Double((seed / 7) % 360)
+
+        return BlockTemplate(
+            name: "Block \(index + 1)",
+            locationLabel: "Auto-placed zone \(index + 1)",
+            readings: readings(
+                temp: temp, rh: rh, leafWet: leafWet, soilMoist: soilMoist, soilTemp: soilTemp,
+                rain: rain, solar: solar, wind: wind, windDir: windDir
+            )
+        )
+    }
+
+    /// Stable, launch-independent hash of a string (FNV-1a, 32-bit, folded to non-negative).
+    private static func stableHash(_ string: String) -> Int {
+        var hash: UInt32 = 2166136261
+        for byte in string.utf8 {
+            hash ^= UInt32(byte)
+            hash = hash &* 16777619
+        }
+        return Int(hash & 0x7FFF_FFFF)
     }
 }

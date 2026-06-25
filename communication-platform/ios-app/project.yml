@@ -23,3 +23,23 @@ targets:
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: We may save generated media to your photo library.
         INFOPLIST_KEY_UIBackgroundModes:
           - remote-notification
+  FarmConnectTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - FarmConnectTests
+    dependencies:
+      - target: FarmConnect
+    settings:
+      base:
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  FarmConnect:
+    build:
+      targets:
+        FarmConnect: all
+    test:
+      targets:
+        - FarmConnectTests

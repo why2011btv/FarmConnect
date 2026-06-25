@@ -7,6 +7,13 @@ struct VineyardHealthMapView: View {
     var isEditingLayout: Bool = false
     @Binding var editingBlockId: String?
     var onMoveBlock: ((String, Double, Double) -> Void)?
+    /// Camera framing. Defaults to the bundled Running Brook region.
+    var region: MKCoordinateRegion = VineyardDemoData.mapRegion
+    /// Changing this value retargets the camera to `region` (e.g. on a mode/vineyard switch),
+    /// without tearing down the map (avoids dropping the user's pan/zoom mid-demo).
+    var cameraKey: String = "default"
+    /// Optional read-only vine-area boundary outline (shown in Planning mode).
+    var boundary: [CLLocationCoordinate2D] = []
 
     @State private var mapPosition = MapCameraPosition.region(VineyardDemoData.mapRegion)
     @State private var dragMapStart: CLLocationCoordinate2D?
@@ -15,7 +22,13 @@ struct VineyardHealthMapView: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             MapReader { proxy in
-                Map(position: $mapPosition, interactionModes: isEditingLayout ? [.pan, .zoom] : [.pan, .zoom]) {
+                Map(position: $mapPosition, interactionModes: [.pan, .zoom]) {
+                    if boundary.count >= 3 {
+                        MapPolygon(coordinates: boundary)
+                            .foregroundStyle(.clear)
+                            .stroke(.white.opacity(0.9), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                    }
+
                     ForEach(blocks) { block in
                         MapPolygon(coordinates: block.polygon)
                             .foregroundStyle(block.riskLevel.fillColor.opacity(fillOpacity(for: block)))
@@ -36,6 +49,14 @@ struct VineyardHealthMapView: View {
                 }
                 .onTapGesture(coordinateSpace: .local) { location in
                     handleMapTap(at: location, proxy: proxy)
+                }
+                .onChange(of: cameraKey) { _, _ in
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        mapPosition = .region(region)
+                    }
+                }
+                .onAppear {
+                    mapPosition = .region(region)
                 }
             }
 

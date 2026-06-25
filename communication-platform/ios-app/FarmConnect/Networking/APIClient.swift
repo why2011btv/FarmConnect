@@ -492,6 +492,23 @@ final class APIClient {
         guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
     }
 
+    func analyzeVineyard(
+        name: String,
+        snapshot: VineyardAnalyzeRequest.Snapshot? = nil
+    ) async throws -> VineyardAnalyzeResponse {
+        var req = try authorizedRequest(path: "/v1/vineyard/analyze", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.timeoutInterval = 60
+        req.httpBody = try makeJSONEncoder().encode(
+            VineyardAnalyzeRequest(name: name, snapshot: snapshot)
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try makeJSONDecoder().decode(VineyardAnalyzeResponse.self, from: data)
+    }
+
     private func makeJSONDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

@@ -44,7 +44,7 @@ struct VineyardBlockLayoutEditor: View {
         .alert("Import failed", isPresented: $importFailed) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("JSON must contain exactly 8 blocks with ids b1–b8.")
+            Text("JSON must be an array of blocks with unique ids.")
         }
         .sheet(isPresented: $showImportSheet) {
             importSheet
@@ -185,7 +185,7 @@ struct VineyardBlockLayoutEditor: View {
         Section("All blocks") {
             Button("Reset all to defaults", role: .destructive) {
                 layoutStore.resetToDefaults()
-                editingBlockId = "b1"
+                editingBlockId = layoutStore.rectangles.first?.id
             }
             Button("Copy layout JSON") {
                 UIPasteboard.general.string = layoutStore.exportJSON()
