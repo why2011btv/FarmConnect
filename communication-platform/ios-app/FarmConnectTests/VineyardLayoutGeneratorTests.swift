@@ -81,6 +81,33 @@ final class VineyardLayoutGeneratorTests: XCTestCase {
         XCTAssertTrue(rects.allSatisfy { $0.rotationDegrees == 7 })
     }
 
+    func testMultiParcelGenerationCoversAllParcels() {
+        // Two disjoint square parcels far apart; blocks must land inside their own parcel.
+        let a = kilometerSquare(center: .init(latitude: 41.68, longitude: -71.00))
+        let b = kilometerSquare(center: .init(latitude: 41.70, longitude: -70.95))
+        let rects = VineyardLayoutGenerator.generateBlocks(parcels: [a, b], totalCount: 20)
+
+        XCTAssertFalse(rects.isEmpty)
+        // Every block is inside parcel A or parcel B (never in the gap between them).
+        for rect in rects {
+            let inA = GeoPolygon.contains(rect.center, polygon: a)
+            let inB = GeoPolygon.contains(rect.center, polygon: b)
+            XCTAssertTrue(inA || inB, "block \(rect.id) is in neither parcel")
+        }
+        // Both parcels get coverage.
+        XCTAssertTrue(rects.contains { GeoPolygon.contains($0.center, polygon: a) })
+        XCTAssertTrue(rects.contains { GeoPolygon.contains($0.center, polygon: b) })
+        // Ids contiguous across parcels.
+        XCTAssertEqual(rects.map(\.id), (1...rects.count).map { "gen-\($0)" })
+    }
+
+    func testTotalAcresSumsParcels() {
+        let a = kilometerSquare(center: .init(latitude: 41.68, longitude: -71.00))
+        let b = kilometerSquare(center: .init(latitude: 41.70, longitude: -70.95))
+        let total = VineyardLayoutGenerator.totalAcres([a, b])
+        XCTAssertEqual(total, 494.2, accuracy: 10.0) // ~2 * 247.1
+    }
+
     func testDefaultBoundaryBoxAcreage() {
         let center = CLLocationCoordinate2D(latitude: 41.68, longitude: -71.0)
         let box = VineyardLayoutGenerator.defaultBoundaryBox(center: center, acres: 20)

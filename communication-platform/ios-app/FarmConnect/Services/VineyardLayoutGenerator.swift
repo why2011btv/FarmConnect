@@ -65,6 +65,44 @@ enum VineyardLayoutGenerator {
         rotationDegrees: Double = 0,
         idPrefix: String = "gen"
     ) -> [VineyardBlockRectangle] {
+        let cells = tile(boundary: boundary, count: count, rotationDegrees: rotationDegrees)
+        return renumber(cells, idPrefix: idPrefix)
+    }
+
+    /// Multi-parcel generation: distribute `totalCount` blocks across parcels proportional to each
+    /// parcel's area (every non-trivial parcel gets at least one), tile each, and number globally.
+    static func generateBlocks(
+        parcels: [[CLLocationCoordinate2D]],
+        totalCount: Int,
+        rotationDegrees: Double = 0,
+        idPrefix: String = "gen"
+    ) -> [VineyardBlockRectangle] {
+        let valid = parcels.filter { $0.count >= 3 }
+        guard !valid.isEmpty, totalCount >= 1 else { return [] }
+        if valid.count == 1 {
+            return generateBlocks(boundary: valid[0], count: totalCount, rotationDegrees: rotationDegrees, idPrefix: idPrefix)
+        }
+
+        let areas = valid.map { max(geodesicAreaAcres($0), 0.0001) }
+        let totalArea = areas.reduce(0, +)
+
+        var combined: [VineyardBlockRectangle] = []
+        for (parcel, area) in zip(valid, areas) {
+            // At least 1 block per parcel; the rest split by area share.
+            let share = Int((Double(totalCount) * area / totalArea).rounded())
+            let parcelCount = max(1, share)
+            combined.append(contentsOf: tile(boundary: parcel, count: parcelCount, rotationDegrees: rotationDegrees))
+        }
+        return renumber(combined, idPrefix: idPrefix)
+    }
+
+    /// Tile one boundary's bounding box and keep cells whose center is inside the boundary.
+    /// Returns un-numbered rectangles (caller renumbers globally).
+    private static func tile(
+        boundary: [CLLocationCoordinate2D],
+        count: Int,
+        rotationDegrees: Double
+    ) -> [VineyardBlockRectangle] {
         guard boundary.count >= 3, count >= 1 else { return [] }
 
         let lats = boundary.map(\.latitude)
@@ -94,14 +132,13 @@ enum VineyardLayoutGenerator {
 
         var inside: [VineyardBlockRectangle] = []
         var allCells: [VineyardBlockRectangle] = []
-        var index = 0
         for row in 0..<rows {
             for col in 0..<cols {
                 let centerLng = minLng + (Double(col) + 0.5) * cellWidthDeg
                 let centerLat = minLat + (Double(row) + 0.5) * cellHeightDeg
                 let center = CLLocationCoordinate2D(latitude: centerLat, longitude: centerLng)
                 let rect = VineyardBlockRectangle(
-                    id: "\(idPrefix)-\(index + 1)",
+                    id: "tmp",
                     centerLatitude: centerLat,
                     centerLongitude: centerLng,
                     halfLatitudeSpan: cellHeightDeg / 2,
@@ -112,13 +149,14 @@ enum VineyardLayoutGenerator {
                 if GeoPolygon.contains(center, polygon: boundary) {
                     inside.append(rect)
                 }
-                index += 1
             }
         }
+        return inside.isEmpty ? allCells : inside
+    }
 
-        // Re-number kept cells so ids are contiguous (gen-1..gen-n).
-        let kept = inside.isEmpty ? allCells : inside
-        return kept.enumerated().map { offset, rect in
+    /// Assign contiguous ids (idPrefix-1 .. idPrefix-n).
+    private static func renumber(_ cells: [VineyardBlockRectangle], idPrefix: String) -> [VineyardBlockRectangle] {
+        cells.enumerated().map { offset, rect in
             VineyardBlockRectangle(
                 id: "\(idPrefix)-\(offset + 1)",
                 centerLatitude: rect.centerLatitude,
@@ -128,6 +166,11 @@ enum VineyardLayoutGenerator {
                 rotationDegrees: rect.rotationDegrees
             )
         }
+    }
+
+    /// Total acreage across multiple parcels.
+    static func totalAcres(_ parcels: [[CLLocationCoordinate2D]]) -> Double {
+        parcels.reduce(0) { $0 + geodesicAreaAcres($1) }
     }
 
     // MARK: - Default / fallback boundary
@@ -155,6 +198,13 @@ enum VineyardLayoutGenerator {
     static func region(forBoundary boundary: [CLLocationCoordinate2D], padding: Double = 1.4) -> MKCoordinateRegion? {
         guard !boundary.isEmpty else { return nil }
         return region(enclosing: boundary, padding: padding)
+    }
+
+    /// A map region framing all parcels (their combined vertices), with padding.
+    static func region(forParcels parcels: [[CLLocationCoordinate2D]], padding: Double = 1.4) -> MKCoordinateRegion? {
+        let coords = parcels.flatMap { $0 }
+        guard !coords.isEmpty else { return nil }
+        return region(enclosing: coords, padding: padding)
     }
 
     /// A map region framing all rectangles' corners (camera fallback when a profile has no region).

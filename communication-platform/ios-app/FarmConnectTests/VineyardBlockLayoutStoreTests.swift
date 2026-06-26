@@ -51,7 +51,7 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
             name: "Test Vineyard",
             centerLatitude: 41.68, centerLongitude: -71.0,
             latitudeDelta: 0.006, longitudeDelta: 0.004,
-            boundary: nil, acreage: 25, source: "osm"
+            parcels: nil, acreage: 25, reportedAcreage: nil, reportedAcreageNote: nil, source: "osm"
         )
         store.installPlanningLayout(rectangles: sampleRects(prefix: "gen", n: 3), profile: profile)
 
@@ -68,7 +68,8 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         let demoBefore = store.slots.demo
         let profile = VineyardProfile(
             name: "V", centerLatitude: 41, centerLongitude: -71,
-            latitudeDelta: 0.006, longitudeDelta: 0.004, boundary: nil, acreage: 25, source: "osm"
+            latitudeDelta: 0.006, longitudeDelta: 0.004, parcels: nil, acreage: 25,
+            reportedAcreage: nil, reportedAcreageNote: nil, source: "osm"
         )
         store.installPlanningLayout(rectangles: sampleRects(prefix: "gen", n: 2), profile: profile)
         store.updateRectangle(id: "gen-1") { $0.centerLatitude += 0.01 }
@@ -81,7 +82,8 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         let store = VineyardBlockLayoutStore()
         let profile = VineyardProfile(
             name: "V", centerLatitude: 41, centerLongitude: -71,
-            latitudeDelta: 0.006, longitudeDelta: 0.004, boundary: nil, acreage: 25, source: "osm"
+            latitudeDelta: 0.006, longitudeDelta: 0.004, parcels: nil, acreage: 25,
+            reportedAcreage: nil, reportedAcreageNote: nil, source: "osm"
         )
         store.installPlanningLayout(rectangles: sampleRects(prefix: "gen", n: 4), profile: profile)
         XCTAssertEqual(store.rectangles.count, 4) // planning
@@ -97,7 +99,8 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         let store = VineyardBlockLayoutStore()
         let profile = VineyardProfile(
             name: "Promoted", centerLatitude: 41, centerLongitude: -71,
-            latitudeDelta: 0.006, longitudeDelta: 0.004, boundary: nil, acreage: 25, source: "osm"
+            latitudeDelta: 0.006, longitudeDelta: 0.004, parcels: nil, acreage: 25,
+            reportedAcreage: nil, reportedAcreageNote: nil, source: "osm"
         )
         store.installPlanningLayout(rectangles: sampleRects(prefix: "gen", n: 3), profile: profile)
         store.promoteActiveLayoutToDemo()

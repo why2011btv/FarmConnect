@@ -54,9 +54,9 @@ struct SensorDashboardView: View {
         "\(mode.rawValue)|\(layoutStore.activeProfile?.name ?? "default")|\(layoutStore.rectangles.count)"
     }
 
-    private var planningBoundary: [CLLocationCoordinate2D] {
+    private var planningParcels: [[CLLocationCoordinate2D]] {
         guard mode == .planning else { return [] }
-        return layoutStore.activeProfile?.boundaryCoordinates ?? []
+        return layoutStore.activeProfile?.parcelCoordinates ?? []
     }
 
     var body: some View {
@@ -218,7 +218,7 @@ struct SensorDashboardView: View {
             },
             region: activeRegion,
             cameraKey: cameraKey,
-            boundary: planningBoundary
+            parcels: planningParcels
         )
         .overlay(alignment: .top) { modeBanner }
         .overlay { emptyPlanningOverlay }

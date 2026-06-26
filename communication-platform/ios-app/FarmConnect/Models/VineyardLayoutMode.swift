@@ -47,9 +47,14 @@ struct VineyardProfile: Codable, Equatable {
     var centerLongitude: Double
     var latitudeDelta: Double
     var longitudeDelta: Double
-    /// Editable vine-area boundary the blocks were tiled into (for re-editing the corners).
-    var boundary: [Coordinate2D]?
+    /// Editable vine-area parcels the blocks were tiled into (a vineyard may be several disjoint
+    /// blocks). Used for re-editing corners and re-rendering the outline.
+    var parcels: [[Coordinate2D]]?
+    /// Acreage measured from `parcels` (drives device count).
     var acreage: Double?
+    /// Acreage reported by LLM research, unverified (shown as context).
+    var reportedAcreage: Double?
+    var reportedAcreageNote: String?
     /// "osm" | "vision" | "geocode-only"
     var source: String?
 
@@ -67,8 +72,9 @@ struct VineyardProfile: Codable, Equatable {
         )
     }
 
-    var boundaryCoordinates: [CLLocationCoordinate2D] {
-        (boundary ?? []).map(\.clCoordinate)
+    /// Parcels as map coordinates (each inner array is one parcel's vertices).
+    var parcelCoordinates: [[CLLocationCoordinate2D]] {
+        (parcels ?? []).map { $0.map(\.clCoordinate) }
     }
 }
 

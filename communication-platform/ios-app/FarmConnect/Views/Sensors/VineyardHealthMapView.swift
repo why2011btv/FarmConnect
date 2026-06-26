@@ -12,8 +12,8 @@ struct VineyardHealthMapView: View {
     /// Changing this value retargets the camera to `region` (e.g. on a mode/vineyard switch),
     /// without tearing down the map (avoids dropping the user's pan/zoom mid-demo).
     var cameraKey: String = "default"
-    /// Optional read-only vine-area boundary outline (shown in Planning mode).
-    var boundary: [CLLocationCoordinate2D] = []
+    /// Optional read-only vine-area parcel outlines (shown in Planning mode).
+    var parcels: [[CLLocationCoordinate2D]] = []
 
     @State private var mapPosition = MapCameraPosition.region(VineyardDemoData.mapRegion)
     @State private var dragMapStart: CLLocationCoordinate2D?
@@ -23,10 +23,12 @@ struct VineyardHealthMapView: View {
         ZStack(alignment: .bottomLeading) {
             MapReader { proxy in
                 Map(position: $mapPosition, interactionModes: [.pan, .zoom]) {
-                    if boundary.count >= 3 {
-                        MapPolygon(coordinates: boundary)
-                            .foregroundStyle(.clear)
-                            .stroke(.white.opacity(0.9), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                    ForEach(Array(parcels.enumerated()), id: \.offset) { _, parcel in
+                        if parcel.count >= 3 {
+                            MapPolygon(coordinates: parcel)
+                                .foregroundStyle(.clear)
+                                .stroke(.white.opacity(0.9), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                        }
                     }
 
                     ForEach(blocks) { block in

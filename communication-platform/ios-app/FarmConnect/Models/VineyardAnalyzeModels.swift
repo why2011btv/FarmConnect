@@ -32,11 +32,19 @@ struct LatLng: Codable, Equatable {
 /// Response from `POST /v1/vineyard/analyze`.
 struct VineyardAnalyzeResponse: Decodable {
     let center: LatLng
-    let boundary: [LatLng]
+    /// Vine-area parcels (a vineyard is often several disjoint blocks). May be empty.
+    let parcels: [[LatLng]]
+    /// Acreage measured from `parcels` (drives device count).
+    let measuredAcreage: Double
+    /// Acreage reported by LLM research, unverified (context only).
+    let reportedAcreage: Double?
+    let reportedAcreageNote: String?
     /// "osm" | "vision" | "geocode-only"
     let source: String
     let note: String?
 
     var centerCoordinate: CLLocationCoordinate2D { center.coordinate }
-    var boundaryCoordinates: [CLLocationCoordinate2D] { boundary.map(\.coordinate) }
+    var parcelCoordinates: [[CLLocationCoordinate2D]] {
+        parcels.map { $0.map(\.coordinate) }
+    }
 }
