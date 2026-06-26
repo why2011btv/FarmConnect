@@ -7,6 +7,31 @@ export type VineyardSnapshot = {
   region: { centerLat: number; centerLng: number; latDelta: number; lngDelta: number };
 };
 
+/** One geocoding candidate the user can pick from. */
+export type PlaceCandidate = {
+  label: string;
+  lat: number;
+  lng: number;
+  /** OSM place class/type, e.g. "tourism/winery", "landuse/vineyard" — helps the user choose. */
+  kind?: string;
+};
+
+/** Researched, unverified facts about the named vineyard (LLM knowledge). */
+export type VineyardResearch = {
+  reportedAcreage?: number;
+  acreageNote?: string;
+  grapeVarieties?: string[];
+  ownership?: string;
+  founded?: string;
+  region?: string;
+  summary?: string;
+};
+
+export type SearchResult = {
+  candidates: PlaceCandidate[];
+  research?: VineyardResearch;
+};
+
 export type BoundaryResult = {
   center: LatLng;
   /** Vine-area parcels. A real vineyard is often several disjoint blocks, so this is an array
@@ -14,10 +39,6 @@ export type BoundaryResult = {
   parcels: LatLng[][];
   /** Acreage MEASURED from the parcels above (shoelace sum). 0 when no parcels. */
   measuredAcreage: number;
-  /** Acreage REPORTED by the LLM from public knowledge of the named vineyard. Unverified. */
-  reportedAcreage?: number;
-  /** Short human note on the reported figure (e.g. "≈24.5 ac across two MA sites"). */
-  reportedAcreageNote?: string;
   source: "osm" | "vision" | "geocode-only";
   note?: string;
 };
@@ -29,77 +50,50 @@ const SQUARE_METERS_PER_ACRE = 4046.8564224;
 const METERS_PER_DEGREE_LAT = 111_320;
 
 /**
- * Resolve a vineyard name to its vine-area parcels + a researched acreage figure.
- *
- * Strategy:
- *   A. Geocode the name (OSM Nominatim) -> center coordinate.
- *   B. In PARALLEL:
- *      - Collect ALL nearby `landuse=vineyard` polygons (OSM Overpass) -> parcels[].
- *      - Ask the LLM for the vineyard's published acreage by name -> reportedAcreage (unverified).
- *   C. If OSM returns no parcels and a satellite snapshot was supplied, ask the vision LLM to
- *      trace the vine area -> a single parcel.
- *
- * measuredAcreage is always computed from whatever parcels we end up with (the map is the source
- * of truth for device count). reportedAcreage is context only. Throws only if geocoding fails AND
- * no snapshot fallback is available.
+ * Step 1 of the flow: turn a typed name into a LIST of location candidates the user can pick from,
+ * plus a researched info card. Geocoding is fuzzy (multiple queries, no exact match required), so
+ * the user is never blocked by "could not locate".
+ */
+export async function searchVineyard(logger: FastifyBaseLogger, name: string): Promise<SearchResult> {
+  const [candidatesSettled, researchSettled] = await Promise.allSettled([
+    geocodeCandidates(logger, name),
+    researchVineyard(logger, name),
+  ]);
+
+  const candidates = candidatesSettled.status === "fulfilled" ? candidatesSettled.value : [];
+  const research = researchSettled.status === "fulfilled" ? researchSettled.value ?? undefined : undefined;
+  return { candidates, research };
+}
+
+/**
+ * Step 2 of the flow: given a CHOSEN center (from a picked candidate), find the vine-area parcels.
+ *   A. Collect ALL nearby `landuse=vineyard` polygons (OSM Overpass) -> parcels[].
+ *   B. If OSM has nothing and a satellite snapshot was supplied, ask the vision LLM to trace it.
+ * measuredAcreage is computed from whatever parcels we end up with. Never throws for "not found":
+ * returns `source: "geocode-only"` with empty parcels so the client can seed an editable box.
  */
 export async function resolveVineyardBoundary(
   logger: FastifyBaseLogger,
-  name: string,
+  center: LatLng,
   snapshot?: VineyardSnapshot
 ): Promise<BoundaryResult> {
-  const center = await geocode(logger, name);
-  if (!center) {
-    if (snapshot) {
-      const reported = await researchAcreage(logger, name).catch(() => null);
-      return {
-        center: { lat: snapshot.region.centerLat, lng: snapshot.region.centerLng },
-        parcels: [],
-        measuredAcreage: 0,
-        reportedAcreage: reported?.acres,
-        reportedAcreageNote: reported?.note,
-        source: "geocode-only",
-        note: "Could not geocode the vineyard name; using the current map center.",
-      };
+  // A — OSM parcels near the chosen center.
+  try {
+    const parcels = await fetchVineyardParcels(logger, center);
+    if (parcels.length > 0) {
+      return { center, parcels, measuredAcreage: totalAcres(parcels), source: "osm" };
     }
-    throw new Error("Could not locate a place matching that vineyard name.");
+  } catch (error) {
+    logger.warn({ error }, "Overpass vineyard parcel lookup failed; continuing to fallbacks");
   }
 
-  // B — OSM parcels and LLM acreage research, concurrently.
-  const [parcelsSettled, reportedSettled] = await Promise.allSettled([
-    fetchVineyardParcels(logger, center),
-    researchAcreage(logger, name),
-  ]);
-
-  const reported = reportedSettled.status === "fulfilled" ? reportedSettled.value : null;
-  let parcels =
-    parcelsSettled.status === "fulfilled" && parcelsSettled.value ? parcelsSettled.value : [];
-
-  if (parcels.length > 0) {
-    return {
-      center,
-      parcels,
-      measuredAcreage: totalAcres(parcels),
-      reportedAcreage: reported?.acres,
-      reportedAcreageNote: reported?.note,
-      source: "osm",
-    };
-  }
-
-  // C — vision fallback (single parcel) when OSM has nothing mapped.
+  // B — vision fallback (single parcel) when OSM has nothing mapped.
   if (snapshot) {
     try {
       const visionBoundary = await traceBoundaryWithVision(logger, snapshot);
       if (visionBoundary && visionBoundary.length >= 3) {
-        parcels = [visionBoundary];
-        return {
-          center,
-          parcels,
-          measuredAcreage: totalAcres(parcels),
-          reportedAcreage: reported?.acres,
-          reportedAcreageNote: reported?.note,
-          source: "vision",
-        };
+        const parcels = [visionBoundary];
+        return { center, parcels, measuredAcreage: totalAcres(parcels), source: "vision" };
       }
     } catch (error) {
       logger.warn({ error }, "Vision boundary extraction failed; returning geocode-only");
@@ -110,10 +104,8 @@ export async function resolveVineyardBoundary(
     center,
     parcels: [],
     measuredAcreage: 0,
-    reportedAcreage: reported?.acres,
-    reportedAcreageNote: reported?.note,
     source: "geocode-only",
-    note: "Found the location but no vine boundary; draw or adjust it on the map.",
+    note: "No vine boundary found here; draw or adjust it on the map.",
   };
 }
 
@@ -141,22 +133,77 @@ function totalAcres(parcels: LatLng[][]): number {
   return parcels.reduce((s, p) => s + polygonAcres(p), 0);
 }
 
-// MARK: - Step A: geocoding
+// MARK: - Geocoding (multiple fuzzy candidates)
 
-async function geocode(logger: FastifyBaseLogger, name: string): Promise<LatLng | null> {
-  const url = `${NOMINATIM_URL}?format=json&limit=1&q=${encodeURIComponent(name)}`;
-  const response = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
-  if (!response.ok) {
-    logger.warn({ status: response.status }, "Nominatim geocode failed");
-    return null;
+type NominatimRow = {
+  lat: string;
+  lon: string;
+  display_name?: string;
+  class?: string;
+  type?: string;
+  importance?: number;
+};
+
+/**
+ * Return up to ~8 location candidates for a typed name. We run several query variants (raw name,
+ * name + "vineyard", name + "winery") because a vineyard is often tagged as a winery/tourism POI
+ * rather than the literal name, then merge + dedupe. This replaces the old single exact-match.
+ */
+async function geocodeCandidates(logger: FastifyBaseLogger, name: string): Promise<PlaceCandidate[]> {
+  const trimmed = name.trim();
+  const queries = Array.from(
+    new Set([
+      trimmed,
+      /vineyard|winery|estate/i.test(trimmed) ? trimmed : `${trimmed} vineyard`,
+      /vineyard|winery|estate/i.test(trimmed) ? trimmed : `${trimmed} winery`,
+    ])
+  );
+
+  const rows: NominatimRow[] = [];
+  for (const q of queries) {
+    try {
+      const url = `${NOMINATIM_URL}?format=json&limit=6&addressdetails=0&q=${encodeURIComponent(q)}`;
+      const response = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+      if (!response.ok) {
+        logger.warn({ status: response.status, q }, "Nominatim search failed");
+        continue;
+      }
+      const data = (await response.json()) as NominatimRow[];
+      rows.push(...data);
+    } catch (error) {
+      logger.warn({ error, q }, "Nominatim search threw");
+    }
   }
-  const data = (await response.json()) as Array<{ lat: string; lon: string }>;
-  const first = data[0];
-  if (!first) return null;
-  const lat = Number(first.lat);
-  const lng = Number(first.lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-  return { lat, lng };
+
+  const candidates: PlaceCandidate[] = [];
+  const seen = new Set<string>();
+  for (const r of rows) {
+    const lat = Number(r.lat);
+    const lng = Number(r.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    // Dedupe places within ~150m of each other.
+    const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    candidates.push({
+      label: r.display_name ?? `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+      lat,
+      lng,
+      kind: r.class && r.type ? `${r.class}/${r.type}` : r.type ?? r.class,
+    });
+  }
+
+  // Vineyard/winery/farm POIs first, then by OSM importance.
+  candidates.sort((a, b) => rankKind(b.kind) - rankKind(a.kind));
+  return candidates.slice(0, 8);
+}
+
+function rankKind(kind?: string): number {
+  if (!kind) return 0;
+  if (/vineyard/i.test(kind)) return 3;
+  if (/winery|farm|orchard/i.test(kind)) return 2;
+  if (/tourism|attraction/i.test(kind)) return 1;
+  return 0;
 }
 
 // MARK: - Step B: OSM vineyard parcels
@@ -209,12 +256,73 @@ async function fetchVineyardParcels(logger: FastifyBaseLogger, center: LatLng): 
   }
   if (parcels.length === 0) return [];
 
-  // Drop slivers (mapping noise), sort nearest-first, cap the count, simplify each ring.
+  // Drop slivers (mapping noise).
   const meaningful = parcels.filter((p) => polygonAcres(p) >= 0.25);
   const usable = meaningful.length > 0 ? meaningful : parcels;
-  usable.sort((a, b) => distSq(centroid(a), center) - distSq(centroid(b), center));
-  const maxParcels = 12;
-  return usable.slice(0, maxParcels).map(simplifyRing);
+
+  // Keep only the cluster that belongs to THIS vineyard. A 3km search radius can pull in a
+  // neighboring vineyard's blocks, which appear as a separate far-away cluster. We grow a single
+  // cluster outward from the parcel nearest the chosen center, keeping a parcel only if it is
+  // within ~600m of one already in the cluster (single-linkage). Disconnected clusters are dropped.
+  const clustered = clusterAroundCenter(usable, center, 600);
+
+  // Observability: if the nearest parcel is far from the chosen point, the chosen POI may be off
+  // the vines (e.g. a tasting room) and clustering could be lossy — surface it in logs.
+  if (clustered.length > 0 && metersBetween(centroid(clustered[0]), center) > 800) {
+    logger.warn(
+      { meters: Math.round(metersBetween(centroid(clustered[0]), center)) },
+      "Nearest vineyard parcel is far from the chosen location; clustering may be lossy"
+    );
+  }
+
+  clustered.sort((a, b) => distSq(centroid(a), center) - distSq(centroid(b), center));
+  const maxParcels = 16;
+  return clustered.slice(0, maxParcels).map(simplifyRing);
+}
+
+/** Approx distance in meters between two coordinates (equirectangular; fine at vineyard scale). */
+function metersBetween(a: LatLng, b: LatLng): number {
+  const mPerLng = METERS_PER_DEGREE_LAT * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+  const dx = (a.lng - b.lng) * mPerLng;
+  const dy = (a.lat - b.lat) * METERS_PER_DEGREE_LAT;
+  return Math.hypot(dx, dy);
+}
+
+/**
+ * Single-linkage cluster grown from the parcel nearest `center`. A parcel joins the cluster if its
+ * centroid is within `gapMeters` of ANY parcel already in the cluster. Returns just that cluster,
+ * so unrelated vineyards farther away (separate clusters) are excluded.
+ */
+function clusterAroundCenter(parcels: LatLng[][], center: LatLng, gapMeters: number): LatLng[][] {
+  if (parcels.length <= 1) return parcels;
+  const centroids = parcels.map(centroid);
+
+  // Seed: parcel nearest the chosen center.
+  let seed = 0;
+  let best = Infinity;
+  for (let i = 0; i < centroids.length; i++) {
+    const d = distSq(centroids[i], center);
+    if (d < best) {
+      best = d;
+      seed = i;
+    }
+  }
+
+  const inCluster = new Array(parcels.length).fill(false);
+  inCluster[seed] = true;
+  const queue = [seed];
+  while (queue.length > 0) {
+    const i = queue.pop()!;
+    for (let j = 0; j < parcels.length; j++) {
+      if (inCluster[j]) continue;
+      if (metersBetween(centroids[i], centroids[j]) <= gapMeters) {
+        inCluster[j] = true;
+        queue.push(j);
+      }
+    }
+  }
+
+  return parcels.filter((_, i) => inCluster[i]);
 }
 
 function distSq(a: LatLng, b: LatLng): number {
@@ -231,17 +339,18 @@ function centroid(poly: LatLng[]): LatLng {
   return { lat: lat / poly.length, lng: lng / poly.length };
 }
 
-// MARK: - Acreage research (LLM, by name — unverified)
+// MARK: - Vineyard research (LLM, by name — unverified)
 
 /**
- * Ask the LLM for the named vineyard's published planted acreage. Returns null if not configured
- * or unknown. This is a REPORTED figure (the model's knowledge), shown to the user as context and
- * explicitly not used to drive device count.
+ * Ask the LLM for an info card about the named vineyard: acreage, grape varieties, ownership,
+ * founding, region, and a one-line summary. All fields optional; the model is told to use null
+ * when unsure. This is REPORTED knowledge shown to the user as context — acreage here never
+ * drives device count (the mapped area does). Returns null if not configured.
  */
-async function researchAcreage(
+async function researchVineyard(
   logger: FastifyBaseLogger,
   name: string
-): Promise<{ acres: number; note: string } | null> {
+): Promise<VineyardResearch | null> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
 
@@ -249,10 +358,13 @@ async function researchAcreage(
   const model = process.env.OPENROUTER_CHAT_MODEL ?? "openai/gpt-4o";
 
   const prompt =
-    `What is the total planted vineyard acreage of "${name}"? ` +
-    "Use only facts you are reasonably confident about. If the vineyard has multiple sites, give the combined total. " +
-    'Respond ONLY as compact JSON: {"acres": <number or null>, "note": "<short note, e.g. sites/uncertainty>"}. ' +
-    "If you do not know, use null for acres. No prose outside the JSON.";
+    `Give a factual profile of the vineyard/winery "${name}". Use only facts you are reasonably ` +
+    "confident about; use null for anything you are unsure of (do not guess). If it has multiple " +
+    "sites, give the combined planted acreage. Respond ONLY as compact JSON with this exact shape:\n" +
+    '{"reportedAcreage": <number|null>, "acreageNote": <string|null>, ' +
+    '"grapeVarieties": <string[]|null>, "ownership": <string|null>, "founded": <string|null>, ' +
+    '"region": <string|null>, "summary": <string|null>}\n' +
+    "summary is one or two sentences. No prose outside the JSON.";
 
   try {
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -270,20 +382,36 @@ async function researchAcreage(
       }),
     });
     if (!response.ok) {
-      logger.warn({ status: response.status }, "Acreage research request failed");
+      logger.warn({ status: response.status }, "Vineyard research request failed");
       return null;
     }
     const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const content = data.choices?.[0]?.message?.content?.trim();
     if (!content) return null;
     const match = content.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(match ? match[0] : content) as { acres?: unknown; note?: unknown };
-    const acres = Number(parsed.acres);
-    if (!Number.isFinite(acres) || acres <= 0) return null;
-    const note = typeof parsed.note === "string" ? parsed.note : "";
-    return { acres, note };
+    const parsed = JSON.parse(match ? match[0] : content) as Record<string, unknown>;
+
+    const asString = (v: unknown): string | undefined =>
+      typeof v === "string" && v.trim().length > 0 ? v.trim() : undefined;
+    const acres = Number(parsed.reportedAcreage);
+    const varieties = Array.isArray(parsed.grapeVarieties)
+      ? parsed.grapeVarieties.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+      : undefined;
+
+    const research: VineyardResearch = {
+      reportedAcreage: Number.isFinite(acres) && acres > 0 ? acres : undefined,
+      acreageNote: asString(parsed.acreageNote),
+      grapeVarieties: varieties && varieties.length > 0 ? varieties : undefined,
+      ownership: asString(parsed.ownership),
+      founded: asString(parsed.founded),
+      region: asString(parsed.region),
+      summary: asString(parsed.summary),
+    };
+    // Return null only if literally nothing came back.
+    const hasAny = Object.values(research).some((v) => v !== undefined);
+    return hasAny ? research : null;
   } catch (error) {
-    logger.warn({ error }, "Acreage research failed");
+    logger.warn({ error }, "Vineyard research failed");
     return null;
   }
 }

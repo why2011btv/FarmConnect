@@ -1,9 +1,9 @@
 import MapKit
 import SwiftUI
 
-/// Auto-arrangement flow (Planning mode): enter a vineyard name -> backend researches its acreage
-/// and drafts the vine-area parcels on the satellite map -> user fixes corners / adds parcels ->
-/// blocks are tiled across all parcels at a chosen density and installed into the planning slot.
+/// Auto-arrangement flow (Planning mode):
+///   input -> search (name) -> pick a location candidate (with a researched info card)
+///   -> analyze the chosen spot -> edit parcels -> tile blocks -> install into the planning slot.
 struct VineyardGeneratorView: View {
     @ObservedObject var layoutStore: VineyardBlockLayoutStore
     var onDone: (() -> Void)?
@@ -14,15 +14,15 @@ struct VineyardGeneratorView: View {
     @State private var phase: Phase = .input
     @State private var errorMessage: String?
 
+    // Search results
+    @State private var candidates: [PlaceCandidate] = []
+    @State private var research: VineyardResearch?
+
     // Parcel editing — a vineyard may be several disjoint blocks.
     @State private var parcels: [[CLLocationCoordinate2D]] = []
     @State private var activeParcel = 0
     @State private var region = VineyardDemoData.mapRegion
     @State private var source: String?
-
-    // Researched acreage (context only; map area drives device count).
-    @State private var reportedAcreage: Double?
-    @State private var reportedAcreageNote: String?
 
     // Density
     @State private var acresPerBlock: Double = 10
@@ -30,6 +30,8 @@ struct VineyardGeneratorView: View {
 
     enum Phase: Equatable {
         case input
+        case searching
+        case picking
         case analyzing
         case editing
     }
@@ -47,19 +49,20 @@ struct VineyardGeneratorView: View {
         parcels.contains { $0.count >= 3 }
     }
 
+    private var reportedAcreage: Double? { research?.reportedAcreage }
+
     var body: some View {
         NavigationStack {
             Group {
                 switch phase {
-                case .input:
-                    inputForm
-                case .analyzing:
-                    analyzingView
-                case .editing:
-                    editingView
+                case .input: inputForm
+                case .searching: progressView("Searching for \(name)…")
+                case .picking: pickingView
+                case .analyzing: progressView("Outlining the vine parcels…")
+                case .editing: editingView
                 }
             }
-            .navigationTitle("New vineyard")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -72,12 +75,31 @@ struct VineyardGeneratorView: View {
                     }
                 }
             }
-            .alert("Couldn't analyze vineyard", isPresented: errorBinding) {
+            .alert("Something went wrong", isPresented: errorBinding) {
                 Button("OK", role: .cancel) { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
             }
         }
+    }
+
+    private var navigationTitle: String {
+        switch phase {
+        case .input, .searching: return "New vineyard"
+        case .picking: return "Pick location"
+        case .analyzing, .editing: return "Outline & generate"
+        }
+    }
+
+    private func progressView(_ message: String) -> some View {
+        VStack(spacing: 16) {
+            ProgressView()
+            Text(message)
+                .font(.subheadline).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Input
@@ -88,31 +110,92 @@ struct VineyardGeneratorView: View {
                 TextField("e.g. Running Brook Vineyards, Dartmouth MA", text: $name)
                     .textInputAutocapitalization(.words)
                     .submitLabel(.search)
-                    .onSubmit { analyze() }
+                    .onSubmit { search() }
             }
             Section {
                 Button {
-                    analyze()
+                    search()
                 } label: {
-                    Label("Analyze on satellite map", systemImage: "scope")
+                    Label("Search", systemImage: "magnifyingglass")
                 }
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             } footer: {
-                Text("We research the vineyard's acreage, outline its vine parcels on satellite imagery, then auto-place sensor coverage blocks. You can fix the outline and add parcels before generating.")
+                Text("We look up the vineyard, show what we find about it, and let you pick the right spot on the map. Then we outline its vine parcels and auto-place sensor coverage blocks.")
             }
         }
     }
 
-    private var analyzingView: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-            Text("Researching \(name) and outlining its vine parcels…")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+    // MARK: - Picking (research card + candidate list)
+
+    private var pickingView: some View {
+        List {
+            if let research {
+                Section("About this vineyard") {
+                    researchCard(research)
+                }
+            }
+
+            Section(candidates.isEmpty ? "No locations found" : "Pick the correct location") {
+                if candidates.isEmpty {
+                    Text("We couldn't find a mapped location for that name. Try a more specific name (add the town or region), then search again.")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Button {
+                        phase = .input
+                    } label: {
+                        Label("Search again", systemImage: "magnifyingglass")
+                    }
+                } else {
+                    ForEach(candidates) { candidate in
+                        Button {
+                            choose(candidate)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(candidate.label)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.primary)
+                                    .multilineTextAlignment(.leading)
+                                if let kind = candidate.kind {
+                                    Text(kind)
+                                        .font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func researchCard(_ r: VineyardResearch) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let summary = r.summary {
+                Text(summary).font(.subheadline)
+            }
+            researchRow("Reported acreage", value: r.reportedAcreage.map { String(format: "%.0f acres", $0) }, note: r.acreageNote)
+            researchRow("Grapes", value: r.grapeVarieties?.joined(separator: ", "))
+            researchRow("Ownership", value: r.ownership)
+            researchRow("Founded", value: r.founded)
+            researchRow("Region", value: r.region)
+            Text("Researched info — unverified. Confirm details with the grower.")
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func researchRow(_ label: String, value: String?, note: String? = nil) -> some View {
+        if let value, !value.isEmpty {
+            HStack(alignment: .top) {
+                Text(label).font(.caption).foregroundStyle(.secondary).frame(width: 120, alignment: .leading)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(value).font(.subheadline)
+                    if let note, !note.isEmpty {
+                        Text(note).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Editing
@@ -129,16 +212,11 @@ struct VineyardGeneratorView: View {
                     if let source {
                         sourceBadge(source)
                     }
-
                     parcelChips
-
                     acreagePanel
-
                     densityControls
-
                     Text("Tap the map to add a point to the active parcel; drag a point to move it; long-press to remove it. Use “Add parcel” for a separate vineyard block.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary)
                 }
                 .padding()
             }
@@ -156,8 +234,7 @@ struct VineyardGeneratorView: View {
                     } label: {
                         Text("Parcel \(index + 1) · \(String(format: "%.1f ac", VineyardLayoutGenerator.geodesicAreaAcres(parcel)))")
                             .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
                             .background(index == activeParcel ? Color.accentColor : Color(.tertiarySystemFill), in: Capsule())
                             .foregroundStyle(index == activeParcel ? .white : .primary)
                     }
@@ -169,8 +246,7 @@ struct VineyardGeneratorView: View {
                 } label: {
                     Label("Add parcel", systemImage: "plus")
                         .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
                         .background(Color(.tertiarySystemFill), in: Capsule())
                 }
                 .buttonStyle(.plain)
@@ -181,8 +257,7 @@ struct VineyardGeneratorView: View {
                     } label: {
                         Image(systemName: "trash")
                             .font(.caption)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
                             .background(Color(.tertiarySystemFill), in: Capsule())
                     }
                     .buttonStyle(.plain)
@@ -202,9 +277,10 @@ struct VineyardGeneratorView: View {
                     Text(String(format: "%.1f ac", reportedAcreage))
                         .font(.title3.weight(.semibold)).monospacedDigit()
                         .foregroundStyle(acreageDisagrees ? .orange : .primary)
-                    Text(reportedAcreageNote ?? "unverified")
-                        .font(.caption2).foregroundStyle(.secondary)
-                        .lineLimit(2).multilineTextAlignment(.trailing)
+                    if let note = research?.acreageNote {
+                        Text(note).font(.caption2).foregroundStyle(.secondary)
+                            .lineLimit(2).multilineTextAlignment(.trailing)
+                    }
                 }
             }
             Spacer()
@@ -217,8 +293,7 @@ struct VineyardGeneratorView: View {
         if acreageDisagrees, let reportedAcreage {
             Label("Mapped area differs from the reported \(String(format: "%.0f", reportedAcreage)) ac. Device count uses the mapped area — add or resize parcels if some vine blocks are missing.",
                   systemImage: "exclamationmark.triangle")
-                .font(.caption)
-                .foregroundStyle(.orange)
+                .font(.caption).foregroundStyle(.orange)
         }
 
         VStack(alignment: .leading, spacing: 4) {
@@ -259,8 +334,7 @@ struct VineyardGeneratorView: View {
             }
         }()
         return Label(text, systemImage: "info.circle")
-            .font(.caption)
-            .foregroundStyle(color)
+            .font(.caption).foregroundStyle(color)
     }
 
     private func metric(title: String, value: String) -> some View {
@@ -276,22 +350,49 @@ struct VineyardGeneratorView: View {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
-    private func analyze() {
+    private func search() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        phase = .analyzing
+        phase = .searching
 
         Task {
             do {
-                // Pass 1: name only -> geocoded center, OSM parcels (if any), researched acreage.
-                var response = try await APIClient.shared.analyzeVineyard(name: trimmed, snapshot: nil)
+                let result = try await APIClient.shared.searchVineyard(name: trimmed)
+                await MainActor.run {
+                    candidates = result.candidates
+                    research = result.research
+                    phase = .picking
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                    phase = .input
+                }
+            }
+        }
+    }
 
-                // Pass 2: if no parcels yet, snapshot satellite imagery AT THE GEOCODED CENTER and
-                // let the backend's vision model trace the vine area there.
+    private func choose(_ candidate: PlaceCandidate) {
+        phase = .analyzing
+        let center = candidate.coordinate
+        region = regionAround(center)
+
+        Task {
+            do {
+                // Pass 1: OSM parcels at the chosen center.
+                var response = try await APIClient.shared.analyzeVineyard(
+                    center: LatLng(lat: center.latitude, lng: center.longitude),
+                    snapshot: nil
+                )
+
+                // Pass 2: if no parcels, snapshot satellite imagery at the chosen center and let the
+                // backend's vision model trace the vine area there.
                 if response.parcels.isEmpty {
-                    let centeredRegion = regionAround(response.centerCoordinate)
-                    if let snapshot = await VineyardMapSnapshot.make(region: centeredRegion) {
-                        let visionResponse = try await APIClient.shared.analyzeVineyard(name: trimmed, snapshot: snapshot)
+                    if let snapshot = await VineyardMapSnapshot.make(region: regionAround(center)) {
+                        let visionResponse = try await APIClient.shared.analyzeVineyard(
+                            center: LatLng(lat: center.latitude, lng: center.longitude),
+                            snapshot: snapshot
+                        )
                         if !visionResponse.parcels.isEmpty {
                             response = visionResponse
                         }
@@ -302,7 +403,7 @@ struct VineyardGeneratorView: View {
             } catch {
                 await MainActor.run {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-                    phase = .input
+                    phase = .picking
                 }
             }
         }
@@ -310,21 +411,24 @@ struct VineyardGeneratorView: View {
 
     private func applyAnalysis(_ response: VineyardAnalyzeResponse) {
         source = response.source
-        reportedAcreage = response.reportedAcreage
-        reportedAcreageNote = response.reportedAcreageNote
         let center = response.centerCoordinate
         let parcelCoords = response.parcelCoordinates.filter { $0.count >= 3 }
 
         if !parcelCoords.isEmpty {
             parcels = parcelCoords
             region = VineyardLayoutGenerator.region(forParcels: parcelCoords) ?? regionAround(center)
+            activeParcel = 0
+            phase = .editing
         } else {
-            // Geocode-only: seed an editable default box so the user always has something to adjust.
-            // Size it to the reported acreage when we have one.
-            let box = VineyardLayoutGenerator.defaultBoundaryBox(center: center, acres: response.reportedAcreage ?? 20)
-            parcels = [box]
-            region = VineyardLayoutGenerator.region(forParcels: parcels) ?? regionAround(center)
+            applyGeocodeOnly(center: center)
         }
+    }
+
+    private func applyGeocodeOnly(center: CLLocationCoordinate2D) {
+        source = "geocode-only"
+        let box = VineyardLayoutGenerator.defaultBoundaryBox(center: center, acres: reportedAcreage ?? 20)
+        parcels = [box]
+        region = VineyardLayoutGenerator.region(forParcels: parcels) ?? regionAround(center)
         activeParcel = 0
         phase = .editing
     }
@@ -337,7 +441,6 @@ struct VineyardGeneratorView: View {
     }
 
     private func addParcel() {
-        // Seed a small box at the current map center so the user can drag it into place.
         let box = VineyardLayoutGenerator.defaultBoundaryBox(center: region.center, acres: 5)
         parcels.append(box)
         activeParcel = parcels.count - 1
@@ -372,7 +475,7 @@ struct VineyardGeneratorView: View {
             parcels: validParcels.map { $0.map(Coordinate2D.init) },
             acreage: acreage,
             reportedAcreage: reportedAcreage,
-            reportedAcreageNote: reportedAcreageNote,
+            reportedAcreageNote: research?.acreageNote,
             source: source
         )
         layoutStore.installPlanningLayout(rectangles: rectangles, profile: profile)
