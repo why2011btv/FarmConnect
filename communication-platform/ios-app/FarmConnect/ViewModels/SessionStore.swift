@@ -66,6 +66,26 @@ final class SessionStore: ObservableObject {
         }
     }
 
+    /// Permanently deletes the account on the server, then clears the local session.
+    /// Unlike `logout()`, this awaits the server so failures can be surfaced to the user.
+    /// Returns true on success.
+    func deleteAccount() async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        do {
+            try await APIClient.shared.deleteAccount()
+            token = nil
+            currentUser = nil
+            APIClient.shared.setAuthToken(nil)
+            UserDefaults.standard.removeObject(forKey: tokenKey)
+            return true
+        } catch {
+            errorMessage = "Couldn't delete your account. Please try again."
+            return false
+        }
+    }
+
     /// Clears the local session immediately and invalidates the token on the
     /// server in the background. We don't `await` the server call so that
     /// logout feels instant even on flaky networks.

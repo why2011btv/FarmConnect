@@ -47,14 +47,14 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     if (!username) return reply.code(400).send({ error: "Username is required" });
 
     let user = await db.query<{ id: string; name: string; username: string }>(
-      "SELECT id, name, username FROM users WHERE username = $1 LIMIT 1",
+      "SELECT id, name, username FROM users WHERE username = $1 AND deleted_at IS NULL LIMIT 1",
       [username]
     );
 
     // Backward compatibility for older clients that still type display name in the username box.
     if (!user.rows[0]) {
       const fallback = await db.query<{ id: string; name: string; username: string }>(
-        "SELECT id, name, username FROM users WHERE LOWER(name) = LOWER($1)",
+        "SELECT id, name, username FROM users WHERE LOWER(name) = LOWER($1) AND deleted_at IS NULL",
         [parsed.data.username.trim()]
       );
       if (fallback.rows.length === 1) {
@@ -100,7 +100,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     if (!displayName) return reply.code(400).send({ error: "Display name is required" });
 
     const existing = await db.query<{ id: string }>(
-      "SELECT id FROM users WHERE username = $1 LIMIT 1",
+      "SELECT id FROM users WHERE username = $1 AND deleted_at IS NULL LIMIT 1",
       [username]
     );
     if (existing.rows[0]) {
@@ -140,7 +140,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
       SELECT u.id, u.name
       FROM auth_sessions s
       JOIN users u ON u.id = s.user_id
-      WHERE s.token = $1 AND s.expires_at > NOW()
+      WHERE s.token = $1 AND s.expires_at > NOW() AND u.deleted_at IS NULL
       LIMIT 1
       `,
       [token]
@@ -155,6 +155,59 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     if (!token) return reply.code(401).send({ error: "Missing token" });
 
     await db.query("DELETE FROM auth_sessions WHERE token = $1", [token]);
+    return reply.code(204).send();
+  });
+
+  // Account deletion (Apple Guideline 5.1.1(v)). Anonymize-in-place: scrub all PII, disable login
+  // permanently, and revoke sessions + push tokens. Content (posts/comments/messages) is retained
+  // but re-attributed to a "[deleted user]" placeholder so other users' threads don't break.
+  app.delete("/v1/auth/account", async (req, reply) => {
+    const token = extractBearerToken(req.headers.authorization);
+    if (!token) return reply.code(401).send({ error: "Missing token" });
+
+    const session = await db.query<{ user_id: string }>(
+      `SELECT u.id AS user_id
+       FROM auth_sessions s JOIN users u ON u.id = s.user_id
+       WHERE s.token = $1 AND s.expires_at > NOW() AND u.deleted_at IS NULL
+       LIMIT 1`,
+      [token]
+    );
+    const userId = session.rows[0]?.user_id;
+    if (!userId) return reply.code(401).send({ error: "Invalid or expired token" });
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Scrub PII on the user row and make the username collision-proof + unrecognizable.
+      // Username has a UNIQUE + NOT NULL constraint, so use the (unique) user id as the new value.
+      await client.query(
+        `UPDATE users
+         SET name = '[deleted user]',
+             username = 'deleted_' || id,
+             password_hash = NULL,
+             deleted_at = NOW()
+         WHERE id = $1`,
+        [userId]
+      );
+
+      // Scrub denormalized name copies stored alongside content.
+      await client.query("UPDATE comments SET user_name = '[deleted user]' WHERE user_id = $1", [userId]);
+      await client.query("UPDATE messages SET from_user_name = '[deleted user]' WHERE from_user_id = $1", [userId]);
+
+      // Revoke all sessions and push tokens for the account.
+      await client.query("DELETE FROM auth_sessions WHERE user_id = $1", [userId]);
+      await client.query("DELETE FROM device_tokens WHERE user_id = $1", [userId]);
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      app.log.error({ error }, "Account deletion failed");
+      return reply.code(500).send({ error: "Failed to delete account" });
+    } finally {
+      client.release();
+    }
+
     return reply.code(204).send();
   });
 }

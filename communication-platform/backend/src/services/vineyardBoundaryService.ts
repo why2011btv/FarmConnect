@@ -16,7 +16,7 @@ export type PlaceCandidate = {
   kind?: string;
 };
 
-/** Researched, unverified facts about the named vineyard (LLM knowledge). */
+/** Researched, unverified facts about the named vineyard (LLM knowledge + website). */
 export type VineyardResearch = {
   reportedAcreage?: number;
   acreageNote?: string;
@@ -25,6 +25,13 @@ export type VineyardResearch = {
   founded?: string;
   region?: string;
   summary?: string;
+  /** Official website URL, if known — shown in the card and used to deepen research. */
+  officialWebsite?: string;
+  /** Best-known street address (used as a geocode fallback when the name doesn't resolve). */
+  address?: string;
+  /** Best-known coordinates from research, offered as a pick candidate when OSM geocoding fails. */
+  latitude?: number;
+  longitude?: number;
 };
 
 export type SearchResult = {
@@ -62,7 +69,59 @@ export async function searchVineyard(logger: FastifyBaseLogger, name: string): P
 
   const candidates = candidatesSettled.status === "fulfilled" ? candidatesSettled.value : [];
   const research = researchSettled.status === "fulfilled" ? researchSettled.value ?? undefined : undefined;
+
+  // Augment with research-derived locations so the user is never stuck on "No locations found"
+  // when the LLM clearly knows the vineyard but Nominatim didn't return a name match.
+  await augmentCandidatesFromResearch(logger, candidates, research);
+
   return { candidates, research };
+}
+
+/**
+ * Ensure there is always something pickable when research knows the place. Adds (a) the research's
+ * own lat/lng if present, and (b) a geocode of the research's address string — both deduped against
+ * existing OSM candidates. These are appended (lower priority) so real OSM POIs still rank first.
+ */
+async function augmentCandidatesFromResearch(
+  logger: FastifyBaseLogger,
+  candidates: PlaceCandidate[],
+  research?: VineyardResearch
+): Promise<void> {
+  if (!research) return;
+  const near = (lat: number, lng: number) =>
+    candidates.some((c) => Math.abs(c.lat - lat) < 0.01 && Math.abs(c.lng - lng) < 0.01);
+
+  // (a) Research-provided coordinates.
+  if (
+    typeof research.latitude === "number" &&
+    typeof research.longitude === "number" &&
+    Number.isFinite(research.latitude) &&
+    Number.isFinite(research.longitude) &&
+    !near(research.latitude, research.longitude)
+  ) {
+    candidates.push({
+      label: research.address ?? researchLocationLabel(research),
+      lat: research.latitude,
+      lng: research.longitude,
+      kind: "research/location",
+    });
+  }
+
+  // (b) Geocode the research's address string (often resolves when the bare name doesn't).
+  if (research.address && candidates.length === 0) {
+    try {
+      const fromAddress = await geocodeCandidates(logger, research.address);
+      for (const c of fromAddress) {
+        if (!near(c.lat, c.lng)) candidates.push(c);
+      }
+    } catch (error) {
+      logger.warn({ error }, "Address geocode fallback failed");
+    }
+  }
+}
+
+function researchLocationLabel(r: VineyardResearch): string {
+  return r.region ? `Reported location · ${r.region}` : "Reported location";
 }
 
 /**
@@ -358,12 +417,17 @@ async function researchVineyard(
   const model = process.env.OPENROUTER_CHAT_MODEL ?? "openai/gpt-4o";
 
   const prompt =
-    `Give a factual profile of the vineyard/winery "${name}". Use only facts you are reasonably ` +
+    `Give a factual profile of the vineyard/winery "${name}". Prefer facts from the vineyard's ` +
+    "OWN OFFICIAL WEBSITE (find it; it is usually the most accurate source for acreage, varieties, " +
+    "ownership, and history), then reputable wine directories. Use only facts you are reasonably " +
     "confident about; use null for anything you are unsure of (do not guess). If it has multiple " +
-    "sites, give the combined planted acreage. Respond ONLY as compact JSON with this exact shape:\n" +
+    "sites, give the combined planted acreage and note the sites. Provide the official website URL, " +
+    "the best-known street address, and approximate coordinates (decimal degrees) of the main site. " +
+    "Respond ONLY as compact JSON with this exact shape:\n" +
     '{"reportedAcreage": <number|null>, "acreageNote": <string|null>, ' +
     '"grapeVarieties": <string[]|null>, "ownership": <string|null>, "founded": <string|null>, ' +
-    '"region": <string|null>, "summary": <string|null>}\n' +
+    '"region": <string|null>, "officialWebsite": <string|null>, "address": <string|null>, ' +
+    '"latitude": <number|null>, "longitude": <number|null>, "summary": <string|null>}\n' +
     "summary is one or two sentences. No prose outside the JSON.";
 
   try {
@@ -393,10 +457,19 @@ async function researchVineyard(
 
     const asString = (v: unknown): string | undefined =>
       typeof v === "string" && v.trim().length > 0 ? v.trim() : undefined;
+    const asFiniteNumber = (v: unknown): number | undefined => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
     const acres = Number(parsed.reportedAcreage);
     const varieties = Array.isArray(parsed.grapeVarieties)
       ? parsed.grapeVarieties.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
       : undefined;
+
+    const lat = asFiniteNumber(parsed.latitude);
+    const lng = asFiniteNumber(parsed.longitude);
+    const validCoords =
+      lat !== undefined && lng !== undefined && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
 
     const research: VineyardResearch = {
       reportedAcreage: Number.isFinite(acres) && acres > 0 ? acres : undefined,
@@ -405,6 +478,10 @@ async function researchVineyard(
       ownership: asString(parsed.ownership),
       founded: asString(parsed.founded),
       region: asString(parsed.region),
+      officialWebsite: asString(parsed.officialWebsite),
+      address: asString(parsed.address),
+      latitude: validCoords ? lat : undefined,
+      longitude: validCoords ? lng : undefined,
       summary: asString(parsed.summary),
     };
     // Return null only if literally nothing came back.

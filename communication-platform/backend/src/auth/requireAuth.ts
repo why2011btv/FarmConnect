@@ -23,7 +23,7 @@ export async function requireAuth(
     SELECT u.id, u.name
     FROM auth_sessions s
     JOIN users u ON u.id = s.user_id
-    WHERE s.token = $1 AND s.expires_at > NOW()
+    WHERE s.token = $1 AND s.expires_at > NOW() AND u.deleted_at IS NULL
     LIMIT 1
     `,
     [token]

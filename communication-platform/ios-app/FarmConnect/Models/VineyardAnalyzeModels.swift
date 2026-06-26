@@ -29,7 +29,7 @@ struct PlaceCandidate: Decodable, Identifiable {
     var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: lat, longitude: lng) }
 }
 
-/// Researched, unverified facts about the vineyard (LLM knowledge).
+/// Researched, unverified facts about the vineyard (LLM knowledge + website).
 struct VineyardResearch: Decodable, Equatable {
     let reportedAcreage: Double?
     let acreageNote: String?
@@ -38,6 +38,10 @@ struct VineyardResearch: Decodable, Equatable {
     let founded: String?
     let region: String?
     let summary: String?
+    let officialWebsite: String?
+    let address: String?
+    let latitude: Double?
+    let longitude: Double?
 }
 
 /// Response from `POST /v1/vineyard/search`.

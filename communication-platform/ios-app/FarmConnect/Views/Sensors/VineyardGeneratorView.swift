@@ -177,10 +177,26 @@ struct VineyardGeneratorView: View {
             researchRow("Ownership", value: r.ownership)
             researchRow("Founded", value: r.founded)
             researchRow("Region", value: r.region)
+            researchRow("Address", value: r.address)
+            if let site = r.officialWebsite, let url = websiteURL(site) {
+                HStack(alignment: .top) {
+                    Text("Website").font(.caption).foregroundStyle(.secondary).frame(width: 120, alignment: .leading)
+                    Link(site, destination: url).font(.subheadline)
+                }
+            }
             Text("Researched info — unverified. Confirm details with the grower.")
                 .font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
+    }
+
+    /// Normalize a possibly scheme-less website string into a tappable URL.
+    private func websiteURL(_ raw: String) -> URL? {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+        let withScheme = trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://")
+            ? trimmed : "https://\(trimmed)"
+        return URL(string: withScheme)
     }
 
     @ViewBuilder

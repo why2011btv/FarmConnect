@@ -211,6 +211,14 @@ final class APIClient {
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
     }
 
+    /// Permanently deletes the signed-in account (anonymizes PII server-side, disables login).
+    func deleteAccount() async throws {
+        let req = try authorizedRequest(path: "/v1/auth/account", method: "DELETE")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
     func getConversations() async throws -> [Conversation] {
         let req = try authorizedRequest(path: "/v1/conversations")
         let (data, response) = try await URLSession.shared.data(for: req)
