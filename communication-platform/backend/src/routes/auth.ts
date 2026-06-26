@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
-import { hash } from "bcryptjs";
+import { hash, compare } from "bcryptjs";
 import { badRequest } from "../lib/badRequest.js";
 
 function extractBearerToken(authHeader?: string): string | null {
@@ -12,6 +12,7 @@ function extractBearerToken(authHeader?: string): string | null {
 
 const signInSchema = z.object({
   username: z.string().min(1),
+  password: z.string().min(1),
 });
 
 const signUpSchema = z.object({
@@ -46,45 +47,38 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     const username = normalizeUsername(parsed.data.username);
     if (!username) return reply.code(400).send({ error: "Username is required" });
 
-    let user = await db.query<{ id: string; name: string; username: string }>(
-      "SELECT id, name, username FROM users WHERE username = $1 AND deleted_at IS NULL LIMIT 1",
+    const user = await db.query<{ id: string; name: string; password_hash: string | null }>(
+      "SELECT id, name, password_hash FROM users WHERE username = $1 AND deleted_at IS NULL LIMIT 1",
       [username]
     );
 
-    // Backward compatibility for older clients that still type display name in the username box.
-    if (!user.rows[0]) {
-      const fallback = await db.query<{ id: string; name: string; username: string }>(
-        "SELECT id, name, username FROM users WHERE LOWER(name) = LOWER($1) AND deleted_at IS NULL",
-        [parsed.data.username.trim()]
-      );
-      if (fallback.rows.length === 1) {
-        user = { ...fallback, rows: [fallback.rows[0]] };
-      }
-    }
+    const row = user.rows[0];
+    // Use a constant generic error for both unknown-username and wrong-password so we don't leak
+    // which usernames exist.
+    const invalid = () => reply.code(401).send({ error: "Invalid username or password" });
+    if (!row) return invalid();
 
-    if (!user.rows[0]) {
-      return reply.code(401).send({ error: "Invalid username" });
-    }
+    // Accounts without a stored password (legacy/seed rows) cannot log in.
+    if (!row.password_hash) return invalid();
+    const passwordOk = await compare(parsed.data.password, row.password_hash);
+    if (!passwordOk) return invalid();
 
     const token = createToken();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
     await db.query(
       "INSERT INTO auth_sessions(token, user_id, expires_at) VALUES ($1, $2, $3)",
-      [token, user.rows[0].id, expiresAt]
+      [token, row.id, expiresAt]
     );
 
     // Opportunistically clean up expired sessions for this user to keep the table bounded.
     await db.query(
       "DELETE FROM auth_sessions WHERE user_id = $1 AND expires_at < NOW()",
-      [user.rows[0].id]
+      [row.id]
     );
 
     return {
       token,
-      user: {
-        id: user.rows[0].id,
-        name: user.rows[0].name,
-      },
+      user: { id: row.id, name: row.name },
       expiresAt: expiresAt.toISOString(),
     };
   });

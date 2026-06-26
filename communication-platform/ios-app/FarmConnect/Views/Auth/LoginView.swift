@@ -33,18 +33,18 @@ struct LoginView: View {
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
 
-                if mode == .signUp {
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
+                SecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
 
+                if mode == .signUp {
                     TextField("Display name", text: $displayName)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.words)
                 }
 
                 Text(mode == .signIn
-                     ? "Sign in with an existing username."
+                     ? "Sign in with your username and password."
                      : "Create a new account with unique username and display name.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -59,7 +59,7 @@ struct LoginView: View {
                     Task {
                         let normalizedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
                         if mode == .signIn {
-                            await session.signIn(username: normalizedUsername)
+                            await session.signIn(username: normalizedUsername, password: password)
                         } else {
                             await session.signUp(
                                 username: normalizedUsername,
@@ -79,6 +79,7 @@ struct LoginView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(
                     username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    || (mode == .signIn && password.isEmpty)
                     || (mode == .signUp && password.count < 6)
                     || (mode == .signUp && displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     || session.isLoading
