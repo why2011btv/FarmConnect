@@ -179,12 +179,20 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
     const authUser = await requireAuth(req, reply, db);
     if (!authUser) return;
 
+    const maxAgeHours = Math.min(
+      168,
+      Math.max(1, Number((req.query as { maxAgeHours?: string }).maxAgeHours ?? 24))
+    );
+    const cutoffMs = Date.now() - maxAgeHours * 60 * 60 * 1000;
+
     const { rows: deviceRows } = await db.query<DeviceRow>(
       `
       SELECT id, name, farm_name, location_label, status, last_seen_at
       FROM devices
+      WHERE last_seen_at >= $1
       ORDER BY name ASC
-      `
+      `,
+      [cutoffMs]
     );
 
     if (deviceRows.length === 0) {
@@ -198,9 +206,10 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
         device_id, sensor_type, value, unit, created_at
       FROM sensor_readings
       WHERE device_id = ANY($1::text[])
+        AND created_at >= $2
       ORDER BY device_id, sensor_type, created_at DESC
       `,
-      [ids]
+      [ids, cutoffMs]
     );
 
     const readingsByDevice = new Map<string, ReadingRow[]>();

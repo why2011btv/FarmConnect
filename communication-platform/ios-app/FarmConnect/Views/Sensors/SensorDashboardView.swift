@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SensorDashboardView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @EnvironmentObject private var sensorViewModel: SensorViewModel
 
     @StateObject private var layoutStore = VineyardBlockLayoutStore()
     @State private var selectedBlockId: String?
@@ -14,7 +15,10 @@ struct SensorDashboardView: View {
     private var mode: LayoutMode { layoutStore.mode }
 
     private var blocks: [VineyardDemoBlock] {
-        layoutStore.blocks
+        SensorBlockMapping.mergeLiveData(
+            into: layoutStore.blocks,
+            devices: sensorViewModel.devices
+        )
     }
 
     private var selectedBlock: VineyardDemoBlock? {
@@ -76,9 +80,12 @@ struct SensorDashboardView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Vineyard Sensors")
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .top) { sensorLoadBanner }
             .toolbarBackground(Color(.systemBackground), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar { dashboardToolbar }
+            .task { await sensorViewModel.load() }
+            .refreshable { await sensorViewModel.load() }
             .sheet(isPresented: $showLayoutEditorSheet, onDismiss: {
                 isEditingLayout = false
                 editingBlockId = nil
@@ -107,6 +114,26 @@ struct SensorDashboardView: View {
     }
 
     // MARK: - Toolbar
+
+    @ViewBuilder
+    private var sensorLoadBanner: some View {
+        if sensorViewModel.isLoading, sensorViewModel.devices.isEmpty {
+            Text("Loading live sensor data…")
+                .font(.caption.weight(.medium))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(.top, 4)
+        } else if let error = sensorViewModel.errorMessage {
+            Text(error)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.red)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(.top, 4)
+        }
+    }
 
     @ToolbarContentBuilder
     private var dashboardToolbar: some ToolbarContent {

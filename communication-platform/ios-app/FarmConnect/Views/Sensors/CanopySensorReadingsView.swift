@@ -29,6 +29,55 @@ struct CanopySensorReadingsView: View {
 
     @ViewBuilder
     private func blockReadings(_ block: VineyardDemoBlock) -> some View {
+        if let live = block.liveSensor {
+            liveBlockReadings(block, live: live)
+        } else {
+            demoBlockReadings(block)
+        }
+    }
+
+    @ViewBuilder
+    private func liveBlockReadings(_ block: VineyardDemoBlock, live: BlockLiveSensorData) -> some View {
+        let grid = LazyVGrid(columns: gridColumns, spacing: 8) {
+            if let tempC = live.temperatureC {
+                metricCard(
+                    "Air temp",
+                    value: String(format: "%.1f °C (%.1f °F)", tempC, tempC * 9 / 5 + 32),
+                    icon: "thermometer.medium",
+                    tint: .orange
+                )
+            }
+            if let humidity = live.humidityPct {
+                metricCard("Humidity", value: format(humidity, unit: "%"), icon: "humidity.fill", tint: .blue)
+            }
+            if let soil = live.soilMoisturePct {
+                metricCard("Soil moist", value: format(soil, unit: "%"), icon: "drop.circle.fill", tint: .brown)
+            }
+        }
+
+        let content = VStack(alignment: .leading, spacing: 10) {
+            liveBlockHeader(for: block, live: live)
+            if live.temperatureC == nil && live.humidityPct == nil && live.soilMoisturePct == nil {
+                Text("No sensor readings in the last 24 hours.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                grid
+            }
+        }
+        .padding(.horizontal, layout == .compact ? 12 : 14)
+        .padding(.vertical, 12)
+
+        if layout == .compact {
+            ScrollView { content }
+                .scrollBounceBehavior(.basedOnSize)
+        } else {
+            content.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+    }
+
+    @ViewBuilder
+    private func demoBlockReadings(_ block: VineyardDemoBlock) -> some View {
         let r = block.readings
         let grid = LazyVGrid(columns: gridColumns, spacing: 8) {
             metricCard("Air temp", value: format(r.airTemperatureF, unit: "°F"), icon: "thermometer.medium", tint: .orange)
@@ -72,7 +121,8 @@ struct CanopySensorReadingsView: View {
     private var vineyardOverview: some View {
         let summaryBlocks = allBlocks.isEmpty ? [] : allBlocks
         let highRisk = summaryBlocks.filter { $0.riskLevel == .high }.count
-        let online = summaryBlocks.count
+        let liveCount = summaryBlocks.filter { $0.liveSensor != nil }.count
+        let demoCount = summaryBlocks.count - liveCount
 
         let content = VStack(alignment: .leading, spacing: layout == .compact ? 10 : 14) {
             VStack(alignment: .leading, spacing: 6) {
@@ -85,16 +135,16 @@ struct CanopySensorReadingsView: View {
 
             HStack(spacing: 10) {
                 overviewTile(
-                    title: "Canopy nodes",
-                    value: "\(online)",
-                    caption: "All online",
+                    title: "Live nodes",
+                    value: "\(liveCount)",
+                    caption: liveCount > 0 ? "Reporting (24 h)" : "No recent data",
                     icon: "sensor.tag.radiowaves.forward.fill",
-                    tint: .green
+                    tint: liveCount > 0 ? .green : .secondary
                 )
                 overviewTile(
                     title: "High-risk blocks",
                     value: "\(highRisk)",
-                    caption: "Fungus pressure",
+                    caption: demoCount > 0 ? "\(demoCount) demo blocks" : "Fungus pressure",
                     icon: "leaf.fill",
                     tint: .red
                 )
@@ -162,6 +212,41 @@ struct CanopySensorReadingsView: View {
                 .padding(.vertical, 4)
                 .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
                 .foregroundStyle(block.riskLevel.fillColor)
+        }
+    }
+
+    private func liveBlockHeader(for block: VineyardDemoBlock, live: BlockLiveSensorData) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(block.name)
+                    .font(.subheadline.weight(.semibold))
+                Text(live.deviceName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text("Updated \(live.lastSeenAt.formatted(date: .omitted, time: .shortened))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                if block.grapeVariety != .notSpecified {
+                    Text(block.grapeVariety.displayName)
+                        .font(.caption.weight(.medium))
+                }
+            }
+            Spacer(minLength: 4)
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Live")
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.2), in: Capsule())
+                    .foregroundStyle(.green)
+                Text(block.riskLevel.label)
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
+                    .foregroundStyle(block.riskLevel.fillColor)
+            }
         }
     }
 

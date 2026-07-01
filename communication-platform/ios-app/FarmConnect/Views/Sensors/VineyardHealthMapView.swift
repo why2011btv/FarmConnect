@@ -166,7 +166,13 @@ struct VineyardHealthMapView: View {
 
     private func sensorNodeMarker(for block: VineyardDemoBlock) -> some View {
         let highlighted = isHighlighted(block)
+        let isLive = block.liveSensor != nil
         return ZStack {
+            if isLive {
+                Circle()
+                    .stroke(Color.green, lineWidth: highlighted ? 3 : 2)
+                    .frame(width: highlighted ? 24 : 18, height: highlighted ? 24 : 18)
+            }
             Circle()
                 .fill(block.riskLevel.fillColor)
                 .frame(width: highlighted ? 18 : 12, height: highlighted ? 18 : 12)

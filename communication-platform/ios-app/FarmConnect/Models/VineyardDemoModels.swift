@@ -65,6 +65,34 @@ struct VineyardDemoBlock: Identifiable {
     let grapeVariety: GrapeVariety
     let analytics: VineyardCanopyAnalyticsSummary
     let insights: [VineyardBlockInsight]
+    /// Present when this block is backed by a live sensor node (within the last 24 h).
+    let liveSensor: BlockLiveSensorData?
+
+    init(
+        id: String,
+        name: String,
+        locationLabel: String,
+        polygon: [CLLocationCoordinate2D],
+        center: CLLocationCoordinate2D,
+        riskLevel: VineyardRiskLevel,
+        readings: VineyardCanopyReading,
+        grapeVariety: GrapeVariety,
+        analytics: VineyardCanopyAnalyticsSummary,
+        insights: [VineyardBlockInsight],
+        liveSensor: BlockLiveSensorData? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.locationLabel = locationLabel
+        self.polygon = polygon
+        self.center = center
+        self.riskLevel = riskLevel
+        self.readings = readings
+        self.grapeVariety = grapeVariety
+        self.analytics = analytics
+        self.insights = insights
+        self.liveSensor = liveSensor
+    }
 }
 
 enum CompassDirection {

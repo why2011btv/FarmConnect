@@ -431,8 +431,8 @@ final class APIClient {
         return try JSONDecoder().decode(NotificationPreferencesResponse.self, from: data).item
     }
 
-    private func getSensorDashboard() async throws -> SensorOverviewResponse {
-        let req = try authorizedRequest(path: "/v1/sensors/overview")
+    private func getSensorDashboard(maxAgeHours: Int = 24) async throws -> SensorOverviewResponse {
+        let req = try authorizedRequest(path: "/v1/sensors/overview?maxAgeHours=\(maxAgeHours)")
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
         guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
