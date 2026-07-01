@@ -196,10 +196,7 @@ struct CanopySensorReadingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(block.name)
                     .font(.subheadline.weight(.semibold))
-                Text(block.locationLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                locationLabelRow(block: block)
                 if block.grapeVariety != .notSpecified {
                     Text(block.grapeVariety.displayName)
                         .font(.caption.weight(.medium))
@@ -220,8 +217,9 @@ struct CanopySensorReadingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(block.name)
                     .font(.subheadline.weight(.semibold))
+                locationLabelRow(block: block)
                 Text(live.deviceName)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 Text("Updated \(live.lastSeenAt.formatted(date: .omitted, time: .shortened))")
@@ -246,6 +244,21 @@ struct CanopySensorReadingsView: View {
                     .padding(.vertical, 4)
                     .background(block.riskLevel.fillColor.opacity(0.2), in: Capsule())
                     .foregroundStyle(block.riskLevel.fillColor)
+            }
+        }
+    }
+
+    private func locationLabelRow(block: VineyardDemoBlock) -> some View {
+        HStack(spacing: 5) {
+            Text(block.locationLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            if let connection = block.sensorConnection {
+                Circle()
+                    .fill(connection.isOnline ? Color.green : Color.red)
+                    .frame(width: 7, height: 7)
+                    .accessibilityLabel(connection.isOnline ? "Online" : "Offline")
             }
         }
     }

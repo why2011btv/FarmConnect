@@ -15,8 +15,10 @@ struct SensorDashboardView: View {
     private var mode: LayoutMode { layoutStore.mode }
 
     private var blocks: [VineyardDemoBlock] {
-        SensorBlockMapping.mergeLiveData(
-            into: layoutStore.blocks,
+        let base = layoutStore.blocks
+        guard mode == .demo else { return base }
+        return SensorBlockMapping.mergeLiveData(
+            into: base,
             devices: sensorViewModel.devices
         )
     }

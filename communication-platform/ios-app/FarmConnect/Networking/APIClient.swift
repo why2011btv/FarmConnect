@@ -53,8 +53,13 @@ final class APIClient {
     }
 
     private func authorizedRequest(path: String, method: String = "GET") throws -> URLRequest {
-        let trimmedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        let url = baseURL.appendingPathComponent(trimmedPath)
+        let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
+        let root = baseURL.absoluteString.hasSuffix("/")
+            ? String(baseURL.absoluteString.dropLast())
+            : baseURL.absoluteString
+        guard let url = URL(string: root + normalizedPath) else {
+            throw APIError.badURL
+        }
         var req = URLRequest(url: url)
         req.httpMethod = method
         if let token = authToken {

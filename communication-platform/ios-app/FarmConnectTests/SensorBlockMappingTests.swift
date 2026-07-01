@@ -52,4 +52,15 @@ final class SensorBlockMappingTests: XCTestCase {
 
         XCTAssertNil(BlockLiveSensorData(device: device, maxAgeMs: SensorBlockMapping.maxAgeMs))
     }
+
+    func testMarksAssignedBlockOfflineWhenDeviceMissing() {
+        let rectangles = VineyardDemoData.defaultRectangles
+        let blocks = VineyardDemoData.makeBlocks(rectangles: rectangles, settings: [:])
+        let merged = SensorBlockMapping.mergeLiveData(into: blocks, devices: [])
+
+        let block1 = merged.first { $0.id == "b1" }
+        XCTAssertNotNil(block1?.sensorConnection)
+        XCTAssertFalse(block1?.sensorConnection?.isOnline ?? true)
+        XCTAssertNil(block1?.liveSensor)
+    }
 }

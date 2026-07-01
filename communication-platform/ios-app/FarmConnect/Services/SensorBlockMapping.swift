@@ -4,6 +4,9 @@ import Foundation
 enum SensorBlockMapping {
     static let maxAgeMs: Int64 = 24 * 60 * 60 * 1000
 
+    /// Demo blocks wired to physical sensor nodes.
+    static let assignedSensorBlockIds: Set<String> = ["b1", "b2"]
+
     private static let blockMatchers: [(blockId: String, patterns: [String])] = [
         ("b1", ["node 1", "node-1", "pi-node-1"]),
         ("b2", ["node 2", "node-2", "pi-node-2"]),
@@ -37,43 +40,103 @@ enum SensorBlockMapping {
         into blocks: [VineyardDemoBlock],
         devices: [SensorDeviceOverview]
     ) -> [VineyardDemoBlock] {
-        let liveByBlockId = liveDataByBlockId(from: devices)
-        guard !liveByBlockId.isEmpty else { return blocks }
+        let deviceByBlockId = devices.reduce(into: [String: SensorDeviceOverview]()) { result, device in
+            guard let blockId = blockId(for: device) else { return }
+            result[blockId] = device
+        }
 
         return blocks.map { block in
-            guard let live = liveByBlockId[block.id] else { return block }
-            let readings = VineyardCanopyReading.fromLiveSensor(live)
-            let analytics = VineyardCanopyAnalytics.summarize(readings: readings)
-            let risk = VineyardDemoData.riskLevel(from: analytics)
+            guard assignedSensorBlockIds.contains(block.id) else { return block }
 
-            let draft = VineyardDemoBlock(
-                id: block.id,
-                name: block.name,
-                locationLabel: block.locationLabel,
-                polygon: block.polygon,
-                center: block.center,
-                riskLevel: risk,
-                readings: readings,
-                grapeVariety: block.grapeVariety,
-                analytics: analytics,
-                insights: [],
-                liveSensor: live
+            if let device = deviceByBlockId[block.id] {
+                let connection = BlockSensorConnection(
+                    deviceName: device.name,
+                    isOnline: device.status.lowercased() == "online"
+                )
+                if let live = BlockLiveSensorData(device: device, maxAgeMs: maxAgeMs) {
+                    return applyLive(block: block, live: live, connection: connection)
+                }
+                return block.withSensorConnection(connection)
+            }
+
+            let connection = BlockSensorConnection(
+                deviceName: placeholderDeviceName(for: block.id),
+                isOnline: false
             )
-            let insights = VineyardCanopyAnalytics.insights(for: draft)
-            return VineyardDemoBlock(
-                id: draft.id,
-                name: draft.name,
-                locationLabel: draft.locationLabel,
-                polygon: draft.polygon,
-                center: draft.center,
-                riskLevel: draft.riskLevel,
-                readings: draft.readings,
-                grapeVariety: draft.grapeVariety,
-                analytics: draft.analytics,
-                insights: insights,
-                liveSensor: live
-            )
+            return block.withSensorConnection(connection)
         }
+    }
+
+    private static func applyLive(
+        block: VineyardDemoBlock,
+        live: BlockLiveSensorData,
+        connection: BlockSensorConnection
+    ) -> VineyardDemoBlock {
+        let readings = VineyardCanopyReading.fromLiveSensor(live)
+        let analytics = VineyardCanopyAnalytics.summarize(readings: readings)
+        let risk = VineyardDemoData.riskLevel(from: analytics)
+
+        let draft = VineyardDemoBlock(
+            id: block.id,
+            name: block.name,
+            locationLabel: block.locationLabel,
+            polygon: block.polygon,
+            center: block.center,
+            riskLevel: risk,
+            readings: readings,
+            grapeVariety: block.grapeVariety,
+            analytics: analytics,
+            insights: [],
+            liveSensor: live,
+            sensorConnection: connection
+        )
+        let insights = VineyardCanopyAnalytics.insights(for: draft)
+        return VineyardDemoBlock(
+            id: draft.id,
+            name: draft.name,
+            locationLabel: draft.locationLabel,
+            polygon: draft.polygon,
+            center: draft.center,
+            riskLevel: draft.riskLevel,
+            readings: draft.readings,
+            grapeVariety: draft.grapeVariety,
+            analytics: draft.analytics,
+            insights: insights,
+            liveSensor: live,
+            sensorConnection: connection
+        )
+    }
+
+    private static func placeholderDeviceName(for blockId: String) -> String {
+        switch blockId {
+        case "b1": return "Node 1"
+        case "b2": return "Node 2"
+        default: return "Sensor node"
+        }
+    }
+}
+
+struct BlockSensorConnection: Equatable {
+    let deviceName: String
+    let isOnline: Bool
+}
+
+extension VineyardDemoBlock {
+    func withSensorConnection(_ connection: BlockSensorConnection) -> VineyardDemoBlock {
+        VineyardDemoBlock(
+            id: id,
+            name: name,
+            locationLabel: locationLabel,
+            polygon: polygon,
+            center: center,
+            riskLevel: riskLevel,
+            readings: readings,
+            grapeVariety: grapeVariety,
+            analytics: analytics,
+            insights: insights,
+            liveSensor: liveSensor,
+            sensorConnection: connection
+        )
     }
 }
 
