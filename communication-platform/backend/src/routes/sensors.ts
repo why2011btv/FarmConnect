@@ -181,7 +181,7 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
 
     const maxAgeHours = Math.min(
       168,
-      Math.max(1, Number((req.query as { maxAgeHours?: string }).maxAgeHours ?? 24))
+      Math.max(1, Number((req.query as { maxAgeHours?: string }).maxAgeHours ?? 168))
     );
     const cutoffMs = Date.now() - maxAgeHours * 60 * 60 * 1000;
 

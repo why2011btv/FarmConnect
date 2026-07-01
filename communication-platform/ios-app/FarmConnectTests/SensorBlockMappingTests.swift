@@ -37,7 +37,7 @@ final class SensorBlockMappingTests: XCTestCase {
     }
 
     func testRejectsStaleDevice() {
-        let staleMs = Int64(Date().timeIntervalSince1970 * 1000) - (25 * 60 * 60 * 1000)
+        let staleMs = Int64(Date().timeIntervalSince1970 * 1000) - (8 * 24 * 60 * 60 * 1000)
         let device = SensorDeviceOverview(
             id: "pi-node-1",
             name: "Node 1",

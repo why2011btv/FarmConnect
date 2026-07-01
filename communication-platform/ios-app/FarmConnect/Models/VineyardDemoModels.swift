@@ -65,7 +65,7 @@ struct VineyardDemoBlock: Identifiable {
     let grapeVariety: GrapeVariety
     let analytics: VineyardCanopyAnalyticsSummary
     let insights: [VineyardBlockInsight]
-    /// Present when this block is backed by a live sensor node (within the last 24 h).
+    /// Present when this block is backed by a live sensor node (within the last week).
     let liveSensor: BlockLiveSensorData?
     /// Set on demo blocks assigned to a physical sensor node (b1, b2).
     let sensorConnection: BlockSensorConnection?

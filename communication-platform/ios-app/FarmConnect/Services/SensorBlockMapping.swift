@@ -2,7 +2,7 @@ import Foundation
 
 /// Maps live sensor devices from the API onto vineyard block ids (b1, b2, …).
 enum SensorBlockMapping {
-    static let maxAgeMs: Int64 = 24 * 60 * 60 * 1000
+    static let maxAgeMs: Int64 = 7 * 24 * 60 * 60 * 1000
 
     /// Demo blocks wired to physical sensor nodes.
     static let assignedSensorBlockIds: Set<String> = ["b1", "b2"]

@@ -58,7 +58,7 @@ struct CanopySensorReadingsView: View {
         let content = VStack(alignment: .leading, spacing: 10) {
             liveBlockHeader(for: block, live: live)
             if live.temperatureC == nil && live.humidityPct == nil && live.soilMoisturePct == nil {
-                Text("No sensor readings in the last 24 hours.")
+                Text("No sensor readings in the last week.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -137,7 +137,7 @@ struct CanopySensorReadingsView: View {
                 overviewTile(
                     title: "Live nodes",
                     value: "\(liveCount)",
-                    caption: liveCount > 0 ? "Reporting (24 h)" : "No recent data",
+                    caption: liveCount > 0 ? "Reporting (1 week)" : "No recent data",
                     icon: "sensor.tag.radiowaves.forward.fill",
                     tint: liveCount > 0 ? .green : .secondary
                 )
