@@ -89,9 +89,9 @@ enum VineyardCanopyAnalytics {
     private static func sensorNetworkMessage(blocks: [VineyardDemoBlock]) -> String {
         let live = blocks.filter { $0.liveSensor != nil }.count
         if live > 0 {
-            return "\(live) live node\(live == 1 ? "" : "s") reporting in the last week. \(blocks.count - live) block\(blocks.count - live == 1 ? "" : "s") use demo data."
+            return "\(live) block\(live == 1 ? "" : "s") include live field-sensor readings; other metrics use local weather for each block."
         }
-        return "No live sensor data in the last week. Blocks show bundled demo readings until nodes report in."
+        return "Blocks use local weather at each block's coordinates. Demo blocks 1–2 also listen for field sensors."
     }
 
     // MARK: - Indices

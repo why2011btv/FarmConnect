@@ -16,6 +16,7 @@ import { postRoutes } from "./routes/posts.js";
 import { sensorRoutes } from "./routes/sensors.js";
 import { uploadRoutes } from "./routes/uploads.js";
 import { aiRoutes } from "./routes/ai.js";
+import { weatherRoutes } from "./routes/weather.js";
 import { vineyardRoutes } from "./routes/vineyard.js";
 
 const app = Fastify({
@@ -54,6 +55,7 @@ await chatRoutes(app, chatRepository, pool);
 await uploadRoutes(app, pool);
 await notificationRoutes(app, pool);
 await sensorRoutes(app, pool);
+await weatherRoutes(app, pool);
 await aiRoutes(app, pool);
 await vineyardRoutes(app, pool);
 

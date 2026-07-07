@@ -454,6 +454,16 @@ final class APIClient {
         return dashboard.insights
     }
 
+    func getBlockWeather(points: [BlockWeatherPoint]) async throws -> [BlockWeatherReadingDTO] {
+        var req = try authorizedRequest(path: "/v1/weather/blocks", method: "POST")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(BlockWeatherBatchRequest(points: points))
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try JSONDecoder().decode(BlockWeatherBatchResponse.self, from: data).items
+    }
+
     func sendAssistantChat(
         sessionId: String?,
         text: String,

@@ -6,6 +6,7 @@ struct SensorDashboardView: View {
     @EnvironmentObject private var sensorViewModel: SensorViewModel
 
     @StateObject private var layoutStore = VineyardBlockLayoutStore()
+    @StateObject private var weatherViewModel = BlockWeatherViewModel()
     @State private var selectedBlockId: String?
     @State private var editingBlockId: String?
     @State private var isEditingLayout = false
@@ -15,11 +16,11 @@ struct SensorDashboardView: View {
     private var mode: LayoutMode { layoutStore.mode }
 
     private var blocks: [VineyardDemoBlock] {
-        let base = layoutStore.blocks
-        guard mode == .demo else { return base }
-        return SensorBlockMapping.mergeLiveData(
-            into: base,
-            devices: sensorViewModel.devices
+        BlockReadingsComposer.compose(
+            blocks: layoutStore.blocks,
+            weatherByBlockId: weatherViewModel.readingsByBlockId,
+            devices: sensorViewModel.devices,
+            includeSensorMapping: mode == .demo
         )
     }
 
@@ -86,8 +87,16 @@ struct SensorDashboardView: View {
             .toolbarBackground(Color(.systemBackground), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar { dashboardToolbar }
-            .task { await sensorViewModel.load() }
-            .refreshable { await sensorViewModel.load() }
+            .task(id: cameraKey) {
+                await reloadDashboard()
+            }
+            .refreshable {
+                weatherViewModel.invalidate()
+                await reloadDashboard()
+            }
+            .onChange(of: layoutStore.mode) { _, _ in
+                weatherViewModel.invalidate()
+            }
             .sheet(isPresented: $showLayoutEditorSheet, onDismiss: {
                 isEditingLayout = false
                 editingBlockId = nil
@@ -119,14 +128,15 @@ struct SensorDashboardView: View {
 
     @ViewBuilder
     private var sensorLoadBanner: some View {
-        if sensorViewModel.isLoading, sensorViewModel.devices.isEmpty {
-            Text("Loading live sensor data…")
+        if sensorViewModel.isLoading || weatherViewModel.isLoading,
+           sensorViewModel.devices.isEmpty, weatherViewModel.readingsByBlockId.isEmpty {
+            Text("Loading vineyard data…")
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(.ultraThinMaterial, in: Capsule())
                 .padding(.top, 4)
-        } else if let error = sensorViewModel.errorMessage {
+        } else if let error = sensorViewModel.errorMessage ?? weatherViewModel.errorMessage {
             Text(error)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.red)
@@ -135,6 +145,13 @@ struct SensorDashboardView: View {
                 .background(.ultraThinMaterial, in: Capsule())
                 .padding(.top, 4)
         }
+    }
+
+    private func reloadDashboard() async {
+        let baseBlocks = layoutStore.blocks
+        async let sensors: Void = sensorViewModel.load()
+        async let weather: Void = weatherViewModel.load(for: baseBlocks)
+        _ = await (sensors, weather)
     }
 
     @ToolbarContentBuilder
@@ -327,7 +344,12 @@ struct SensorDashboardView: View {
             let topHeight = geo.size.height * PanelProportions.readings
 
             VStack(spacing: 0) {
-                CanopySensorReadingsView(block: selectedBlock, allBlocks: blocks, layout: .regular)
+                CanopySensorReadingsView(
+                    block: selectedBlock,
+                    allBlocks: blocks,
+                    layout: .regular,
+                    isLoadingWeather: weatherViewModel.isLoading
+                )
                     .frame(height: topHeight)
 
                 Divider()
@@ -360,7 +382,8 @@ struct SensorDashboardView: View {
                     CanopySensorReadingsView(
                         block: selectedBlock,
                         allBlocks: blocks,
-                        layout: .compact
+                        layout: .compact,
+                        isLoadingWeather: weatherViewModel.isLoading
                     )
                     .frame(maxHeight: geometry.size.height * 0.36)
 

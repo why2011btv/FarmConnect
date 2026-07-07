@@ -69,6 +69,8 @@ struct VineyardDemoBlock: Identifiable {
     let liveSensor: BlockLiveSensorData?
     /// Set on demo blocks assigned to a physical sensor node (b1, b2).
     let sensorConnection: BlockSensorConnection?
+    /// Whether each canopy metric came from a field sensor or weather API.
+    let readingSources: CanopyReadingSources
 
     init(
         id: String,
@@ -82,7 +84,8 @@ struct VineyardDemoBlock: Identifiable {
         analytics: VineyardCanopyAnalyticsSummary,
         insights: [VineyardBlockInsight],
         liveSensor: BlockLiveSensorData? = nil,
-        sensorConnection: BlockSensorConnection? = nil
+        sensorConnection: BlockSensorConnection? = nil,
+        readingSources: CanopyReadingSources = CanopyReadingSources(all: .weather)
     ) {
         self.id = id
         self.name = name
@@ -96,6 +99,7 @@ struct VineyardDemoBlock: Identifiable {
         self.insights = insights
         self.liveSensor = liveSensor
         self.sensorConnection = sensorConnection
+        self.readingSources = readingSources
     }
 }
 

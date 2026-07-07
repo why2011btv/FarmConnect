@@ -43,7 +43,9 @@
 		DD1111111111111100000008 /* VineyardBlockLayoutEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2211111111111100000008 /* VineyardBlockLayoutEditor.swift */; };
 		DD1122222222222200000009 /* GrapeVariety.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2222222222222200000009 /* GrapeVariety.swift */; };
 		DD1133333333333300000010 /* VineyardCanopyAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */; };
-		DD1144444444444400000011 /* SensorBlockMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2244444444444400000011 /* SensorBlockMapping.swift */; };
+        DD1144444444444400000011 /* SensorBlockMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2244444444444400000011 /* SensorBlockMapping.swift */; };
+		DD1155555555555500000012 /* BlockReadingsComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2255555555555500000012 /* BlockReadingsComposer.swift */; };
+		DD1166666666666600000013 /* BlockWeatherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2266666666666600000013 /* BlockWeatherViewModel.swift */; };
 		DD11AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */; };
 		DD11BBBBBBBBBBBB00000002 /* VineyardDemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22BBBBBBBBBBBB00000002 /* VineyardDemoData.swift */; };
 		DD11CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */; };
@@ -101,6 +103,8 @@
 		FA2222222222222200000009 /* GrapeVariety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrapeVariety.swift; sourceTree = "<group>"; };
 		FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardCanopyAnalytics.swift; sourceTree = "<group>"; };
 		FA2244444444444400000011 /* SensorBlockMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorBlockMapping.swift; sourceTree = "<group>"; };
+		FA2255555555555500000012 /* BlockReadingsComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockReadingsComposer.swift; sourceTree = "<group>"; };
+		FA2266666666666600000013 /* BlockWeatherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockWeatherViewModel.swift; sourceTree = "<group>"; };
 		FA22AAAAAAAAAAAA00000001 /* VineyardDemoModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoModels.swift; sourceTree = "<group>"; };
 		FA22BBBBBBBBBBBB00000002 /* VineyardDemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoData.swift; sourceTree = "<group>"; };
 		FA22CCCCCCCCCCCC00000003 /* VineyardHealthMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardHealthMapView.swift; sourceTree = "<group>"; };
@@ -196,6 +200,7 @@
 				770E037D2A141A178276DB57 /* UserLocationManager.swift */,
 				FA2233333333333300000010 /* VineyardCanopyAnalytics.swift */,
 				FA2244444444444400000011 /* SensorBlockMapping.swift */,
+				FA2255555555555500000012 /* BlockReadingsComposer.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -297,6 +302,7 @@
 				C03385AD637416062FCF000E /* ChatViewModel.swift */,
 				1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */,
 				3117FAD7A857F17CAF3990DE /* SensorViewModel.swift */,
+				FA2266666666666600000013 /* BlockWeatherViewModel.swift */,
 				8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */,
 			);
 			path = ViewModels;
@@ -443,6 +449,8 @@
 				DD1122222222222200000009 /* GrapeVariety.swift in Sources */,
 				DD1133333333333300000010 /* VineyardCanopyAnalytics.swift in Sources */,
 				DD1144444444444400000011 /* SensorBlockMapping.swift in Sources */,
+				DD1155555555555500000012 /* BlockReadingsComposer.swift in Sources */,
+				DD1166666666666600000013 /* BlockWeatherViewModel.swift in Sources */,
 				DD33AAAAAAAAAAAA00000001 /* VineyardFieldLogModels.swift in Sources */,
 				DD33BBBBBBBBBBBB00000002 /* VineyardFieldLogDemoData.swift in Sources */,
 				DD33CCCCCCCCCCCC00000003 /* VineyardFieldLogStore.swift in Sources */,

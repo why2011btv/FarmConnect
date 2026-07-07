@@ -265,3 +265,45 @@ struct NotificationPreferences: Codable {
 struct NotificationPreferencesResponse: Codable {
     let item: NotificationPreferences
 }
+
+struct BlockWeatherPoint: Codable {
+    let blockId: String
+    let latitude: Double
+    let longitude: Double
+}
+
+struct BlockWeatherBatchRequest: Codable {
+    let points: [BlockWeatherPoint]
+}
+
+struct BlockWeatherReadingDTO: Codable {
+    let blockId: String
+    let airTemperatureF: Double
+    let relativeHumidityPct: Double
+    let leafWetnessHours: Double
+    let soilMoisturePct: Double
+    let soilTemperatureF: Double
+    let rainfallInches24h: Double
+    let solarExposureMJ: Double
+    let windSpeedMph: Double
+    let windDirectionDegrees: Double
+    let fetchedAt: Int64
+
+    var canopyReading: VineyardCanopyReading {
+        VineyardCanopyReading(
+            airTemperatureF: airTemperatureF,
+            relativeHumidityPct: relativeHumidityPct,
+            leafWetnessHours: leafWetnessHours,
+            soilMoisturePct: soilMoisturePct,
+            soilTemperatureF: soilTemperatureF,
+            rainfallInches24h: rainfallInches24h,
+            solarExposureMJ: solarExposureMJ,
+            windSpeedMph: windSpeedMph,
+            windDirectionDegrees: windDirectionDegrees
+        )
+    }
+}
+
+struct BlockWeatherBatchResponse: Codable {
+    let items: [BlockWeatherReadingDTO]
+}
