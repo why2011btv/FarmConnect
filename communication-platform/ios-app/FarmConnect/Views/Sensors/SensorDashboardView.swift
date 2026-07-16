@@ -2,7 +2,6 @@ import MapKit
 import SwiftUI
 
 struct SensorDashboardView: View {
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var sensorViewModel: SensorViewModel
 
     @StateObject private var layoutStore = VineyardBlockLayoutStore()
@@ -12,6 +11,9 @@ struct SensorDashboardView: View {
     @State private var isEditingLayout = false
     @State private var showLayoutEditorSheet = false
     @State private var showGeneratorSheet = false
+    /// True when the two-pane wide layout is active (kept in sync with the GeometryReader). The
+    /// block-detail bottom sheet is a phone-only affordance, so it presents only when this is false.
+    @State private var isWide = false
 
     private var mode: LayoutMode { layoutStore.mode }
 
@@ -34,10 +36,6 @@ struct SensorDashboardView: View {
             return selectedBlock.insights
         }
         return VineyardCanopyAnalytics.vineyardWideInsights(blocks: blocks)
-    }
-
-    private var useInlineEditor: Bool {
-        horizontalSizeClass == .regular
     }
 
     // MARK: - Camera region per mode
@@ -72,12 +70,16 @@ struct SensorDashboardView: View {
                 GeometryReader { geometry in
                     let wide = isWideLayout(geometry)
 
-                    if wide {
-                        wideLayout
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                    } else {
-                        phoneLayout(in: geometry)
+                    Group {
+                        if wide {
+                            wideLayout
+                                .frame(width: geometry.size.width, height: geometry.size.height)
+                        } else {
+                            phoneLayout
+                        }
                     }
+                    .onAppear { isWide = wide }
+                    .onChange(of: wide) { _, newValue in isWide = newValue }
                 }
             }
             .background(Color(.systemGroupedBackground))
@@ -121,6 +123,43 @@ struct SensorDashboardView: View {
                     }
                 )
             }
+            .sheet(isPresented: showBlockDetailBinding) {
+                blockDetailSheet
+            }
+        }
+    }
+
+    // MARK: - Block detail sheet (phone: full-screen map -> tap a block)
+
+    /// Present the detail sheet only in the non-wide (single-column map) layout, when a block is
+    /// selected and no other sheet / inline editor owns the screen. Gated on the SAME geometry
+    /// predicate that picks phoneLayout, so the wide two-pane layout shows detail inline instead.
+    private var showBlockDetailBinding: Binding<Bool> {
+        Binding(
+            get: {
+                !isWide
+                    && !isEditingLayout
+                    && !showLayoutEditorSheet
+                    && !showGeneratorSheet
+                    && selectedBlockId != nil
+            },
+            set: { presented in
+                if !presented { selectedBlockId = nil }
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var blockDetailSheet: some View {
+        if let selectedBlock {
+            BlockDetailSheet(
+                block: selectedBlock,
+                insights: selectedBlock.insights,
+                isLoadingWeather: weatherViewModel.isLoading
+            )
+            .presentationDetents([.fraction(0.45), .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
         }
     }
 
@@ -244,7 +283,9 @@ struct SensorDashboardView: View {
             guard let firstId = layoutStore.rectangles.first?.id else { return }
             isEditingLayout = true
             editingBlockId = editingBlockId ?? firstId
-            if !useInlineEditor {
+            // The inline sidebar editor only exists inside the wide two-pane layout; in any non-wide
+            // geometry (iPhone, or iPad portrait) present the editor as a sheet instead.
+            if !isWide {
                 showLayoutEditorSheet = true
             }
         }
@@ -321,7 +362,9 @@ struct SensorDashboardView: View {
 
             Divider()
 
-            if isEditingLayout, useInlineEditor {
+            // We're inside the wide two-pane layout, so the inline sidebar editor is the right
+            // surface here (gate on the same geometry predicate that selected this layout).
+            if isEditingLayout {
                 VineyardBlockLayoutEditor(
                     layoutStore: layoutStore,
                     editingBlockId: $editingBlockId,
@@ -362,38 +405,10 @@ struct SensorDashboardView: View {
 
     // MARK: - iPhone / portrait
 
-    private func phoneLayout(in geometry: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            mapView()
-                .frame(height: geometry.size.height * 0.34)
-
-            if isEditingLayout, useInlineEditor {
-                VineyardBlockLayoutEditor(
-                    layoutStore: layoutStore,
-                    editingBlockId: $editingBlockId,
-                    style: .sidebar,
-                    onDone: {
-                        isEditingLayout = false
-                        editingBlockId = nil
-                    }
-                )
-            } else {
-                VStack(spacing: 0) {
-                    CanopySensorReadingsView(
-                        block: selectedBlock,
-                        allBlocks: blocks,
-                        layout: .compact,
-                        isLoadingWeather: weatherViewModel.isLoading
-                    )
-                    .frame(maxHeight: geometry.size.height * 0.36)
-
-                    Divider()
-
-                    VineyardInsightsPanel(block: selectedBlock, insights: activeInsights)
-                        .frame(maxHeight: .infinity)
-                }
-            }
-        }
+    // Full-screen map; tapping a block raises the detail bottom sheet (see blockDetailSheet).
+    private var phoneLayout: some View {
+        mapView()
+            .ignoresSafeArea(.container, edges: .bottom)
     }
 }
 
@@ -401,4 +416,37 @@ struct SensorDashboardView: View {
 private enum PanelProportions {
     private static let phi: CGFloat = (1 + sqrt(5)) / 2
     static let readings: CGFloat = 1 / (1 + phi)
+}
+
+// MARK: - Block detail bottom sheet (phone: full-screen map -> tap a block)
+
+/// Bottom-sheet detail for a tapped vineyard block on the full-screen phone map.
+/// Shows the block's canopy readings (metric grid) and its insights / spray recommendations.
+/// Reuses the existing panels so it stays in sync with the dashboard's other layouts.
+/// (Kept in this file rather than its own to avoid a new Xcode target-membership entry.)
+private struct BlockDetailSheet: View {
+    let block: VineyardDemoBlock
+    let insights: [VineyardBlockInsight]
+    var isLoadingWeather: Bool = false
+
+    var body: some View {
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                // Readings on top (compact = 2-col grid that scrolls internally if tall), capped so
+                // it can't crowd out the insights; insights fill the remainder with their own scroll.
+                CanopySensorReadingsView(
+                    block: block,
+                    layout: .compact,
+                    isLoadingWeather: isLoadingWeather
+                )
+                .frame(maxHeight: geo.size.height * 0.55)
+
+                Divider()
+
+                VineyardInsightsPanel(block: block, insights: insights)
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+    }
 }
