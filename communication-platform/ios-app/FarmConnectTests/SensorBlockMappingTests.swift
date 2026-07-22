@@ -2,30 +2,28 @@ import XCTest
 @testable import FarmConnect
 
 final class SensorBlockMappingTests: XCTestCase {
-    func testMapsNode0ToBlock1() {
+    func testMapsA1ToBlock1() {
         let device = SensorDeviceOverview(
-            id: "lora-node-0",
-            name: "Persephones Basket Node 0",
+            id: "pb-node-A1",
+            name: "PB Node A1",
             farmName: "Persephone Farm",
-            locationLabel: "North Plot",
+            locationLabel: "Block 1",
             status: "online",
             lastSeenAt: Int64(Date().timeIntervalSince1970 * 1000),
             readings: [
                 SensorReading(sensorType: "temperature", value: 22.5, unit: "C", createdAt: Int64(Date().timeIntervalSince1970 * 1000)),
-                SensorReading(sensorType: "humidity", value: 61.0, unit: "%", createdAt: Int64(Date().timeIntervalSince1970 * 1000)),
-                SensorReading(sensorType: "soil_moisture", value: 38.0, unit: "%", createdAt: Int64(Date().timeIntervalSince1970 * 1000)),
             ]
         )
 
         XCTAssertEqual(SensorBlockMapping.blockId(for: device), "b1")
     }
 
-    func testMapsNode1ToBlock2() {
+    func testMapsA2ToBlock2() {
         let device = SensorDeviceOverview(
-            id: "lora-node-1",
-            name: "Persephones Basket Node 1",
+            id: "pb-node-A2",
+            name: "PB Node A2",
             farmName: "Persephone Farm",
-            locationLabel: "South Plot",
+            locationLabel: "Block 2",
             status: "online",
             lastSeenAt: Int64(Date().timeIntervalSince1970 * 1000),
             readings: [
@@ -36,11 +34,43 @@ final class SensorBlockMappingTests: XCTestCase {
         XCTAssertEqual(SensorBlockMapping.blockId(for: device), "b2")
     }
 
+    func testMapsA8ToBlock8() {
+        let device = SensorDeviceOverview(
+            id: "pb-node-A8",
+            name: "PB Node A8",
+            farmName: "Persephone Farm",
+            locationLabel: "Block 8",
+            status: "online",
+            lastSeenAt: Int64(Date().timeIntervalSince1970 * 1000),
+            readings: [
+                SensorReading(sensorType: "humidity", value: 55.0, unit: "%", createdAt: Int64(Date().timeIntervalSince1970 * 1000)),
+            ]
+        )
+
+        XCTAssertEqual(SensorBlockMapping.blockId(for: device), "b8")
+    }
+
+    func testLegacyNode0StillMapsToBlock1() {
+        let device = SensorDeviceOverview(
+            id: "lora-node-0",
+            name: "Persephones Basket Node 0",
+            farmName: "Persephone Farm",
+            locationLabel: "North Plot",
+            status: "online",
+            lastSeenAt: Int64(Date().timeIntervalSince1970 * 1000),
+            readings: [
+                SensorReading(sensorType: "temperature", value: 22.5, unit: "C", createdAt: Int64(Date().timeIntervalSince1970 * 1000)),
+            ]
+        )
+
+        XCTAssertEqual(SensorBlockMapping.blockId(for: device), "b1")
+    }
+
     func testRejectsStaleDevice() {
         let staleMs = Int64(Date().timeIntervalSince1970 * 1000) - (8 * 24 * 60 * 60 * 1000)
         let device = SensorDeviceOverview(
-            id: "lora-node-0",
-            name: "Node 0",
+            id: "pb-node-A1",
+            name: "PB Node A1",
             farmName: "Farm",
             locationLabel: "Plot",
             status: "online",
@@ -69,7 +99,7 @@ final class SensorBlockMappingTests: XCTestCase {
         XCTAssertNil(block1?.liveSensor)
     }
 
-    func testOverlaysSensorFieldsOntoWeather() {
+    func testOverlaysSensorFieldsOntoWeatherFromA1() {
         let rectangles = VineyardDemoData.defaultRectangles
         let blocks = VineyardDemoData.makeBlocks(rectangles: rectangles, settings: [:])
         let weather = VineyardCanopyReading(
@@ -84,8 +114,8 @@ final class SensorBlockMappingTests: XCTestCase {
             windDirectionDegrees: 90
         )
         let device = SensorDeviceOverview(
-            id: "lora-node-0",
-            name: "Persephones Basket Node 0",
+            id: "pb-node-A1",
+            name: "PB Node A1",
             farmName: "Farm",
             locationLabel: "Plot",
             status: "online",

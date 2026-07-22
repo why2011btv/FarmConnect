@@ -54,6 +54,12 @@ enum BlockReadingsComposer {
             if includeSensorMapping, SensorBlockMapping.assignedSensorBlockIds.contains(block.id) {
                 let deviceByBlockId = devices.reduce(into: [String: SensorDeviceOverview]()) { result, device in
                     guard let blockId = SensorBlockMapping.blockId(for: device) else { return }
+                    // Prefer PB Node A# over legacy lora/pi nodes when both map to the same block.
+                    if let existing = result[blockId],
+                       SensorBlockMapping.extractSeriesANumber(from: existing.id.lowercased()) != nil
+                        || SensorBlockMapping.extractSeriesANumber(from: existing.name.lowercased()) != nil {
+                        return
+                    }
                     result[blockId] = device
                 }
 

@@ -4,20 +4,30 @@ import Foundation
 enum SensorBlockMapping {
     static let maxAgeMs: Int64 = 7 * 24 * 60 * 60 * 1000
 
-    /// Demo blocks wired to physical sensor nodes.
-    static let assignedSensorBlockIds: Set<String> = ["b1", "b2"]
+    /// Demo blocks that can show a sensor online/offline indicator (Running Brook has 8 blocks).
+    static let assignedSensorBlockIds: Set<String> = [
+        "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8",
+    ]
 
-    private static let blockMatchers: [(blockId: String, patterns: [String])] = [
+    /// Legacy fallbacks when no PB Node A# device is present.
+    private static let legacyMatchers: [(blockId: String, patterns: [String])] = [
         ("b1", ["node 0", "node-0", "lora-node-0"]),
-        ("b2", ["node 1", "node-1", "lora-node-1", "pi-node-1"]),
+        ("b2", ["node 1", "node-1", "lora-node-1"]),
     ]
 
     static func blockId(for device: SensorDeviceOverview) -> String? {
-        let name = device.name.lowercased()
-        let id = device.id.lowercased()
-        for (blockId, patterns) in blockMatchers {
+        let candidates = [device.id, device.name].map { $0.lowercased() }
+
+        // Prefer PB Node A1 / pb-node-A1 → b1, A2 → b2, …
+        for text in candidates {
+            if let number = extractSeriesANumber(from: text) {
+                return "b\(number)"
+            }
+        }
+
+        for (blockId, patterns) in legacyMatchers {
             for pattern in patterns {
-                if name.contains(pattern) || id.contains(pattern) {
+                if candidates.contains(where: { $0.contains(pattern) }) {
                     return blockId
                 }
             }
@@ -25,12 +35,34 @@ enum SensorBlockMapping {
         return nil
     }
 
-    static func placeholderDeviceName(for blockId: String) -> String {
-        switch blockId {
-        case "b1": return "Node 0"
-        case "b2": return "Node 1"
-        default: return "Sensor node"
+    /// Parses `A1`, `a2`, `pb-node-A3`, `PB Node A4`, etc. into 1…8.
+    static func extractSeriesANumber(from text: String) -> Int? {
+        let patterns = [
+            #"pb[-_]?node[-_]?a(\d+)"#,
+            #"\bnode\s*a(\d+)\b"#,
+            #"\ba(\d+)\b"#,
+        ]
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+                continue
+            }
+            let range = NSRange(text.startIndex..<text.endIndex, in: text)
+            guard let match = regex.firstMatch(in: text, options: [], range: range),
+                  match.numberOfRanges >= 2,
+                  let numberRange = Range(match.range(at: 1), in: text),
+                  let number = Int(text[numberRange]),
+                  (1...8).contains(number)
+            else { continue }
+            return number
         }
+        return nil
+    }
+
+    static func placeholderDeviceName(for blockId: String) -> String {
+        if blockId.hasPrefix("b"), let n = Int(blockId.dropFirst()), (1...8).contains(n) {
+            return "PB Node A\(n)"
+        }
+        return "Sensor node"
     }
 }
 
