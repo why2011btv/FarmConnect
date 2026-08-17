@@ -203,6 +203,123 @@ struct MessageListResponse: Codable {
 struct UserProfile: Codable, Identifiable {
     let id: String
     let name: String
+    let email: String?
+    let emailVerified: Bool?
+    let isAdmin: Bool?
+
+    /// Older builds of the API returned only id/name, so the newer fields decode as optional.
+    init(id: String, name: String, email: String? = nil, emailVerified: Bool? = nil, isAdmin: Bool? = nil) {
+        self.id = id
+        self.name = name
+        self.email = email
+        self.emailVerified = emailVerified
+        self.isAdmin = isAdmin
+    }
+}
+
+// MARK: - Admin (staff only)
+
+struct AdminFarmSummary: Codable, Identifiable {
+    let id: String
+    let name: String
+    let createdAt: String
+    let deviceCount: Int
+    let memberCount: Int
+    let onlineCount: Int
+    let activeCodeCount: Int
+    let lastSeenAt: Double?
+}
+
+struct AdminFarmListResponse: Codable {
+    let items: [AdminFarmSummary]
+}
+
+/// A node's ingest key, returned exactly once at provisioning or rotation time.
+struct AdminProvisionedNode: Codable, Identifiable {
+    let id: String
+    let name: String
+    let locationLabel: String
+    let ingestKey: String
+}
+
+struct AdminProvisionResponse: Codable {
+    struct FarmRef: Codable { let id: String; let name: String }
+    let farm: FarmRef
+    let accessCode: String
+    let nodes: [AdminProvisionedNode]
+}
+
+struct AdminDevice: Codable, Identifiable {
+    let id: String
+    let name: String
+    let locationLabel: String
+    let status: String
+    let lastSeenAt: Double
+    let hasIngestKey: Bool
+}
+
+struct AdminMember: Codable, Identifiable {
+    let id: String
+    let name: String
+    let email: String?
+    let role: String
+    let joinedAt: String
+}
+
+struct AdminCode: Codable, Identifiable {
+    let id: String
+    let label: String?
+    let maxUses: Int?
+    let useCount: Int
+    let createdAt: String
+    let expiresAt: String?
+    let revokedAt: String?
+
+    var isActive: Bool { revokedAt == nil }
+}
+
+struct AdminFarmDetail: Codable {
+    struct FarmRef: Codable { let id: String; let name: String; let createdAt: String }
+    let farm: FarmRef
+    let devices: [AdminDevice]
+    let members: [AdminMember]
+    let codes: [AdminCode]
+}
+
+struct AdminCodeResponse: Codable {
+    let code: String
+}
+
+struct AdminRotateKeyResponse: Codable {
+    let deviceId: String
+    let ingestKey: String
+}
+
+/// A customer site. Devices belong to a farm; a user sees a farm's sensors only after redeeming
+/// the access code that shipped with the hardware.
+struct Farm: Codable, Identifiable {
+    let id: String
+    let name: String
+    let role: String
+    let joinedAt: String?
+    let deviceCount: Int?
+
+    var isOwner: Bool { role == "owner" }
+}
+
+struct FarmListResponse: Codable {
+    let items: [Farm]
+}
+
+struct ClaimedFarm: Codable {
+    let id: String
+    let name: String
+    let role: String
+    let alreadyMember: Bool
+}
+
+struct ClaimFarmResponse: Codable {
+    let farm: ClaimedFarm
 }
 
 struct AuthResponse: Codable {

@@ -18,6 +18,8 @@ import { uploadRoutes } from "./routes/uploads.js";
 import { aiRoutes } from "./routes/ai.js";
 import { weatherRoutes } from "./routes/weather.js";
 import { vineyardRoutes } from "./routes/vineyard.js";
+import { farmRoutes } from "./routes/farms.js";
+import { adminRoutes } from "./routes/admin.js";
 
 const app = Fastify({
   logger: true,
@@ -58,6 +60,8 @@ await sensorRoutes(app, pool);
 await weatherRoutes(app, pool);
 await aiRoutes(app, pool);
 await vineyardRoutes(app, pool);
+await farmRoutes(app, pool);
+await adminRoutes(app, pool);
 
 const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? "0.0.0.0";

@@ -1,7 +1,10 @@
+import { timingSafeEqual } from "node:crypto";
 import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
+import { getUserFarmIds } from "../auth/farmAccess.js";
+import { hashSecret } from "../lib/accessCode.js";
 import { createId } from "../lib/id.js";
 import { SensorDeviceOverview, SensorInsight } from "../types.js";
 import { badRequest } from "../lib/badRequest.js";
@@ -14,6 +17,14 @@ type DeviceRow = {
   status: "online" | "offline";
   last_seen_at: string;
 };
+
+/** Constant-time comparison of two hex digests of equal length. */
+function hashesMatch(a: string, b: string): boolean {
+  const left = Buffer.from(a, "hex");
+  const right = Buffer.from(b, "hex");
+  if (left.length !== right.length || left.length === 0) return false;
+  return timingSafeEqual(left, right);
+}
 
 type ReadingRow = {
   device_id: string;
@@ -109,18 +120,18 @@ function buildInsights(items: SensorDeviceOverview[]): SensorInsight[] {
 }
 
 export async function sensorRoutes(app: FastifyInstance, db: Pool) {
+  /**
+   * Reading ingest from a field node.
+   *
+   * Preferred path is `x-device-key`: every shipped node carries its own secret, bound to a
+   * pre-provisioned device row, so a key recovered from a node sitting in one customer's vineyard
+   * cannot write readings for anybody else — and cannot invent new device ids.
+   *
+   * `x-sensor-key` is the original single shared key. It is kept working so nodes already in the
+   * field keep reporting, but it can only write into the legacy farm and should be retired once
+   * those nodes are reflashed with per-device keys. Leave SENSOR_INGEST_API_KEY unset to disable it.
+   */
   app.post("/v1/sensors/ingest", async (req, reply) => {
-    const expectedKey = process.env.SENSOR_INGEST_API_KEY;
-    if (!expectedKey) {
-      return reply.code(500).send({ error: "Sensor ingest is not configured. Set SENSOR_INGEST_API_KEY." });
-    }
-
-    const providedKey = (req.headers["x-sensor-key"] as string | undefined)
-      ?? (req.headers["x-device-key"] as string | undefined);
-    if (!providedKey || providedKey !== expectedKey) {
-      return reply.code(401).send({ error: "Invalid sensor ingest key" });
-    }
-
     const parsed = ingestPayloadSchema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
@@ -129,26 +140,78 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
     const lastSeenAt = payload.deviceTimestamp ?? now;
     const status = payload.status ?? "online";
 
-    await db.query(
-      `
-      INSERT INTO devices (id, name, farm_name, location_label, status, last_seen_at)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (id) DO UPDATE SET
-        name = EXCLUDED.name,
-        farm_name = EXCLUDED.farm_name,
-        location_label = EXCLUDED.location_label,
-        status = EXCLUDED.status,
-        last_seen_at = EXCLUDED.last_seen_at
-      `,
-      [
-        payload.deviceId,
-        payload.deviceName,
-        payload.farmName,
-        payload.locationLabel,
-        status,
-        lastSeenAt,
-      ]
-    );
+    const deviceKey = req.headers["x-device-key"] as string | undefined;
+    const legacyKey = req.headers["x-sensor-key"] as string | undefined;
+    const expectedLegacyKey = process.env.SENSOR_INGEST_API_KEY;
+
+    if (deviceKey) {
+      const { rows } = await db.query<{ ingest_key_hash: string | null }>(
+        "SELECT ingest_key_hash FROM devices WHERE id = $1 LIMIT 1",
+        [payload.deviceId]
+      );
+      const storedHash = rows[0]?.ingest_key_hash;
+      // Same response for unknown device and wrong key, so the endpoint can't be used to
+      // enumerate which device ids exist.
+      if (!storedHash || !hashesMatch(hashSecret(deviceKey), storedHash)) {
+        return reply.code(401).send({ error: "Invalid device credentials" });
+      }
+
+      // farm_id is deliberately not updatable from the payload — ownership is set at provisioning
+      // time, never by the device itself.
+      await db.query(
+        `UPDATE devices
+         SET name = $2, farm_name = $3, location_label = $4, status = $5, last_seen_at = $6
+         WHERE id = $1`,
+        [
+          payload.deviceId,
+          payload.deviceName,
+          payload.farmName,
+          payload.locationLabel,
+          status,
+          lastSeenAt,
+        ]
+      );
+    } else if (legacyKey && expectedLegacyKey && legacyKey === expectedLegacyKey) {
+      const legacyFarmId = process.env.LEGACY_FARM_ID ?? "farm_legacy";
+      req.log.warn(
+        { deviceId: payload.deviceId },
+        "Sensor ingest used the shared legacy key; reflash this node with a per-device key"
+      );
+
+      // The shared key may only touch the legacy farm. Without this, it could overwrite a
+      // customer's device by guessing its id.
+      const existing = await db.query<{ farm_id: string }>(
+        "SELECT farm_id FROM devices WHERE id = $1 LIMIT 1",
+        [payload.deviceId]
+      );
+      if (existing.rows[0] && existing.rows[0].farm_id !== legacyFarmId) {
+        return reply.code(401).send({ error: "Invalid device credentials" });
+      }
+
+      await db.query(
+        `
+        INSERT INTO devices (id, name, farm_name, location_label, status, last_seen_at, farm_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          farm_name = EXCLUDED.farm_name,
+          location_label = EXCLUDED.location_label,
+          status = EXCLUDED.status,
+          last_seen_at = EXCLUDED.last_seen_at
+        `,
+        [
+          payload.deviceId,
+          payload.deviceName,
+          payload.farmName,
+          payload.locationLabel,
+          status,
+          lastSeenAt,
+          legacyFarmId,
+        ]
+      );
+    } else {
+      return reply.code(401).send({ error: "Invalid device credentials" });
+    }
 
     for (const reading of payload.readings) {
       await db.query(
@@ -185,14 +248,22 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
     );
     const cutoffMs = Date.now() - maxAgeHours * 60 * 60 * 1000;
 
+    // Tenancy boundary: a user only ever sees devices belonging to farms they have joined by
+    // redeeming an access code. No membership means no devices, not all devices.
+    const farmIds = await getUserFarmIds(db, authUser.id);
+    if (farmIds.length === 0) {
+      return { items: [] as SensorDeviceOverview[], insights: [] as SensorInsight[] };
+    }
+
     const { rows: deviceRows } = await db.query<DeviceRow>(
       `
       SELECT id, name, farm_name, location_label, status, last_seen_at
       FROM devices
       WHERE last_seen_at >= $1
+        AND farm_id = ANY($2::text[])
       ORDER BY name ASC
       `,
-      [cutoffMs]
+      [cutoffMs, farmIds]
     );
 
     if (deviceRows.length === 0) {

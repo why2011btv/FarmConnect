@@ -20,8 +20,20 @@ Server defaults:
 
 ## API endpoints
 
-- `POST /v1/auth/login`
+- `POST /v1/auth/signup` (email + password)
+- `POST /v1/auth/login` (email + password; legacy `username` still accepted)
 - `GET /v1/auth/me`
+- `POST /v1/auth/forgot-password` / `POST /v1/auth/reset-password`
+- `POST /v1/auth/verify-email` / `POST /v1/auth/resend-verification`
+- `POST /v1/auth/email` (attach an address to a pre-email account; requires current password)
+- `GET /v1/admin/farms`, `POST /v1/admin/farms` (staff only)
+- `GET /v1/admin/farms/:farmId`, `POST /v1/admin/farms/:farmId/codes`
+- `DELETE /v1/admin/farms/:farmId/codes/:codeId`, `DELETE /v1/admin/farms/:farmId/members/:userId`
+- `POST /v1/admin/devices/:deviceId/rotate-key`
+- `GET /v1/farms` (auth required)
+- `POST /v1/farms/claim` (redeem a farm access code)
+- `GET|POST /v1/farms/:farmId/codes`, `DELETE /v1/farms/:farmId/codes/:codeId` (owner only)
+- `GET /v1/farms/:farmId/members`, `DELETE /v1/farms/:farmId/members/:userId`
 - `GET /v1/posts`
 - `POST /v1/posts`
 - `POST /v1/posts/:postId/upvote`
@@ -43,7 +55,8 @@ Server defaults:
 - Session tokens are stored in `auth_sessions` (migration `003_auth_sessions.sql`).
 - APNs delivery is wired via token-based auth key env vars (see `.env.example`).
 - Uploaded images are stored in Cloudflare R2 when `R2_*` env vars are configured.
-- Sensor ingest endpoint uses `SENSOR_INGEST_API_KEY` header auth (`x-sensor-key`).
+- Sensor ingest prefers per-device keys (`x-device-key`); the shared `SENSOR_INGEST_API_KEY`
+  (`x-sensor-key`) is a legacy fallback limited to the legacy farm.
 - Content moderation guard (text + image URLs) can be enabled via OpenRouter env vars.
 
 ## APNs setup (for TestFlight)
@@ -169,3 +182,87 @@ while True:
 
     time.sleep(60)  # send every 60 seconds
 ```
+
+## Multi-tenancy: farms, access codes and device keys
+
+Devices belong to a **farm**. Users join a farm by redeeming an **access code**, and
+`GET /v1/sensors/overview` returns only devices from farms the caller has joined. A user with no
+membership sees nothing — this is the boundary that keeps one customer out of another's vineyard.
+
+### Provisioning a customer before shipping
+
+Normally you do this from the **Admin tab in the app** — it is staff-only and does exactly what the
+CLI does. See "Admin access" below.
+
+The CLI remains for scripting and for when the app isn't handy:
+
+```bash
+npm run provision -- --farm "Smith Vineyard" --nodes 8
+```
+
+It has to run where `DATABASE_URL` resolves, i.e. on the Railway container:
+
+```bash
+railway ssh --project=<project> --environment=<env> --service=<service> \
+  'cd /app && npm run provision -- --farm "Smith Vineyard" --nodes 8'
+```
+
+This prints, once and never again:
+
+- the **access code** (`PB-XXXX-XXXX-XXXX-XXXX`) to print on the card in the box, and
+- a **per-node ingest key** to flash onto each node.
+
+Only hashes are stored, so lost secrets must be reissued rather than recovered:
+
+```bash
+npm run provision -- --farm-id farm_ab12cd --add-code --label "replacement card"
+```
+
+The first person to redeem a code joins as `member`. Promote them so they can manage codes and
+remove crew members:
+
+```sql
+UPDATE farm_members SET role = 'owner' WHERE farm_id = '<farm>' AND user_id = '<user>';
+```
+
+### Admin access
+
+Set `ADMIN_BOOTSTRAP_EMAILS` (comma-separated) in the Railway dashboard. Any listed address is
+granted staff on its next sign-in — so the first admin is created without touching the database.
+Removing an address does not demote an existing admin; clear the flag explicitly:
+
+```sql
+UPDATE users SET is_admin = FALSE WHERE LOWER(email) = 'someone@example.com';
+```
+
+Staff see an **Admin** tab in the app with every customer farm, node status, who has access, and
+buttons to provision a farm, issue or revoke access codes, remove a member, and rotate a node key.
+Admin endpoints answer `404` to everyone else, so the surface is invisible rather than merely
+locked. Secrets are displayed once, on a screen that requires an explicit acknowledgement before it
+can be dismissed.
+
+### Access code design
+
+- 16 characters of Crockford base32 (no `I`/`L`/`O`/`U`) = 80 bits, printed as `PB-XXXX-…`.
+- Stored as SHA-256 of the normalized code. Fast hash rather than bcrypt is correct here: the input
+  is high entropy, and an indexable exact lookup is required.
+- It is an **enrollment** credential, not a password. It is exchanged once for durable membership,
+  so it never lives on the customer's phone, and revoking it does not evict people who already
+  joined.
+- Redemption is rate limited and every failure mode returns the same flat `404`, so the endpoint
+  cannot be used to probe for real farms.
+
+### Node ingest keys
+
+Each shipped node has its own key, checked against the pre-provisioned `devices` row. A key
+recovered from a node in one field cannot write another customer's readings and cannot invent new
+device ids. The shared `SENSOR_INGEST_API_KEY` remains only so nodes already deployed keep
+reporting; it can write only to the legacy farm. Retire it once every node is reflashed.
+
+### Email
+
+Login is by email; `username` is retained for display and @-mentions. Accounts created before
+email login have none, so they keep signing in by username and are prompted in-app to add an
+address — until they do, they have no way to reset a forgotten password. Password reset and address
+verification send short codes via Resend (`RESEND_API_KEY`, `MAIL_FROM`). With no API key
+configured, codes are logged instead of sent, so the flows are testable locally.

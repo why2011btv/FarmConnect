@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "migrate": "tsx src/scripts/migrate.ts",
+    "provision": "tsx src/scripts/provisionFarm.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js"
   },

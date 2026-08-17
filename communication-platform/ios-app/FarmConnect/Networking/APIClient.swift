@@ -78,35 +78,174 @@ final class APIClient {
         return .badStatus(statusCode)
     }
 
-    func signIn(username: String, password: String) async throws -> AuthResponse {
-        var req = try authorizedRequest(path: "/v1/auth/login", method: "POST")
+    /// Sends a JSON body and decodes the response, surfacing the server's `error` string so the UI
+    /// can show "Invalid access code" rather than "Request failed (HTTP 404)".
+    private func sendJSON<T: Decodable>(
+        path: String,
+        method: String,
+        payload: [String: Any],
+        as type: T.Type
+    ) async throws -> T {
+        var req = try authorizedRequest(path: path, method: method)
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        let payload: [String: Any] = [
-            "username": username,
-            "password": password
-        ]
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
-        return try JSONDecoder().decode(AuthResponse.self, from: data)
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
-    func signUp(username: String, password: String, displayName: String) async throws -> AuthResponse {
-        var req = try authorizedRequest(path: "/v1/auth/signup", method: "POST")
+    /// Same as `sendJSON` for endpoints that return 204 with no body.
+    private func sendJSONNoContent(
+        path: String,
+        method: String,
+        payload: [String: Any]
+    ) async throws {
+        var req = try authorizedRequest(path: path, method: method)
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        let payload: [String: Any] = [
-            "username": username,
-            "password": password,
-            "displayName": displayName
-        ]
         req.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
-        guard 200..<300 ~= http.statusCode else { throw APIError.badStatus(http.statusCode) }
-        return try JSONDecoder().decode(AuthResponse.self, from: data)
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
+    func signIn(email: String, password: String) async throws -> AuthResponse {
+        try await sendJSON(
+            path: "/v1/auth/login",
+            method: "POST",
+            payload: ["email": email, "password": password],
+            as: AuthResponse.self
+        )
+    }
+
+    func signUp(email: String, password: String, displayName: String) async throws -> AuthResponse {
+        try await sendJSON(
+            path: "/v1/auth/signup",
+            method: "POST",
+            payload: ["email": email, "password": password, "displayName": displayName],
+            as: AuthResponse.self
+        )
+    }
+
+    /// Always succeeds when the address is well-formed, whether or not an account exists —
+    /// the server deliberately does not confirm which addresses are registered.
+    func requestPasswordReset(email: String) async throws {
+        try await sendJSONNoContent(
+            path: "/v1/auth/forgot-password",
+            method: "POST",
+            payload: ["email": email]
+        )
+    }
+
+    func resetPassword(email: String, code: String, password: String) async throws -> AuthResponse {
+        try await sendJSON(
+            path: "/v1/auth/reset-password",
+            method: "POST",
+            payload: ["email": email, "code": code, "password": password],
+            as: AuthResponse.self
+        )
+    }
+
+    /// Attaches an email to an account made before email login existed. Requires the current
+    /// password, since the address becomes the password-reset channel.
+    func setEmail(email: String, password: String) async throws -> UserProfile {
+        try await sendJSON(
+            path: "/v1/auth/email",
+            method: "POST",
+            payload: ["email": email, "password": password],
+            as: AuthMeResponse.self
+        ).user
+    }
+
+    // MARK: - Farms
+
+    func getFarms() async throws -> [Farm] {
+        let req = try authorizedRequest(path: "/v1/farms")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try JSONDecoder().decode(FarmListResponse.self, from: data).items
+    }
+
+    /// Redeems the access code printed on the card shipped with the hardware. One-time exchange:
+    /// the code buys durable membership, so it is never stored on the device.
+    func claimFarm(code: String) async throws -> ClaimedFarm {
+        try await sendJSON(
+            path: "/v1/farms/claim",
+            method: "POST",
+            payload: ["code": code],
+            as: ClaimFarmResponse.self
+        ).farm
+    }
+
+    // MARK: - Admin (staff only)
+    //
+    // These endpoints answer 404 for non-staff, so the admin surface is invisible rather than
+    // merely locked. The app hides the tab unless `isAdmin` is set on the profile.
+
+    private func getDecoded<T: Decodable>(_ path: String, as type: T.Type) async throws -> T {
+        let req = try authorizedRequest(path: path)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    private func deleteNoContent(_ path: String) async throws {
+        let req = try authorizedRequest(path: path, method: "DELETE")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
+    func adminListFarms() async throws -> [AdminFarmSummary] {
+        try await getDecoded("/v1/admin/farms", as: AdminFarmListResponse.self).items
+    }
+
+    /// Onboards a customer. The access code and every node key come back once and are never
+    /// retrievable again — the caller must show them before dismissing.
+    func adminCreateFarm(name: String, nodeCount: Int) async throws -> AdminProvisionResponse {
+        try await sendJSON(
+            path: "/v1/admin/farms",
+            method: "POST",
+            payload: ["name": name, "nodeCount": nodeCount],
+            as: AdminProvisionResponse.self
+        )
+    }
+
+    func adminFarmDetail(farmId: String) async throws -> AdminFarmDetail {
+        try await getDecoded("/v1/admin/farms/\(farmId)", as: AdminFarmDetail.self)
+    }
+
+    func adminIssueCode(farmId: String, label: String?, maxUses: Int?) async throws -> String {
+        var payload: [String: Any] = [:]
+        if let label, !label.isEmpty { payload["label"] = label }
+        if let maxUses { payload["maxUses"] = maxUses }
+        return try await sendJSON(
+            path: "/v1/admin/farms/\(farmId)/codes",
+            method: "POST",
+            payload: payload,
+            as: AdminCodeResponse.self
+        ).code
+    }
+
+    func adminRevokeCode(farmId: String, codeId: String) async throws {
+        try await deleteNoContent("/v1/admin/farms/\(farmId)/codes/\(codeId)")
+    }
+
+    func adminRemoveMember(farmId: String, userId: String) async throws {
+        try await deleteNoContent("/v1/admin/farms/\(farmId)/members/\(userId)")
+    }
+
+    func adminRotateDeviceKey(deviceId: String) async throws -> AdminRotateKeyResponse {
+        try await sendJSON(
+            path: "/v1/admin/devices/\(deviceId)/rotate-key",
+            method: "POST",
+            payload: [:],
+            as: AdminRotateKeyResponse.self
+        )
     }
 
     func me() async throws -> UserProfile {

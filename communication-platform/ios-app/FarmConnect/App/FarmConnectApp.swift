@@ -12,10 +12,14 @@ struct FarmConnectApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if sessionStore.isAuthenticated {
-                    RootTabView()
-                } else {
+                if !sessionStore.isAuthenticated {
                     LoginView()
+                } else if sessionStore.needsFarmAccess {
+                    // Signed in but not yet attached to a farm: nothing in the app has data to
+                    // show until an access code is redeemed.
+                    AccessCodeView()
+                } else {
+                    RootTabView()
                 }
             }
             .environmentObject(sessionStore)

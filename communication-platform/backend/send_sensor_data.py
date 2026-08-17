@@ -3,7 +3,17 @@ import random
 import requests
 
 BACKEND_URL = "https://farmconnect-production-500d.up.railway.app/v1/sensors/ingest"
-INGEST_KEY = "<SENSOR_INGEST_API_KEY>"
+
+# Per-node credentials, printed by `npm run provision` when this node's farm was set up.
+# Each node has its own key: a key recovered from this device cannot write readings for any other
+# node, and cannot register a device that was not provisioned in advance.
+DEVICE_ID = "<deviceId from provisioning output>"
+DEVICE_KEY = "<x-device-key from provisioning output>"
+
+DEVICE_NAME = "PB Node A1"
+FARM_NAME = "Smith Vineyard"
+LOCATION_LABEL = "Block 1"
+
 
 def read_sensors():
     # Replace this block with real sensor reads
@@ -13,13 +23,14 @@ def read_sensors():
         "humidity": round(random.uniform(35, 80), 1),
     }
 
+
 while True:
     values = read_sensors()
     payload = {
-        "deviceId": "pi-node-1",
-        "deviceName": "Raspberry Pi Node 1",
-        "farmName": "Persephone Farm",
-        "locationLabel": "North Plot",
+        "deviceId": DEVICE_ID,
+        "deviceName": DEVICE_NAME,
+        "farmName": FARM_NAME,
+        "locationLabel": LOCATION_LABEL,
         "status": "online",
         "readings": [
             {"sensorType": "soil_moisture", "value": values["soil_moisture"], "unit": "%"},
@@ -32,7 +43,7 @@ while True:
         r = requests.post(
             BACKEND_URL,
             json=payload,
-            headers={"x-sensor-key": INGEST_KEY},
+            headers={"x-device-key": DEVICE_KEY},
             timeout=10,
         )
         print(r.status_code, r.text)
