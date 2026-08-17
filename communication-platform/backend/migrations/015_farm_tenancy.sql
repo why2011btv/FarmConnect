@@ -73,3 +73,9 @@ SELECT 'farm_legacy', id, 'member' FROM users WHERE deleted_at IS NULL
 ON CONFLICT (farm_id, user_id) DO NOTHING;
 
 ALTER TABLE devices ALTER COLUMN farm_id SET NOT NULL;
+
+-- Safety net for the rollout window. The schema is migrated before the new code ships, and the
+-- currently-running ingest handler inserts devices without a farm_id — without a default, a node
+-- reporting for the first time in that gap would fail to register. New code always sets farm_id
+-- explicitly, so this only ever catches the old path.
+ALTER TABLE devices ALTER COLUMN farm_id SET DEFAULT 'farm_legacy';
