@@ -14,6 +14,8 @@ targets:
         PRODUCT_NAME: FarmConnect
         SWIFT_VERSION: 5.9
         GENERATE_INFOPLIST_FILE: YES
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "13"
         CODE_SIGN_ENTITLEMENTS: FarmConnect/FarmConnect.entitlements
         INFOPLIST_KEY_CFBundleDisplayName: "Persephone's Basket"
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
