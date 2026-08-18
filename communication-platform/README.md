@@ -1,31 +1,17 @@
 # Communication Platform (Native-First)
 
-This directory contains the first build of the communication platform:
+This directory contains the FarmConnect / Persephone's Basket platform:
 
-- `backend/`: TypeScript API for posts, comments, upvotes, conversations, messages, and upload URL stubs.
-- `ios-app/`: SwiftUI app skeleton for TestFlight-targeted development.
+- `backend/` — TypeScript API (Fastify + Postgres on Railway)
+- `ios-app/` — SwiftUI app (TestFlight / App Store)
 
-## MVP features included
+## Guides
 
-- Posts + comments + upvotes
-- Feed filters (search, category, time)
-- 1:1 direct messages
-- Image upload flow (signed-upload URL placeholder)
-- Push notifications scaffold point (backend endpoint + iOS app service hook)
+- **[SHIPPING.md](./SHIPPING.md)** — Provision a customer farm, flash nodes, ship hardware, and onboard customers with access codes
+- **[backend/README.md](./backend/README.md)** — API reference, local dev, admin setup, Railway
 
-## What is in-progress
+## Railway SSH (production database)
 
-- Authentication and authorization are scaffolded but not production-ready.
-- Persistence is in-memory for now (next step: Postgres + managed auth).
-- iOS project is a code skeleton and needs to be opened in Xcode with a generated project.
-
-## Next steps
-
-1. Run backend locally and validate API responses.
-2. Generate/open iOS project and connect base URL.
-3. Replace in-memory store with Postgres repository layer.
-4. Add APNs push pipeline for DM/comment notifications.
-
-
-
+```bash
 railway ssh --project=88eca128-a3e4-4094-9c50-3dcec2779c01 --environment=f1bf40e0-15ea-456e-a8a0-f52546c24666 --service=af43fc9c-0298-40ea-9d72-7adec106f301
+```

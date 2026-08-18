@@ -185,6 +185,8 @@ while True:
 
 ## Multi-tenancy: farms, access codes and device keys
 
+**→ Full shipping & onboarding guide: [../SHIPPING.md](../SHIPPING.md)**
+
 Devices belong to a **farm**. Users join a farm by redeeming an **access code**, and
 `GET /v1/sensors/overview` returns only devices from farms the caller has joined. A user with no
 membership sees nothing — this is the boundary that keeps one customer out of another's vineyard.
