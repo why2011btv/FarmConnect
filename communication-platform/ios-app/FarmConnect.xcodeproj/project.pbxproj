@@ -13,14 +13,12 @@
 		0A0EDB0C0F88807FAF16F95F /* AdminSecretsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E19BAD3F022BE0CD6873C1 /* AdminSecretsView.swift */; };
 		106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9AD053305991A9390867F2 /* MapFeedView.swift */; };
 		14431E869C5FDB9E05CE9CA7 /* GrapeVariety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 588D44AB56AC7599029D3283 /* GrapeVariety.swift */; };
-		16035C6E766A16DA5D0A07E8 /* SensorBlockMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8507240F8770F83441621ECC /* SensorBlockMappingTests.swift */; };
 		17DA3A6876741A36A6E77BAE /* VineyardAnalyzeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7DFD1754EA35226B7115AF /* VineyardAnalyzeModels.swift */; };
 		17E5A68B940D3EBDDDADBB27 /* BlockReadingsComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE62888F400AD164D39F54E2 /* BlockReadingsComposer.swift */; };
 		1993897545798AB42ABED4B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 269A9E80B87E44BA617ABC0D /* Assets.xcassets */; };
 		1BC69EDACD34171679102196 /* AccessCodeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38176D6F29DA5B8090CFAA48 /* AccessCodeFormatter.swift */; };
 		1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */; };
 		24B1A0E059ABF310754E3857 /* AssistantChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF39977CC49157F2B27F45AE /* AssistantChatViewModel.swift */; };
-		277695859988900595351887 /* VineyardBlockLayoutStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78155EF83D5303CB5AF31EC /* VineyardBlockLayoutStoreTests.swift */; };
 		2C74B692BB75668E7552DBE6 /* VineyardGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582569A960DC341DA72F14F7 /* VineyardGeneratorView.swift */; };
 		2C8FBA5B369CDDFBF2EBC58F /* CategoryStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5E0C85EE3681BE0D115213 /* CategoryStyle.swift */; };
 		3128EA68FA960BC79AB4CD53 /* AccessCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AD1DAEE0580C5BB16A7353 /* AccessCodeView.swift */; };
@@ -49,7 +47,6 @@
 		7684E2CA54BAE76756F07E28 /* VineyardFieldLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EDCA8EDA3CAB96A48394E5 /* VineyardFieldLogStore.swift */; };
 		79B1FE1C7046D5AFCC9E071A /* VineyardFieldLogDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A6AC0E1997E4DADA62B4D8 /* VineyardFieldLogDetailView.swift */; };
 		8C8AD85F22BC3649893B400C /* BlockWeatherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239CE8A20BC30160910691E7 /* BlockWeatherViewModel.swift */; };
-		8D637F061DA96E3EEC73BA35 /* VineyardLayoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC72D5F8D3495131C41E631D /* VineyardLayoutGeneratorTests.swift */; };
 		916878B050B99101FAE543CB /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091639F4A3A72FAD47669012 /* AssistantChatView.swift */; };
 		94C042452F3050509C352E8A /* VineyardFieldLogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C753BE2FCE1BC4CF611FB391 /* VineyardFieldLogModels.swift */; };
 		9C0679E7746A289CEC07DD1C /* NewVineyardLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C8F3EC3D15237249B97DAE /* NewVineyardLogEntryView.swift */; };
@@ -74,22 +71,11 @@
 		F2F25DA2351D5534055340D4 /* CanopySensorReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		79B0E1AA3C885DE14769CB1D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3A9EEBE9AE589C085661A126 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 107227AA516E709142DF81FE;
-			remoteInfo = FarmConnect;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		091639F4A3A72FAD47669012 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		0BCD8E639846169AAE640898 /* AssistantChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatModels.swift; sourceTree = "<group>"; };
 		156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanopySensorReadingsView.swift; sourceTree = "<group>"; };
 		19B8DED80A11C91B8F01E38F /* PostCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCardRow.swift; sourceTree = "<group>"; };
-		1C36880C5DAE10364D85ADDF /* FarmConnectTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FarmConnectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
 		239CE8A20BC30160910691E7 /* BlockWeatherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockWeatherViewModel.swift; sourceTree = "<group>"; };
 		269A9E80B87E44BA617ABC0D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -114,7 +100,6 @@
 		6A888FAD16E4369D43BC994F /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
-		8507240F8770F83441621ECC /* SensorBlockMappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorBlockMappingTests.swift; sourceTree = "<group>"; };
 		8758CBA4CE8A9DF73CC95EC6 /* VineyardDemoModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoModels.swift; sourceTree = "<group>"; };
 		8A5E0C85EE3681BE0D115213 /* CategoryStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStyle.swift; sourceTree = "<group>"; };
 		8E09B7F9A122A4AFF86449C7 /* VineyardMapSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardMapSnapshot.swift; sourceTree = "<group>"; };
@@ -123,10 +108,8 @@
 		975BDBE5AE51AA576E6BFF44 /* VineyardDemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoData.swift; sourceTree = "<group>"; };
 		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4EDCA8EDA3CAB96A48394E5 /* VineyardFieldLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogStore.swift; sourceTree = "<group>"; };
-		A78155EF83D5303CB5AF31EC /* VineyardBlockLayoutStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockLayoutStoreTests.swift; sourceTree = "<group>"; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		AB7DFD1754EA35226B7115AF /* VineyardAnalyzeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardAnalyzeModels.swift; sourceTree = "<group>"; };
-		AC72D5F8D3495131C41E631D /* VineyardLayoutGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardLayoutGeneratorTests.swift; sourceTree = "<group>"; };
 		AE62888F400AD164D39F54E2 /* BlockReadingsComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockReadingsComposer.swift; sourceTree = "<group>"; };
 		B0E19BAD3F022BE0CD6873C1 /* AdminSecretsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminSecretsView.swift; sourceTree = "<group>"; };
 		B373E8A9C17FB53E8936FB03 /* VineyardBlockRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockRectangle.swift; sourceTree = "<group>"; };
@@ -161,7 +144,6 @@
 			isa = PBXGroup;
 			children = (
 				250ACD424D6736DD12482FCE /* FarmConnect */,
-				D4FED8535423EA37D14D7E10 /* FarmConnectTests */,
 				C8C3A3E8A037821420778A02 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -354,7 +336,6 @@
 			isa = PBXGroup;
 			children = (
 				9ED6684CEB63217A5CD70268 /* FarmConnect.app */,
-				1C36880C5DAE10364D85ADDF /* FarmConnectTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -366,16 +347,6 @@
 				C1188FF971B4192ACB1F07E9 /* RootTabView.swift */,
 			);
 			path = App;
-			sourceTree = "<group>";
-		};
-		D4FED8535423EA37D14D7E10 /* FarmConnectTests */ = {
-			isa = PBXGroup;
-			children = (
-				8507240F8770F83441621ECC /* SensorBlockMappingTests.swift */,
-				A78155EF83D5303CB5AF31EC /* VineyardBlockLayoutStoreTests.swift */,
-				AC72D5F8D3495131C41E631D /* VineyardLayoutGeneratorTests.swift */,
-			);
-			path = FarmConnectTests;
 			sourceTree = "<group>";
 		};
 		D56BE55B5B683627AC772E40 /* ViewModels */ = {
@@ -421,24 +392,6 @@
 			productReference = 9ED6684CEB63217A5CD70268 /* FarmConnect.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5161860366483790ABA83BB2 /* FarmConnectTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8D9852F19FA544F32E4A3167 /* Build configuration list for PBXNativeTarget "FarmConnectTests" */;
-			buildPhases = (
-				35AEB914CB45C9A37BFCDF3A /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				824FE435B25C1CD184EE0967 /* PBXTargetDependency */,
-			);
-			name = FarmConnectTests;
-			packageProductDependencies = (
-			);
-			productName = FarmConnectTests;
-			productReference = 1C36880C5DAE10364D85ADDF /* FarmConnectTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -448,6 +401,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					107227AA516E709142DF81FE = {
+						DevelopmentTeam = NLMFF528Q4;
+					};
 				};
 			};
 			buildConfigurationList = B4F6FF2CA20ED34BB49173A4 /* Build configuration list for PBXProject "FarmConnect" */;
@@ -465,7 +421,6 @@
 			projectRoot = "";
 			targets = (
 				107227AA516E709142DF81FE /* FarmConnect */,
-				5161860366483790ABA83BB2 /* FarmConnectTests */,
 			);
 		};
 /* End PBXProject section */
@@ -482,16 +437,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		35AEB914CB45C9A37BFCDF3A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				16035C6E766A16DA5D0A07E8 /* SensorBlockMappingTests.swift in Sources */,
-				277695859988900595351887 /* VineyardBlockLayoutStoreTests.swift in Sources */,
-				8D637F061DA96E3EEC73BA35 /* VineyardLayoutGeneratorTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		DAE32916F1BD55F9C1563B33 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -562,39 +507,34 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		824FE435B25C1CD184EE0967 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 107227AA516E709142DF81FE /* FarmConnect */;
-			targetProxy = 79B0E1AA3C885DE14769CB1D /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
 		13203F201E2940931BE1267C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 14;
+				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
-				CURRENT_PROJECT_VERSION = "$(CI_BUILD_NUMBER)";
-				MARKETING_VERSION = 1.0.0;
 				INFOPLIST_KEY_CFBundleDisplayName = "Persephone's Basket";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We use the camera so you can take and upload photos for posts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use location to show local farm posts on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					"remote-notification",
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
@@ -665,24 +605,6 @@
 			};
 			name = Debug;
 		};
-		2C0CDB1EA856BEAB9EF59240 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FarmConnect.app/FarmConnect";
-			};
-			name = Debug;
-		};
 		595A6A1F7961D509CA5BD1CC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -742,26 +664,29 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = FarmConnect/FarmConnect.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 14;
+				DEVELOPMENT_TEAM = NLMFF528Q4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FarmConnect/Info.plist;
-				CURRENT_PROJECT_VERSION = "$(CI_BUILD_NUMBER)";
-				MARKETING_VERSION = 1.0.0;
 				INFOPLIST_KEY_CFBundleDisplayName = "Persephone's Basket";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We use the camera so you can take and upload photos for posts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use location to show local farm posts on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We may save generated media to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We use photos to upload images in posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIBackgroundModes = (
-					"remote-notification",
-				);
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
@@ -770,36 +695,9 @@
 			};
 			name = Debug;
 		};
-		B43C004A305C63CF4FC90EB7 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FarmConnect.app/FarmConnect";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8D9852F19FA544F32E4A3167 /* Build configuration list for PBXNativeTarget "FarmConnectTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				2C0CDB1EA856BEAB9EF59240 /* Debug */,
-				B43C004A305C63CF4FC90EB7 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		B4F6FF2CA20ED34BB49173A4 /* Build configuration list for PBXProject "FarmConnect" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
