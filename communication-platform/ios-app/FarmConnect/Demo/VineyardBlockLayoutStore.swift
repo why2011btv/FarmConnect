@@ -138,7 +138,7 @@ final class VineyardBlockLayoutStore: ObservableObject {
 
     /// Copy the current planning layout into the demo slot so it can be hand-polished for a demo.
     /// A deep value copy: the two slots remain fully independent afterwards.
-    /// Note: after promotion, demo "Reset to defaults" still reverts to the bundled Running Brook layout.
+    /// Note: after promotion, demo "Reset to defaults" still reverts to the bundled sample layout.
     func promoteActiveLayoutToDemo() {
         slots.demo = slots.planning
         persist(slot: slots.demo, forKey: Self.demoSlotKey)
@@ -202,7 +202,7 @@ final class VineyardBlockLayoutStore: ObservableObject {
 
     /// One-way migration of the v1 demo layout into a v2 demo slot. The caller only invokes this
     /// when the v2 demo key is absent. Returns nil when there's no usable v1 data (then the caller
-    /// falls back to the bundled Running Brook defaults).
+    /// falls back to the bundled sample defaults).
     private static func migrateDemoFromV1() -> LayoutSlot? {
         let rectangles: [VineyardBlockRectangle]? = {
             guard let data = UserDefaults.standard.data(forKey: legacyRectanglesKey) else { return nil }

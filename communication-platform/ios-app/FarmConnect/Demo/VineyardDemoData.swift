@@ -7,7 +7,7 @@ enum VineyardDemoData {
     static let mapCenter = CLLocationCoordinate2D(latitude: 41.68245, longitude: -71.00075)
     static let mapSpan = MKCoordinateSpan(latitudeDelta: 0.0065, longitudeDelta: 0.0045)
 
-    /// Default rectangles aligned to Running Brook vineyard blocks (manual satellite fit).
+    /// Default rectangles for the bundled sample vineyard (manual satellite fit).
     static let defaultRectangles: [VineyardBlockRectangle] = [
         rect("b1", 41.684619999999924, -71.00101000000005, halfLat: 0.00023500000000000007, halfLng: 0.0010950000000000016, rotation: 6.5),
         rect("b2", 41.68409999999994, -71.00093000000003, halfLat: 0.00026500000000000004, halfLng: 0.0010800000000000015, rotation: 6.5),
@@ -115,7 +115,7 @@ enum VineyardDemoData {
         MKCoordinateRegion(center: mapCenter, span: mapSpan)
     }
 
-    /// The curated, farmer-facing layout shipped out of the box (hand-tuned Running Brook blocks).
+    /// The curated, farmer-facing layout shipped out of the box (hand-tuned sample blocks).
     static var defaultDemoSlot: LayoutSlot {
         LayoutSlot(rectangles: defaultRectangles, blockSettings: defaultBlockSettings, profile: nil)
     }

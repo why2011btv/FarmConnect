@@ -4,7 +4,7 @@ import XCTest
 
 final class VineyardLayoutGeneratorTests: XCTestCase {
 
-    // A ~1 km square near Running Brook (Dartmouth, MA). 1 km^2 ≈ 247.1 acres.
+    // A ~1 km square test boundary. 1 km^2 ≈ 247.1 acres.
     private func kilometerSquare(center: CLLocationCoordinate2D) -> [CLLocationCoordinate2D] {
         let halfLat = 500.0 / VineyardLayoutGenerator.metersPerDegreeLatitude
         let halfLng = 500.0 / VineyardLayoutGenerator.metersPerDegreeLongitude(atLatitude: center.latitude)

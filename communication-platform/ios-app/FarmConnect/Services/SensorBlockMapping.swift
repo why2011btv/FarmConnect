@@ -4,7 +4,7 @@ import Foundation
 enum SensorBlockMapping {
     static let maxAgeMs: Int64 = 7 * 24 * 60 * 60 * 1000
 
-    /// Demo blocks that can show a sensor online/offline indicator (Running Brook has 8 blocks).
+    /// Demo blocks that can show a sensor online/offline indicator (the sample layout has 8 blocks).
     static let assignedSensorBlockIds: Set<String> = [
         "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8",
     ]

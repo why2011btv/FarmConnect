@@ -3,7 +3,7 @@ import Foundation
 import MapKit
 
 /// Which layout the Sensors tab is showing.
-/// - `demo`: curated, farmer-facing layout (the hand-tuned Running Brook blocks). Launch default.
+/// - `demo`: curated, farmer-facing layout (the hand-tuned sample blocks). Launch default.
 /// - `planning`: auto-arranged layout used internally to judge a proposed device deployment.
 enum LayoutMode: String, Codable, CaseIterable, Identifiable {
     case demo

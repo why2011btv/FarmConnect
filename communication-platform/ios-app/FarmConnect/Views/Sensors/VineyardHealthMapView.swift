@@ -7,7 +7,7 @@ struct VineyardHealthMapView: View {
     var isEditingLayout: Bool = false
     @Binding var editingBlockId: String?
     var onMoveBlock: ((String, Double, Double) -> Void)?
-    /// Camera framing. Defaults to the bundled Running Brook region.
+    /// Camera framing. Defaults to the bundled sample region.
     var region: MKCoordinateRegion = VineyardDemoData.mapRegion
     /// Changing this value retargets the camera to `region` (e.g. on a mode/vineyard switch),
     /// without tearing down the map (avoids dropping the user's pan/zoom mid-demo).

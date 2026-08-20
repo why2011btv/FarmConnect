@@ -35,7 +35,7 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         }
     }
 
-    func testFreshInstallShowsRunningBrookDemo() {
+    func testFreshInstallShowsBundledSampleDemo() {
         let store = VineyardBlockLayoutStore()
         XCTAssertEqual(store.mode, .demo)
         // Bundled demo = 8 hand-tuned blocks b1..b8.

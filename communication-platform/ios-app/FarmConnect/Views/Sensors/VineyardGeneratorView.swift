@@ -107,7 +107,7 @@ struct VineyardGeneratorView: View {
     private var inputForm: some View {
         Form {
             Section("Vineyard name") {
-                TextField("e.g. Running Brook Vineyards, Dartmouth MA", text: $name)
+                TextField("Vineyard name and town", text: $name)
                     .textInputAutocapitalization(.words)
                     .submitLabel(.search)
                     .onSubmit { search() }
