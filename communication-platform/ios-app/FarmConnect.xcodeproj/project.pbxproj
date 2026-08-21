@@ -542,7 +542,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;
@@ -694,7 +694,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.persephonesbasket.farmconnect;
 				PRODUCT_NAME = FarmConnect;
 				SDKROOT = iphoneos;

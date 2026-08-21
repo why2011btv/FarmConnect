@@ -14,7 +14,7 @@ targets:
         PRODUCT_NAME: FarmConnect
         SWIFT_VERSION: 5.9
         GENERATE_INFOPLIST_FILE: YES
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "1.2"
         # Fallback only. Xcode Cloud overwrites this from its run number in
         # ci_scripts/ci_post_clone.sh, which is why it tracks the run counter (86 at
         # the time of writing) rather than restarting from 1. Writing

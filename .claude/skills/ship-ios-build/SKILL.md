@@ -17,10 +17,16 @@ description: >
    Always: `git push farmconnect main` then verify `git rev-parse farmconnect/main` equals local `main`.
    Do not trust the push command's echo alone.
 
-2. **"Preparing build for App Store Connect failed" = the build number is stale.**
-   It means `CFBundleVersion` is not higher than a build already accepted for the same marketing
-   version (`CFBundleShortVersionString`). It is a version-number rejection — NOT icons, entitlements,
-   privacy manifest, or the `ci_scripts` location. Do not go theorizing from the generic message.
+2. **"Preparing build for App Store Connect failed" is a VERSION-number rejection, not code.**
+   The archive already succeeded; this post-step uploads/validates it. TWO different causes show this
+   same generic line:
+   - `CFBundleShortVersionString` (**marketing version**, `MARKETING_VERSION`) is not **strictly higher**
+     than the highest version already in App Store Connect. (This is what bit us: App Store Connect had
+     version **1.1** while the app shipped `1.0.0` → every build rejected. Fixed by bumping to `1.2`.)
+   - `CFBundleVersion` (**build number**, `CURRENT_PROJECT_VERSION`) is not unique/increasing within that
+     marketing version.
+   It is NOT icons, entitlements, the privacy manifest, or the `ci_scripts` location. Do not theorize
+   from the generic message — get the App Store Connect version + the `ITMS-####` code first.
 
 ## How the build number is set
 
