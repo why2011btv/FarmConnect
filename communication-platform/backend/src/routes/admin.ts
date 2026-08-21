@@ -9,6 +9,7 @@ import {
   provisionFarm,
   rotateDeviceKey,
 } from "../services/provisioningService.js";
+import { runSensorHealthCheck } from "../services/sensorHealthService.js";
 
 const createFarmSchema = z.object({
   name: z.string().min(1).max(120),
@@ -225,6 +226,50 @@ export async function adminRoutes(app: FastifyInstance, db: Pool) {
     const { farmId, userId } = req.params as { farmId: string; userId: string };
     await db.query("DELETE FROM farm_members WHERE farm_id = $1 AND user_id = $2", [farmId, userId]);
     return reply.code(204).send();
+  });
+
+  /** Open (and recently resolved) sensor health alerts across all farms. */
+  app.get("/v1/admin/sensor-health", async (req, reply) => {
+    if (!(await requireAdmin(req, reply, db))) return;
+
+    const { rows } = await db.query<{
+      id: string; device_id: string; farm_id: string | null; kind: string;
+      sensor_type: string | null; severity: string; detail: string;
+      sensor_value: number | null; reference_value: number | null;
+      created_at: Date; updated_at: Date; resolved_at: Date | null; notified_at: Date | null;
+      device_name: string | null; farm_name: string | null;
+    }>(
+      `SELECT a.*, d.name AS device_name, f.name AS farm_name
+       FROM sensor_health_alerts a
+       LEFT JOIN devices d ON d.id = a.device_id
+       LEFT JOIN farms f ON f.id = a.farm_id
+       WHERE a.resolved_at IS NULL OR a.resolved_at > NOW() - INTERVAL '7 days'
+       ORDER BY (a.resolved_at IS NULL) DESC, a.severity DESC, a.updated_at DESC
+       LIMIT 200`
+    );
+    return {
+      items: rows.map((r) => ({
+        id: r.id, deviceId: r.device_id, deviceName: r.device_name, farmName: r.farm_name,
+        kind: r.kind, sensorType: r.sensor_type, severity: r.severity, detail: r.detail,
+        sensorValue: r.sensor_value, referenceValue: r.reference_value,
+        createdAt: r.created_at.toISOString(), updatedAt: r.updated_at.toISOString(),
+        resolvedAt: r.resolved_at?.toISOString() ?? null,
+        notifiedAt: r.notified_at?.toISOString() ?? null,
+        open: r.resolved_at === null,
+      })),
+    };
+  });
+
+  /** Run a sensor-health sweep on demand (the scheduler also runs it periodically). */
+  app.post("/v1/admin/sensor-health/check", async (req, reply) => {
+    if (!(await requireAdmin(req, reply, db))) return;
+    try {
+      const summary = await runSensorHealthCheck(db, app.log);
+      return summary;
+    } catch (error) {
+      app.log.error({ error }, "manual sensor health check failed");
+      return reply.code(500).send({ error: "Health check failed" });
+    }
   });
 
   /** New ingest key for one node, for a device that was lost, resold or reflashed. */

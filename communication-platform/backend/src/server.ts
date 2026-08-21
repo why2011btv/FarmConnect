@@ -19,6 +19,7 @@ import { aiRoutes } from "./routes/ai.js";
 import { weatherRoutes } from "./routes/weather.js";
 import { vineyardRoutes } from "./routes/vineyard.js";
 import { farmRoutes } from "./routes/farms.js";
+import { runSensorHealthCheck } from "./services/sensorHealthService.js";
 import { adminRoutes } from "./routes/admin.js";
 
 const app = Fastify({
@@ -62,6 +63,20 @@ await aiRoutes(app, pool);
 await vineyardRoutes(app, pool);
 await farmRoutes(app, pool);
 await adminRoutes(app, pool);
+
+// Periodic sensor-health sweep: alarms the ops team about faulty/silent nodes. Set
+// SENSOR_HEALTH_CHECK_DISABLED=true to turn off. Interval is in-process (single Railway instance).
+const healthIntervalMinutes = Number(process.env.SENSOR_HEALTH_CHECK_MINUTES ?? 120);
+if (process.env.SENSOR_HEALTH_CHECK_DISABLED !== "true") {
+  const sweep = () => {
+    runSensorHealthCheck(pool, app.log).catch((error) =>
+      app.log.error({ error }, "scheduled sensor health check failed")
+    );
+  };
+  // First run shortly after boot, then on the interval.
+  setTimeout(sweep, 30_000);
+  setInterval(sweep, Math.max(15, healthIntervalMinutes) * 60_000);
+}
 
 const port = Number(process.env.PORT ?? 4000);
 const host = process.env.HOST ?? "0.0.0.0";

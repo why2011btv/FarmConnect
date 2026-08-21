@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
-import { getFarmRole, requireFarmOwner } from "../auth/farmAccess.js";
+import { getFarmRole, requireFarmOwner, getUserFarmIds } from "../auth/farmAccess.js";
 import { generateAccessCode, hashSecret, normalizeAccessCode } from "../lib/accessCode.js";
 import { badRequest } from "../lib/badRequest.js";
 import { checkRateLimit, clientBucket } from "../lib/rateLimit.js";
@@ -290,5 +290,44 @@ export async function farmRoutes(app: FastifyInstance, db: Pool) {
 
     await db.query("DELETE FROM farm_members WHERE farm_id = $1 AND user_id = $2", [farmId, userId]);
     return reply.code(204).send();
+  });
+  /**
+   * Sets coordinates for the caller's devices, from placing them on the vineyard map. Also makes
+   * placement durable server-side and enables the weather-divergence health check for those nodes.
+   */
+  app.post("/v1/devices/locations", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
+    const parsed = z
+      .object({
+        locations: z
+          .array(
+            z.object({
+              deviceId: z.string().min(1),
+              latitude: z.number().min(-90).max(90),
+              longitude: z.number().min(-180).max(180),
+            })
+          )
+          .min(1)
+          .max(500),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
+
+    const farmIds = await getUserFarmIds(db, authUser.id);
+    if (farmIds.length === 0) return reply.code(403).send({ error: "No farm access" });
+
+    let updated = 0;
+    for (const loc of parsed.data.locations) {
+      // Only touch devices that belong to a farm the caller is a member of.
+      const res = await db.query(
+        `UPDATE devices SET latitude = $2, longitude = $3
+         WHERE id = $1 AND farm_id = ANY($4::text[])`,
+        [loc.deviceId, loc.latitude, loc.longitude, farmIds]
+      );
+      updated += res.rowCount ?? 0;
+    }
+    return { updated };
   });
 }

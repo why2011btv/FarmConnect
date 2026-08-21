@@ -180,6 +180,15 @@ final class APIClient {
         ).farm
     }
 
+    /// Persists where the customer placed each device (from the vineyard map). Enables the
+    /// server-side weather-divergence health check and makes placement durable across reinstalls.
+    func setDeviceLocations(_ locations: [(deviceId: String, latitude: Double, longitude: Double)]) async throws {
+        let payload: [String: Any] = [
+            "locations": locations.map { ["deviceId": $0.deviceId, "latitude": $0.latitude, "longitude": $0.longitude] }
+        ]
+        try await sendJSONNoContent(path: "/v1/devices/locations", method: "POST", payload: payload)
+    }
+
     // MARK: - Admin (staff only)
     //
     // These endpoints answer 404 for non-staff, so the admin surface is invisible rather than

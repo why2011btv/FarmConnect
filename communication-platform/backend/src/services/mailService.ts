@@ -101,3 +101,67 @@ export async function sendEmailVerificationEmail(
     logger,
   });
 }
+
+/**
+ * Alarms the Persephone's Basket ops team about newly-detected sensor faults.
+ *
+ * Recipients come from OPS_ALERT_EMAILS (comma-separated). Resend accepts an array `to`, so all
+ * operators get one email per sweep summarising the new alerts. Returns true if actually sent.
+ */
+export async function sendSensorHealthAlert(
+  alerts: Array<{
+    deviceName: string;
+    farmName: string;
+    kind: string;
+    sensorType: string | null;
+    severity: string;
+    detail: string;
+  }>,
+  logger: FastifyBaseLogger
+): Promise<boolean> {
+  const { apiKey, from } = readConfig();
+  const recipients = (process.env.OPS_ALERT_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (recipients.length === 0) {
+    logger.warn("OPS_ALERT_EMAILS not set — sensor health alert not sent");
+    return false;
+  }
+
+  const lines = alerts.map(
+    (a) =>
+      `• [${a.severity.toUpperCase()}] ${a.farmName} / ${a.deviceName}` +
+      `${a.sensorType ? ` (${a.sensorType})` : ""} — ${a.kind}\n    ${a.detail}`
+  );
+  const text = [
+    `${alerts.length} new sensor health alert${alerts.length === 1 ? "" : "s"} on Persephone's Basket:`,
+    "",
+    ...lines,
+    "",
+    "These are ongoing until the condition clears. Full list: admin -> sensor health.",
+  ].join("\n");
+  const subject = `⚠️ ${alerts.length} sensor alert${alerts.length === 1 ? "" : "s"} (${alerts.filter((a) => a.severity === "critical").length} critical)`;
+
+  if (!apiKey) {
+    logger.warn({ recipients, subject, text }, "RESEND_API_KEY not set — logging sensor alert instead of emailing");
+    return false;
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: recipients, subject, text }),
+    });
+    if (!response.ok) {
+      logger.error({ status: response.status, body: await response.text() }, "Sensor alert email failed");
+      return false;
+    }
+    return true;
+  } catch (error) {
+    logger.error({ error }, "Sensor alert email threw");
+    return false;
+  }
+}

@@ -257,6 +257,11 @@ struct DevicePlacementView: View {
         )
 
         layoutStore.installPlanningLayout(rectangles: rectangles, profile: profile)
+
+        // Best-effort: sync placements to the server so the ops health monitor can compare each
+        // node against the weather API at its real location, and placement survives a reinstall.
+        let coords = pins.map { (deviceId: $0.id, latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude) }
+        Task { try? await APIClient.shared.setDeviceLocations(coords) }
         onDone?()
         dismiss()
     }
