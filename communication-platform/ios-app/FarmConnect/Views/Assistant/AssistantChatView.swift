@@ -337,7 +337,7 @@ struct AssistantChatView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("New chat") {
                         Task {
-                            try? await viewModel.createNewSession()
+                            _ = try? await viewModel.createNewSession()
                             isSessionListPresented = false
                         }
                     }
