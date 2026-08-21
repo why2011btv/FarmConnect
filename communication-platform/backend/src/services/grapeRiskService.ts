@@ -1,3 +1,4 @@
+import { Pool } from "pg";
 import {
   HourlyWeather,
   DailyTempF,
@@ -37,6 +38,8 @@ export type DiseaseAssessment = {
   phenology: PhenologyContext;
   diseases: DiseaseRisk[];
   disclaimer: string;
+  /** How much of the recent window used this block's own sensor readings vs. the weather API. */
+  provenance?: { sensorHours: number; totalHours: number };
 };
 
 export type AssessOptions = {
@@ -269,14 +272,94 @@ export async function assessVineyardDiseaseRisk(
   const hit = cache.get(key);
   if (hit && now.getTime() - hit.at < CACHE_TTL_MS) return hit.value;
 
-  const [hourly, daily] = await Promise.all([
+  const [hourlyResult, daily] = await Promise.all([
     fetchHourlyRecent(lat, lng, 12),
     fetchDailySeason(lat, lng, now, "04-01"),
   ]);
-  if (!hourly) return null;
+  if (!hourlyResult) return null;
 
   const gdd = accumulateGdd(daily as DailyTempF[]);
-  const value = assessFromWeather(hourly, gdd, opts, now);
+  const value = assessFromWeather(hourlyResult.weather, gdd, opts, now);
   cache.set(key, { at: now.getTime(), value });
   return value;
+}
+
+
+// --- Per-block: fuse this block's device readings (temperature, humidity) with the weather API ---
+
+type SensorRow = { sensor_type: string; value: number; created_at: number };
+
+/**
+ * Overrides weather-API temperature/humidity with the block's own hourly sensor means where the
+ * device reported, keeping weather for rainfall and any gaps. Aligns sensor timestamps (UTC epoch)
+ * to the weather hours via the station's UTC offset, so a block's real microclimate — a humid low
+ * spot vs a breezy hilltop — actually changes its infection risk.
+ */
+function mergeSensorOverride(
+  weather: HourlyWeather,
+  utcOffsetSeconds: number,
+  sensorRows: SensorRow[]
+): { merged: HourlyWeather; sensorHours: number } {
+  const bucket = new Map<number, { tSum: number; tN: number; hSum: number; hN: number }>();
+  for (const r of sensorRows) {
+    const hourEpoch = Math.floor(r.created_at / 3_600_000) * 3_600_000;
+    const b = bucket.get(hourEpoch) ?? { tSum: 0, tN: 0, hSum: 0, hN: 0 };
+    if (r.sensor_type === "temperature") { b.tSum += r.value * 9 / 5 + 32; b.tN += 1; }
+    else if (r.sensor_type === "humidity") { b.hSum += r.value; b.hN += 1; }
+    bucket.set(hourEpoch, b);
+  }
+
+  const temperatureF = weather.temperatureF.slice();
+  const relativeHumidityPct = weather.relativeHumidityPct.slice();
+  let sensorHours = 0;
+  for (let i = 0; i < weather.timeIso.length; i += 1) {
+    const wallMs = Date.parse(`${weather.timeIso[i]}Z`); // local wall time read as UTC
+    if (Number.isNaN(wallMs)) continue;
+    const hourEpoch = Math.floor((wallMs - utcOffsetSeconds * 1000) / 3_600_000) * 3_600_000;
+    const b = bucket.get(hourEpoch);
+    if (!b) continue;
+    let used = false;
+    if (b.tN > 0) { temperatureF[i] = b.tSum / b.tN; used = true; }
+    if (b.hN > 0) { relativeHumidityPct[i] = b.hSum / b.hN; used = true; }
+    if (used) sensorHours += 1;
+  }
+  return { merged: { ...weather, temperatureF, relativeHumidityPct }, sensorHours };
+}
+
+/** Disease assessment for a single block, driven by that block's device readings where available. */
+export async function assessBlockDiseaseRisk(
+  db: Pool,
+  deviceId: string,
+  lat: number,
+  lng: number,
+  opts: AssessOptions,
+  now: Date = new Date()
+): Promise<DiseaseAssessment | null> {
+  const [hourlyResult, daily] = await Promise.all([
+    fetchHourlyRecent(lat, lng, 12),
+    fetchDailySeason(lat, lng, now, "04-01"),
+  ]);
+  if (!hourlyResult) return null;
+
+  const since = now.getTime() - 13 * 24 * 60 * 60 * 1000;
+  const { rows } = await db.query<{ sensor_type: string; value: number; created_at: string }>(
+    `SELECT sensor_type, value, created_at FROM sensor_readings
+     WHERE device_id = $1 AND sensor_type IN ('temperature','humidity') AND created_at >= $2
+     ORDER BY created_at`,
+    [deviceId, since]
+  );
+  const sensorRows: SensorRow[] = rows.map((r) => ({
+    sensor_type: r.sensor_type,
+    value: Number(r.value),
+    created_at: Number(r.created_at),
+  }));
+
+  const { merged, sensorHours } = mergeSensorOverride(
+    hourlyResult.weather,
+    hourlyResult.utcOffsetSeconds,
+    sensorRows
+  );
+  const gdd = accumulateGdd(daily);
+  const value = assessFromWeather(merged, gdd, opts, now);
+  return { ...value, provenance: { sensorHours, totalHours: merged.timeIso.length } };
 }

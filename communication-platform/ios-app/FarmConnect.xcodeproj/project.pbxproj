@@ -21,6 +21,7 @@
 		1BC69EDACD34171679102196 /* AccessCodeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38176D6F29DA5B8090CFAA48 /* AccessCodeFormatter.swift */; };
 		1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DFC7619A5884F9B97D38A96 /* FeedViewModel.swift */; };
 		24B1A0E059ABF310754E3857 /* AssistantChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF39977CC49157F2B27F45AE /* AssistantChatViewModel.swift */; };
+		28B32411D293656089219EE6 /* DiseaseCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3B29F2B094F966BC9AE2B /* DiseaseCards.swift */; };
 		2C74B692BB75668E7552DBE6 /* VineyardGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582569A960DC341DA72F14F7 /* VineyardGeneratorView.swift */; };
 		2C8FBA5B369CDDFBF2EBC58F /* CategoryStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A5E0C85EE3681BE0D115213 /* CategoryStyle.swift */; };
 		3128EA68FA960BC79AB4CD53 /* AccessCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AD1DAEE0580C5BB16A7353 /* AccessCodeView.swift */; };
@@ -53,6 +54,7 @@
 		8C8AD85F22BC3649893B400C /* BlockWeatherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239CE8A20BC30160910691E7 /* BlockWeatherViewModel.swift */; };
 		916878B050B99101FAE543CB /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091639F4A3A72FAD47669012 /* AssistantChatView.swift */; };
 		94C042452F3050509C352E8A /* VineyardFieldLogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C753BE2FCE1BC4CF611FB391 /* VineyardFieldLogModels.swift */; };
+		9A03266CF9D0792C91198A5A /* BlockDiseaseRiskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F3157591DCD8CD69EAB0CA /* BlockDiseaseRiskView.swift */; };
 		9C0679E7746A289CEC07DD1C /* NewVineyardLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C8F3EC3D15237249B97DAE /* NewVineyardLogEntryView.swift */; };
 		9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315A68954A4EA050BC10058F /* ErrorHelpers.swift */; };
 		A03C46F8BB35D8B79CE648BF /* BoundaryEditorMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */; };
@@ -78,6 +80,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		06F3157591DCD8CD69EAB0CA /* BlockDiseaseRiskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockDiseaseRiskView.swift; sourceTree = "<group>"; };
 		091639F4A3A72FAD47669012 /* AssistantChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatView.swift; sourceTree = "<group>"; };
 		0BCD8E639846169AAE640898 /* AssistantChatModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantChatModels.swift; sourceTree = "<group>"; };
 		156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanopySensorReadingsView.swift; sourceTree = "<group>"; };
@@ -134,6 +137,7 @@
 		C1188FF971B4192ACB1F07E9 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
 		C2395D4A12ADBCE121AC4E17 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
 		C445BF16DF03C1A6F06996AA /* AdminFarmsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminFarmsView.swift; sourceTree = "<group>"; };
+		C4E3B29F2B094F966BC9AE2B /* DiseaseCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiseaseCards.swift; sourceTree = "<group>"; };
 		C5A3C11C905D8D879A6462C6 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		C676B47662102E42C4722FA7 /* SensorBlockMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorBlockMapping.swift; sourceTree = "<group>"; };
 		C753BE2FCE1BC4CF611FB391 /* VineyardFieldLogModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogModels.swift; sourceTree = "<group>"; };
@@ -273,10 +277,12 @@
 		816996408A074CB67376E5AA /* Sensors */ = {
 			isa = PBXGroup;
 			children = (
+				06F3157591DCD8CD69EAB0CA /* BlockDiseaseRiskView.swift */,
 				3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */,
 				156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */,
 				A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */,
 				9B173F1AE704A9795074503E /* DevicePlacementView.swift */,
+				C4E3B29F2B094F966BC9AE2B /* DiseaseCards.swift */,
 				9E4CA2C633F739AFFF5F8E46 /* DiseaseRiskView.swift */,
 				ADE2ECE8139D0980F723B519 /* HarvestLogView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
@@ -472,6 +478,7 @@
 				4FB82B5D883DD09FF1E4A443 /* AssistantChatModels.swift in Sources */,
 				916878B050B99101FAE543CB /* AssistantChatView.swift in Sources */,
 				24B1A0E059ABF310754E3857 /* AssistantChatViewModel.swift in Sources */,
+				9A03266CF9D0792C91198A5A /* BlockDiseaseRiskView.swift in Sources */,
 				17E5A68B940D3EBDDDADBB27 /* BlockReadingsComposer.swift in Sources */,
 				8C8AD85F22BC3649893B400C /* BlockWeatherViewModel.swift in Sources */,
 				A03C46F8BB35D8B79CE648BF /* BoundaryEditorMap.swift in Sources */,
@@ -482,6 +489,7 @@
 				5B38E3429F9B0CCA32DE4951 /* ChatViewModel.swift in Sources */,
 				AE0501CB60A6397771BED72F /* DevicePlacementMap.swift in Sources */,
 				7A539280076BAF8427ACAD06 /* DevicePlacementView.swift in Sources */,
+				28B32411D293656089219EE6 /* DiseaseCards.swift in Sources */,
 				3D7D0C52AD067EE09662DAB6 /* DiseaseRiskView.swift in Sources */,
 				E1C00A9B32119819F938D53F /* DomainModels.swift in Sources */,
 				9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */,

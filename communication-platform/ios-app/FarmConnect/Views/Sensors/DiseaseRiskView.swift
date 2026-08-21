@@ -6,12 +6,12 @@ final class DiseaseRiskViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    func load(lat: Double, lng: Double, bloomDate: String?) async {
+    func load(lat: Double, lng: Double, bloomDate: String?, deviceId: String? = nil) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         do {
-            assessment = try await APIClient.shared.getDiseaseRisk(lat: lat, lng: lng, bloomDate: bloomDate, shootCm: nil)
+            assessment = try await APIClient.shared.getDiseaseRisk(lat: lat, lng: lng, bloomDate: bloomDate, shootCm: nil, deviceId: deviceId)
         } catch {
             errorMessage = (error as? APIError).flatMap {
                 if case .serverMessage(_, let m) = $0 { return m } else { return nil }
@@ -118,64 +118,7 @@ struct DiseaseRiskView: View {
     @ViewBuilder
     private func diseaseSection(_ a: DiseaseAssessment) -> some View {
         ForEach(a.diseases) { d in
-            Section {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(d.name).font(.subheadline.weight(.semibold))
-                        Spacer()
-                        Text(levelLabel(d.level))
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(levelColor(d.level).opacity(0.2), in: Capsule())
-                            .foregroundStyle(levelColor(d.level))
-                    }
-                    Text(d.headline).font(.footnote.weight(.medium))
-                    // Why: what the weather did / why this level.
-                    Text(d.detail).font(.caption).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    // What to do: actionable steps, each with its reason. Scouting and cultural
-                    // steps are always safe; protection timing defers materials/rate to the label.
-                    if let actions = d.actions, !actions.isEmpty {
-                        Divider().padding(.vertical, 2)
-                        Text("What to do")
-                            .font(.caption.weight(.semibold))
-                        ForEach(actions) { act in
-                            HStack(alignment: .top, spacing: 8) {
-                                Image(systemName: actionIcon(act.category))
-                                    .font(.caption)
-                                    .foregroundStyle(actionColor(act.category))
-                                    .frame(width: 16)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(act.action).font(.caption)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(act.reason).font(.caption2).foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    private func actionIcon(_ category: String) -> String {
-        switch category {
-        case "scout": return "magnifyingglass"
-        case "cultural": return "leaf"
-        case "protect": return "shield.lefthalf.filled"
-        default: return "circle"
-        }
-    }
-
-    private func actionColor(_ category: String) -> Color {
-        switch category {
-        case "scout": return .blue
-        case "cultural": return .green
-        case "protect": return .orange
-        default: return .secondary
+            Section { DiseaseCard(disease: d) }
         }
     }
 
@@ -220,26 +163,6 @@ struct DiseaseRiskView: View {
         .presentationDetents([.medium, .large])
         .onAppear {
             if bloomDate == nil { bloomDate = UserDefaults.standard.object(forKey: Self.bloomKey) as? Date }
-        }
-    }
-
-    // MARK: - Styling
-
-    private func levelColor(_ level: String) -> Color {
-        switch level {
-        case "high": return .red
-        case "moderate": return .orange
-        case "low": return .green
-        default: return .secondary
-        }
-    }
-
-    private func levelLabel(_ level: String) -> String {
-        switch level {
-        case "high": return "HIGH"
-        case "moderate": return "MODERATE"
-        case "low": return "LOW"
-        default: return "N/A"
         }
     }
 }

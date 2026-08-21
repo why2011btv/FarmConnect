@@ -191,10 +191,11 @@ final class APIClient {
 
     /// Validated grape disease infection-condition estimates for the vineyard at (lat,lng). Decision
     /// support for scouting — the response carries a "not a spray recommendation" disclaimer.
-    func getDiseaseRisk(lat: Double, lng: Double, bloomDate: String?, shootCm: Int?) async throws -> DiseaseAssessment {
+    func getDiseaseRisk(lat: Double, lng: Double, bloomDate: String?, shootCm: Int?, deviceId: String? = nil) async throws -> DiseaseAssessment {
         var path = "/v1/vineyard/disease-risk?lat=\(lat)&lng=\(lng)"
         if let bloomDate { path += "&bloomDate=\(bloomDate)" }
         if let shootCm { path += "&shootCm=\(shootCm)" }
+        if let deviceId { path += "&deviceId=\(deviceId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? deviceId)" }
         return try await getDecoded(path, as: DiseaseAssessment.self)
     }
 

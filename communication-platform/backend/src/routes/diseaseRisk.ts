@@ -3,13 +3,14 @@ import { Pool } from "pg";
 import { z } from "zod";
 import { requireAuth } from "../auth/requireAuth.js";
 import { badRequest } from "../lib/badRequest.js";
-import { assessVineyardDiseaseRisk } from "../services/grapeRiskService.js";
+import { assessVineyardDiseaseRisk, assessBlockDiseaseRisk } from "../services/grapeRiskService.js";
 
 const querySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   bloomDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   shootCm: z.coerce.number().min(0).max(400).optional(),
+  deviceId: z.string().min(1).optional(),
 });
 
 /**
@@ -28,11 +29,21 @@ export async function diseaseRiskRoutes(app: FastifyInstance, db: Pool) {
     const parsed = querySchema.safeParse(req.query);
     if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
 
+    const opts = { bloomDateIso: parsed.data.bloomDate ?? null, shootLengthCm: parsed.data.shootCm };
     try {
-      const assessment = await assessVineyardDiseaseRisk(parsed.data.lat, parsed.data.lng, {
-        bloomDateIso: parsed.data.bloomDate ?? null,
-        shootLengthCm: parsed.data.shootCm,
-      });
+      let assessment;
+      if (parsed.data.deviceId) {
+        // Per-block: only if the device belongs to a farm the caller is a member of.
+        const { rows } = await db.query<{ id: string }>(
+          `SELECT d.id FROM devices d JOIN farm_members m ON m.farm_id = d.farm_id
+           WHERE d.id = $1 AND m.user_id = $2 LIMIT 1`,
+          [parsed.data.deviceId, authUser.id]
+        );
+        if (!rows[0]) return reply.code(404).send({ error: "Device not found" });
+        assessment = await assessBlockDiseaseRisk(db, parsed.data.deviceId, parsed.data.lat, parsed.data.lng, opts);
+      } else {
+        assessment = await assessVineyardDiseaseRisk(parsed.data.lat, parsed.data.lng, opts);
+      }
       if (!assessment) return reply.code(502).send({ error: "Weather data is temporarily unavailable" });
       return assessment;
     } catch (error) {

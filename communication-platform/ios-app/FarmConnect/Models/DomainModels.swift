@@ -260,12 +260,18 @@ struct DiseaseRisk: Codable, Identifiable {
     var id: String { key }
 }
 
+struct DiseaseProvenance: Codable {
+    let sensorHours: Int
+    let totalHours: Int
+}
+
 struct DiseaseAssessment: Codable {
     let updatedAt: Double
     let gddBase50FromApr1: Int
     let phenology: PhenologyContext
     let diseases: [DiseaseRisk]
     let disclaimer: String
+    let provenance: DiseaseProvenance?
 }
 
 // MARK: - Admin (staff only)

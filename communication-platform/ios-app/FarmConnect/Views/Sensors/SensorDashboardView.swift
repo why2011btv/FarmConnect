@@ -491,8 +491,13 @@ private struct BlockDetailSheet: View {
 
                 Divider()
 
-                VineyardInsightsPanel(block: block, insights: insights)
-                    .frame(maxHeight: .infinity)
+                // Block-specific disease risk, driven by this block's own device readings.
+                BlockDiseaseRiskView(
+                    latitude: block.center.latitude,
+                    longitude: block.center.longitude,
+                    deviceId: block.liveSensor?.deviceId
+                )
+                .frame(maxHeight: .infinity)
             }
         }
         .background(Color(.systemGroupedBackground))

@@ -86,11 +86,13 @@ export async function fetchDailySeason(
 }
 
 /** Hourly temperature/RH/precip over the last `pastDays` days plus today, via the forecast API. */
+export type HourlyWeatherResult = { weather: HourlyWeather; utcOffsetSeconds: number };
+
 export async function fetchHourlyRecent(
   lat: number,
   lng: number,
   pastDays = 10
-): Promise<HourlyWeather | null> {
+): Promise<HourlyWeatherResult | null> {
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lng),
@@ -104,6 +106,7 @@ export async function fetchHourlyRecent(
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
   if (!res.ok) return null;
   const data = (await res.json()) as {
+    utc_offset_seconds?: number;
     hourly?: {
       time?: string[];
       temperature_2m?: Array<number | null>;
@@ -116,9 +119,12 @@ export async function fetchHourlyRecent(
   const n = (v: number | null | undefined, f: number) =>
     typeof v === "number" && Number.isFinite(v) ? v : f;
   return {
-    timeIso: h.time,
-    temperatureF: (h.temperature_2m ?? []).map((v) => n(v, NaN)),
-    relativeHumidityPct: (h.relative_humidity_2m ?? []).map((v) => n(v, 0)),
-    precipitationInch: (h.precipitation ?? []).map((v) => n(v, 0)),
+    utcOffsetSeconds: typeof data.utc_offset_seconds === "number" ? data.utc_offset_seconds : 0,
+    weather: {
+      timeIso: h.time,
+      temperatureF: (h.temperature_2m ?? []).map((v) => n(v, NaN)),
+      relativeHumidityPct: (h.relative_humidity_2m ?? []).map((v) => n(v, 0)),
+      precipitationInch: (h.precipitation ?? []).map((v) => n(v, 0)),
+    },
   };
 }
