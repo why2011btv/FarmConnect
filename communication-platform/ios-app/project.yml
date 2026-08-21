@@ -15,20 +15,14 @@ targets:
         SWIFT_VERSION: 5.9
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: "1.0.0"
-        # BUMP THIS FOR EVERY APP STORE UPLOAD. App Store Connect rejects any build
-        # whose number is not strictly higher than one already uploaded, and that
-        # rejection appears as "Preparing build for App Store Connect failed".
-        #
-        # ci_scripts/ci_post_clone.sh raises it to the Xcode Cloud run number when that
-        # is higher, but never lowers it -- so this value alone is always safe.
-        #
-        # Do not write "$(CI_BUILD_NUMBER)" here: build settings only expand variables
-        # Xcode defines, so the literal text would land in CFBundleVersion.
-        #
-        # Kept in step with the Xcode Cloud run counter: run 88 was the last failure,
-        # so the next run is 89. From here ci_post_clone.sh keeps it in sync, since
-        # the run number will always be >= this value.
-        CURRENT_PROJECT_VERSION: "89"
+        # Fallback only. Xcode Cloud overwrites this from its run number in
+        # ci_scripts/ci_post_clone.sh, which is why it tracks the run counter (86 at
+        # the time of writing) rather than restarting from 1. Writing
+        # "$(CI_BUILD_NUMBER)" here instead does not work: build settings only expand
+        # variables Xcode knows about, and CI_BUILD_NUMBER is an environment variable
+        # given to CI scripts, so the literal text survives into CFBundleVersion and
+        # fails "Prepare Build for App Store Connect".
+        CURRENT_PROJECT_VERSION: "86"
         # Required for App Store Connect: identifies the signing team. Xcode wrote this
         # into the project directly, so it was lost the first time the project was
         # regenerated from this spec.
