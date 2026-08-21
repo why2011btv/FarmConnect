@@ -12,6 +12,7 @@ struct SensorDashboardView: View {
     @State private var isEditingLayout = false
     @State private var showLayoutEditorSheet = false
     @State private var showGeneratorSheet = false
+    @State private var showDevicePlacement = false
     /// True when the two-pane wide layout is active (kept in sync with the GeometryReader). The
     /// block-detail bottom sheet is a phone-only affordance, so it presents only when this is false.
     @State private var isWide = false
@@ -29,7 +30,7 @@ struct SensorDashboardView: View {
             devices: sensorViewModel.devices,
             insights: sensorViewModel.insights,
             isLoading: sensorViewModel.isLoading,
-            onSetUpVineyard: { showGeneratorSheet = true }
+            onSetUpVineyard: { showDevicePlacement = true }
         )
     }
 
@@ -132,6 +133,16 @@ struct SensorDashboardView: View {
                     onDone: {
                         isEditingLayout = false
                         editingBlockId = nil
+                    }
+                )
+            }
+            .sheet(isPresented: $showDevicePlacement) {
+                DevicePlacementView(
+                    layoutStore: layoutStore,
+                    devices: sensorViewModel.devices,
+                    onDone: {
+                        selectedBlockId = nil
+                        Task { await reloadDashboard() }
                     }
                 )
             }

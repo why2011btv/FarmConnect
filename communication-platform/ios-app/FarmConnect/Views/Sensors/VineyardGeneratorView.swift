@@ -24,9 +24,14 @@ struct VineyardGeneratorView: View {
     @State private var region = VineyardDemoData.mapRegion
     @State private var source: String?
 
-    // Density
-    @State private var acresPerBlock: Double = 10
+    // Placement: the user chooses how many devices (sensor nodes) to place. Each block holds one.
+    @State private var deviceCount: Int = 8
+    @State private var deviceCountInitialized = false
     @State private var rotationDegrees: Double = 0
+
+    /// How many acres one device is assumed to cover when suggesting a starting count.
+    private let recommendedAcresPerDevice: Double = 10
+    private let deviceCountRange = 1...64
 
     enum Phase: Equatable {
         case input
@@ -41,8 +46,18 @@ struct VineyardGeneratorView: View {
         VineyardLayoutGenerator.totalAcres(parcels)
     }
 
-    private var blockCount: Int {
-        VineyardLayoutGenerator.recommendedBlockCount(acres: acreage, acresPerBlock: acresPerBlock)
+    /// Suggested device count from the mapped acreage. The user can override it freely.
+    private var recommendedCount: Int {
+        let rec = VineyardLayoutGenerator.recommendedBlockCount(acres: acreage, acresPerBlock: recommendedAcresPerDevice)
+        return min(max(rec, deviceCountRange.lowerBound), deviceCountRange.upperBound)
+    }
+
+    /// Seed the device count from the recommendation the first time we reach the editing step,
+    /// then leave it under the user's control.
+    private func initializeDeviceCountIfNeeded() {
+        guard !deviceCountInitialized else { return }
+        deviceCount = recommendedCount
+        deviceCountInitialized = true
     }
 
     private var canGenerate: Bool {
@@ -230,7 +245,7 @@ struct VineyardGeneratorView: View {
                     }
                     parcelChips
                     acreagePanel
-                    densityControls
+                    placementControls
                     Text("Tap the map to add a point to the active parcel; drag a point to move it; long-press to remove it. Use “Add parcel” for a separate vineyard block.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -300,27 +315,46 @@ struct VineyardGeneratorView: View {
                 }
             }
             Spacer()
-            metric(title: "Coverage blocks", value: "\(blockCount)")
+            metric(title: "Devices", value: "\(deviceCount)")
         }
     }
 
     @ViewBuilder
-    private var densityControls: some View {
+    private var placementControls: some View {
         if acreageDisagrees, let reportedAcreage {
-            Label("Mapped area differs from the reported \(String(format: "%.0f", reportedAcreage)) ac. Device count uses the mapped area — add or resize parcels if some vine blocks are missing.",
+            Label("Mapped area differs from the reported \(String(format: "%.0f", reportedAcreage)) ac. Blocks are spread across the mapped area — add or resize parcels if some vine blocks are missing.",
                   systemImage: "exclamationmark.triangle")
                 .font(.caption).foregroundStyle(.orange)
         }
 
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("Density")
-                Spacer()
-                Text(String(format: "1 block / %.0f ac", acresPerBlock))
-                    .foregroundStyle(.secondary).monospacedDigit()
+        VStack(alignment: .leading, spacing: 6) {
+            Stepper(value: $deviceCount, in: deviceCountRange) {
+                HStack {
+                    Text("Devices to place")
+                    Spacer()
+                    Text("\(deviceCount)")
+                        .foregroundStyle(.secondary).monospacedDigit()
+                }
+                .font(.subheadline)
             }
-            .font(.subheadline)
-            Slider(value: $acresPerBlock, in: 2...50, step: 1)
+
+            HStack(spacing: 8) {
+                // Density is now a consequence of the chosen device count, shown for context.
+                if acreage > 0 {
+                    Text(String(format: "≈ %.0f ac / device", acreage / Double(max(deviceCount, 1))))
+                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                }
+                Spacer()
+                if deviceCount != recommendedCount {
+                    Button("Use recommended (\(recommendedCount))") {
+                        deviceCount = recommendedCount
+                    }
+                    .font(.caption)
+                }
+            }
+
+            Text("Place one block per sensor node you're deploying. Nodes map to blocks in order — node A1 to the first block, A2 to the second, and so on.")
+                .font(.caption2).foregroundStyle(.secondary)
         }
 
         VStack(alignment: .leading, spacing: 4) {
@@ -434,6 +468,7 @@ struct VineyardGeneratorView: View {
             parcels = parcelCoords
             region = VineyardLayoutGenerator.region(forParcels: parcelCoords) ?? regionAround(center)
             activeParcel = 0
+            initializeDeviceCountIfNeeded()
             phase = .editing
         } else {
             applyGeocodeOnly(center: center)
@@ -446,6 +481,7 @@ struct VineyardGeneratorView: View {
         parcels = [box]
         region = VineyardLayoutGenerator.region(forParcels: parcels) ?? regionAround(center)
         activeParcel = 0
+        initializeDeviceCountIfNeeded()
         phase = .editing
     }
 
@@ -472,7 +508,7 @@ struct VineyardGeneratorView: View {
         let validParcels = parcels.filter { $0.count >= 3 }
         let rectangles = VineyardLayoutGenerator.generateBlocks(
             parcels: validParcels,
-            totalCount: blockCount,
+            totalCount: deviceCount,
             rotationDegrees: rotationDegrees
         )
         guard !rectangles.isEmpty else {

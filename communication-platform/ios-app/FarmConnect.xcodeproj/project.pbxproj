@@ -47,6 +47,7 @@
 		73C8394ECD64D3B98760EF0F /* VineyardMapSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E09B7F9A122A4AFF86449C7 /* VineyardMapSnapshot.swift */; };
 		7684E2CA54BAE76756F07E28 /* VineyardFieldLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EDCA8EDA3CAB96A48394E5 /* VineyardFieldLogStore.swift */; };
 		79B1FE1C7046D5AFCC9E071A /* VineyardFieldLogDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A6AC0E1997E4DADA62B4D8 /* VineyardFieldLogDetailView.swift */; };
+		7A539280076BAF8427ACAD06 /* DevicePlacementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B173F1AE704A9795074503E /* DevicePlacementView.swift */; };
 		8C8AD85F22BC3649893B400C /* BlockWeatherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239CE8A20BC30160910691E7 /* BlockWeatherViewModel.swift */; };
 		916878B050B99101FAE543CB /* AssistantChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091639F4A3A72FAD47669012 /* AssistantChatView.swift */; };
 		94C042452F3050509C352E8A /* VineyardFieldLogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C753BE2FCE1BC4CF611FB391 /* VineyardFieldLogModels.swift */; };
@@ -54,6 +55,7 @@
 		9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315A68954A4EA050BC10058F /* ErrorHelpers.swift */; };
 		A03C46F8BB35D8B79CE648BF /* BoundaryEditorMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */; };
 		AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC4BD82888633215B07B2A7 /* FeedView.swift */; };
+		AE0501CB60A6397771BED72F /* DevicePlacementMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */; };
 		AE5AF754F96E7B1556A6868F /* PostCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19B8DED80A11C91B8F01E38F /* PostCardRow.swift */; };
 		B7809718F84FEF4DA72648F8 /* VineyardFieldLogCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40BDDA4AD39BD890D1582EC1 /* VineyardFieldLogCard.swift */; };
 		B830E3AB16B56BE3721B5DE0 /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A888FAD16E4369D43BC994F /* PostDetailView.swift */; };
@@ -110,8 +112,10 @@
 		8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		9169DF6659B988CAA8DE05D9 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		975BDBE5AE51AA576E6BFF44 /* VineyardDemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoData.swift; sourceTree = "<group>"; };
+		9B173F1AE704A9795074503E /* DevicePlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePlacementView.swift; sourceTree = "<group>"; };
 		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4EDCA8EDA3CAB96A48394E5 /* VineyardFieldLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogStore.swift; sourceTree = "<group>"; };
+		A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePlacementMap.swift; sourceTree = "<group>"; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		AB7DFD1754EA35226B7115AF /* VineyardAnalyzeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardAnalyzeModels.swift; sourceTree = "<group>"; };
 		AE62888F400AD164D39F54E2 /* BlockReadingsComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockReadingsComposer.swift; sourceTree = "<group>"; };
@@ -267,6 +271,8 @@
 			children = (
 				3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */,
 				156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */,
+				A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */,
+				9B173F1AE704A9795074503E /* DevicePlacementView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
 				7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */,
 				FD9270A806E6D0EA8E76F7C5 /* VineyardBlockLayoutEditor.swift */,
@@ -468,6 +474,8 @@
 				62856BA206121F8A9264F0F0 /* ChatThreadView.swift in Sources */,
 				3E8FA09A79296FD488D8E734 /* ChatView.swift in Sources */,
 				5B38E3429F9B0CCA32DE4951 /* ChatViewModel.swift in Sources */,
+				AE0501CB60A6397771BED72F /* DevicePlacementMap.swift in Sources */,
+				7A539280076BAF8427ACAD06 /* DevicePlacementView.swift in Sources */,
 				E1C00A9B32119819F938D53F /* DomainModels.swift in Sources */,
 				9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */,
 				D4C2F86EAFEAA05A8E43F9DA /* FarmConnectApp.swift in Sources */,
