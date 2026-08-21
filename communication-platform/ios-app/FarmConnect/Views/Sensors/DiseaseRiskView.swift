@@ -58,6 +58,18 @@ struct DiseaseRiskView: View {
                         Text(a.disclaimer)
                             .font(.caption2).foregroundStyle(.secondary)
                     }
+                    Section("Sources & pesticide safety") {
+                        if let url = URL(string: "https://newa.cornell.edu/grape-diseases") {
+                            Link("Cornell NEWA grape disease models", destination: url)
+                                .font(.footnote)
+                        }
+                        if let url = URL(string: "https://cropandpestguides.cce.cornell.edu") {
+                            Link("NY & PA Pest Management Guidelines for Grapes", destination: url)
+                                .font(.footnote)
+                        }
+                        Text("The product label is the legal authority on materials, rate, REI and PHI. Consult it and a licensed advisor before any application.")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
                 }
             }
             .navigationTitle("Disease risk")

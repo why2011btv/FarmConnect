@@ -217,6 +217,20 @@ struct UserProfile: Codable, Identifiable {
     }
 }
 
+// MARK: - Harvest fruit samples
+
+struct FruitSample: Codable, Identifiable {
+    let id: String
+    let blockLabel: String?
+    let sampledOn: String    // "yyyy-MM-dd"
+    let brix: Double?
+    let titratableAcidity: Double?
+    let ph: Double?
+    let notes: String?
+}
+
+struct FruitSampleList: Codable { let items: [FruitSample] }
+
 // MARK: - Disease risk (validated models)
 
 struct PhenologyContext: Codable {

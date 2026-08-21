@@ -22,6 +22,7 @@ import { farmRoutes } from "./routes/farms.js";
 import { runSensorHealthCheck } from "./services/sensorHealthService.js";
 import { adminRoutes } from "./routes/admin.js";
 import { diseaseRiskRoutes } from "./routes/diseaseRisk.js";
+import { harvestRoutes } from "./routes/harvest.js";
 
 const app = Fastify({
   logger: true,
@@ -65,6 +66,7 @@ await vineyardRoutes(app, pool);
 await farmRoutes(app, pool);
 await adminRoutes(app, pool);
 await diseaseRiskRoutes(app, pool);
+await harvestRoutes(app, pool);
 
 // Periodic sensor-health sweep: alarms the ops team about faulty/silent nodes. Set
 // SENSOR_HEALTH_CHECK_DISABLED=true to turn off. Interval is in-process (single Railway instance).

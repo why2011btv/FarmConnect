@@ -14,6 +14,7 @@ struct SensorDashboardView: View {
     @State private var showGeneratorSheet = false
     @State private var showDevicePlacement = false
     @State private var showDiseaseRisk = false
+    @State private var showHarvestLog = false
     /// True when the two-pane wide layout is active (kept in sync with the GeometryReader). The
     /// block-detail bottom sheet is a phone-only affordance, so it presents only when this is false.
     @State private var isWide = false
@@ -136,6 +137,11 @@ struct SensorDashboardView: View {
                         editingBlockId = nil
                     }
                 )
+            }
+            .sheet(isPresented: $showHarvestLog) {
+                if let farmId = session.farms.first?.id {
+                    HarvestLogView(farmId: farmId)
+                }
             }
             .sheet(isPresented: $showDiseaseRisk) {
                 if let center = layoutStore.activeProfile?.center {
@@ -274,6 +280,11 @@ struct SensorDashboardView: View {
                     showGeneratorSheet = true
                 } label: {
                     Label("New vineyard…", systemImage: "plus.viewfinder")
+                }
+                Button {
+                    showHarvestLog = true
+                } label: {
+                    Label("Harvest log", systemImage: "drop.degreesign")
                 }
                 Button {
                     toggleLayoutEditing()

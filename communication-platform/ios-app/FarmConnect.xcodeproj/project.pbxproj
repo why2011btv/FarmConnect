@@ -11,6 +11,7 @@
 		0170406A69BBF6924085EBEF /* VineyardLayoutGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E578EADFEA29270D08F9BB66 /* VineyardLayoutGenerator.swift */; };
 		01F92DB3CD0E887F5247515B /* SensorNodeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */; };
 		060BA3BE9647A87B8E03B93C /* AddEmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD6E60F0405B9FD1FAA11BC /* AddEmailView.swift */; };
+		0619CCF6FFAA00900716A210 /* HarvestLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE2ECE8139D0980F723B519 /* HarvestLogView.swift */; };
 		0A0EDB0C0F88807FAF16F95F /* AdminSecretsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E19BAD3F022BE0CD6873C1 /* AdminSecretsView.swift */; };
 		106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9AD053305991A9390867F2 /* MapFeedView.swift */; };
 		14431E869C5FDB9E05CE9CA7 /* GrapeVariety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 588D44AB56AC7599029D3283 /* GrapeVariety.swift */; };
@@ -120,6 +121,7 @@
 		A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePlacementMap.swift; sourceTree = "<group>"; };
 		A79859C361B2EFA9A1141E7F /* ChatThreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatThreadView.swift; sourceTree = "<group>"; };
 		AB7DFD1754EA35226B7115AF /* VineyardAnalyzeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardAnalyzeModels.swift; sourceTree = "<group>"; };
+		ADE2ECE8139D0980F723B519 /* HarvestLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HarvestLogView.swift; sourceTree = "<group>"; };
 		AE62888F400AD164D39F54E2 /* BlockReadingsComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockReadingsComposer.swift; sourceTree = "<group>"; };
 		B0E19BAD3F022BE0CD6873C1 /* AdminSecretsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminSecretsView.swift; sourceTree = "<group>"; };
 		B373E8A9C17FB53E8936FB03 /* VineyardBlockRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardBlockRectangle.swift; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 				A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */,
 				9B173F1AE704A9795074503E /* DevicePlacementView.swift */,
 				9E4CA2C633F739AFFF5F8E46 /* DiseaseRiskView.swift */,
+				ADE2ECE8139D0980F723B519 /* HarvestLogView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
 				7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */,
 				FD9270A806E6D0EA8E76F7C5 /* VineyardBlockLayoutEditor.swift */,
@@ -486,6 +489,7 @@
 				AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */,
 				1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */,
 				14431E869C5FDB9E05CE9CA7 /* GrapeVariety.swift in Sources */,
+				0619CCF6FFAA00900716A210 /* HarvestLogView.swift in Sources */,
 				3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */,
 				106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */,
 				3CBA481DE1662E4CA5E46E5C /* NewPostView.swift in Sources */,

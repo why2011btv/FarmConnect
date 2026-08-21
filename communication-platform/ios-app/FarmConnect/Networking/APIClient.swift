@@ -198,6 +198,27 @@ final class APIClient {
         return try await getDecoded(path, as: DiseaseAssessment.self)
     }
 
+    // MARK: - Harvest fruit samples
+
+    func getFruitSamples(farmId: String) async throws -> [FruitSample] {
+        try await getDecoded("/v1/farms/\(farmId)/fruit-samples", as: FruitSampleList.self).items
+    }
+
+    func addFruitSample(farmId: String, sampledOn: String, blockLabel: String?,
+                        brix: Double?, titratableAcidity: Double?, ph: Double?, notes: String?) async throws {
+        var payload: [String: Any] = ["sampledOn": sampledOn]
+        if let blockLabel, !blockLabel.isEmpty { payload["blockLabel"] = blockLabel }
+        if let brix { payload["brix"] = brix }
+        if let titratableAcidity { payload["titratableAcidity"] = titratableAcidity }
+        if let ph { payload["ph"] = ph }
+        if let notes, !notes.isEmpty { payload["notes"] = notes }
+        _ = try await sendJSON(path: "/v1/farms/\(farmId)/fruit-samples", method: "POST", payload: payload, as: [String: String].self)
+    }
+
+    func deleteFruitSample(farmId: String, id: String) async throws {
+        try await deleteNoContent("/v1/farms/\(farmId)/fruit-samples/\(id)")
+    }
+
     // MARK: - Admin (staff only)
     //
     // These endpoints answer 404 for non-staff, so the admin surface is invisible rather than
