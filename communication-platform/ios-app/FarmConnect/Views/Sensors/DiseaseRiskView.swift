@@ -58,10 +58,12 @@ struct DiseaseRiskView: View {
                         Text(a.disclaimer)
                             .font(.caption2).foregroundStyle(.secondary)
                     }
-                    Section("Sources & pesticide safety") {
+                    Section {
+                        Text("Our black rot, Phomopsis and powdery-mildew estimates use the same published models Cornell NEWA runs. NEWA is the regional authority — open it, pick your nearest weather station, and compare before you rely on this.")
+                            .font(.caption).foregroundStyle(.secondary)
                         if let url = URL(string: "https://newa.cornell.edu/grape-diseases") {
-                            Link("Cornell NEWA grape disease models", destination: url)
-                                .font(.footnote)
+                            Link("Open NEWA grape disease models", destination: url)
+                                .font(.footnote.weight(.medium))
                         }
                         if let url = URL(string: "https://cropandpestguides.cce.cornell.edu") {
                             Link("NY & PA Pest Management Guidelines for Grapes", destination: url)
@@ -69,6 +71,8 @@ struct DiseaseRiskView: View {
                         }
                         Text("The product label is the legal authority on materials, rate, REI and PHI. Consult it and a licensed advisor before any application.")
                             .font(.caption2).foregroundStyle(.secondary)
+                    } header: {
+                        Text("Cross-check with Cornell NEWA")
                     }
                 }
             }

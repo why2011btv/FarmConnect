@@ -8,7 +8,8 @@
     "migrate": "tsx src/scripts/migrate.ts",
     "provision": "tsx src/scripts/provisionFarm.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "validate-newa": "tsx src/scripts/validateAgainstNewa.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1026.0",
