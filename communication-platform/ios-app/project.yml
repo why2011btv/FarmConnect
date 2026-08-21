@@ -22,7 +22,7 @@ targets:
         # variables Xcode knows about, and CI_BUILD_NUMBER is an environment variable
         # given to CI scripts, so the literal text survives into CFBundleVersion and
         # fails "Prepare Build for App Store Connect".
-        CURRENT_PROJECT_VERSION: "86"
+        CURRENT_PROJECT_VERSION: "92"
         # Required for App Store Connect: identifies the signing team. Xcode wrote this
         # into the project directly, so it was lost the first time the project was
         # regenerated from this spec.
