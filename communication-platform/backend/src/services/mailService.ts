@@ -12,6 +12,7 @@ type SendArgs = {
   to: string;
   subject: string;
   text: string;
+  replyTo?: string;
   logger: FastifyBaseLogger;
 };
 
@@ -27,7 +28,7 @@ export function isMailConfigured(): boolean {
   return Boolean(readConfig().apiKey);
 }
 
-async function send({ to, subject, text, logger }: SendArgs): Promise<boolean> {
+async function send({ to, subject, text, replyTo, logger }: SendArgs): Promise<boolean> {
   const { apiKey, from } = readConfig();
 
   if (!apiKey) {
@@ -44,7 +45,7 @@ async function send({ to, subject, text, logger }: SendArgs): Promise<boolean> {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to, subject, text }),
+      body: JSON.stringify({ from, to, subject, text, ...(replyTo ? { reply_to: replyTo } : {}) }),
     });
 
     if (!response.ok) {
@@ -97,6 +98,49 @@ export async function sendEmailVerificationEmail(
       `    ${code}`,
       "",
       "It expires in 24 hours.",
+    ].join("\n"),
+    logger,
+  });
+}
+
+/**
+ * Warm onboarding email sent once, right after signup. Also carries the (optional) email-confirmation
+ * code so a new grower gets a single friendly message instead of two. Replies route to alex@ so the
+ * "just reply" line works regardless of the sending domain.
+ */
+export async function sendWelcomeEmail(
+  to: string,
+  name: string,
+  code: string,
+  logger: FastifyBaseLogger
+): Promise<boolean> {
+  const { appName } = readConfig();
+  const firstName = name.trim().split(/\s+/)[0] || "there";
+  return send({
+    to,
+    replyTo: "alex@persephonesbasket.com",
+    subject: `Welcome to ${appName}`,
+    text: [
+      `Hi ${firstName},`,
+      "",
+      `Welcome to ${appName} — we're glad to have your vineyard on board.`,
+      "",
+      "Getting started:",
+      "  1. Open the FarmConnect app and sign in.",
+      "  2. Enter the access code that came with your sensors to link your farm.",
+      "  3. Open the Sensors tab for live temperature and humidity from each node,",
+      "     your vineyard map, and per-block disease-risk insights.",
+      "",
+      "Good to know:",
+      "  \u2022 The disease-risk estimates are decision support, not spray instructions.",
+      "    Always follow the product label and check Cornell NEWA and a licensed advisor.",
+      "  \u2022 Questions, or a sensor acting up? Just reply to this email.",
+      "",
+      `To confirm this email address, enter this code in the app: ${code}`,
+      "(Optional, expires in 24 hours \u2014 you can use the app without it.)",
+      "",
+      "Happy growing,",
+      `The ${appName} team`,
     ].join("\n"),
     logger,
   });

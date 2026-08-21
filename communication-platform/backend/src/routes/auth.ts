@@ -6,7 +6,7 @@ import { hash, compare } from "bcryptjs";
 import { badRequest } from "../lib/badRequest.js";
 import { generateShortCode, hashSecret, normalizeShortCode } from "../lib/accessCode.js";
 import { checkRateLimit, clientBucket } from "../lib/rateLimit.js";
-import { sendEmailVerificationEmail, sendPasswordResetEmail } from "../services/mailService.js";
+import { sendEmailVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../services/mailService.js";
 import { bootstrapAdminEmails } from "../auth/requireAdmin.js";
 
 function extractBearerToken(authHeader?: string): string | null {
@@ -237,7 +237,7 @@ export async function authRoutes(app: FastifyInstance, db: Pool) {
     // should not be blocked from seeing their sensors because an email is slow. It gates nothing
     // today beyond marking the address confirmed.
     const code = await issueVerificationCode(db, id, email);
-    await sendEmailVerificationEmail(email, code, app.log);
+    await sendWelcomeEmail(email, displayName, code, app.log);
 
     const isAdmin = await applyAdminBootstrap(db, id, email, false);
     const { token, expiresAt } = await issueSession(db, id);
