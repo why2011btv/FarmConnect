@@ -2,11 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  Push notifications. Actually used: PushNotificationManager registers a device
+	  token and the backend delivers via APNs.
+
+	  Deliberately NOT requested here:
+
+	    com.apple.developer.usernotifications.communication
+	    com.apple.developer.usernotifications.time-sensitive
+
+	  Both are restricted entitlements that must be enabled on the App ID before a
+	  build can be signed for the App Store; requesting one that is not enabled fails
+	  provisioning during "Prepare Build for App Store Connect". Neither was used by
+	  any code -- no INSendMessageIntent, no interruptionLevel, no Intents import --
+	  so they bought nothing and could only break signing. Re-add only alongside the
+	  code that needs them, and enable the matching capability first.
+	-->
 	<key>aps-environment</key>
 	<string>production</string>
-	<key>com.apple.developer.usernotifications.communication</key>
-	<true/>
-	<key>com.apple.developer.usernotifications.time-sensitive</key>
-	<true/>
 </dict>
 </plist>
