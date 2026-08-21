@@ -189,6 +189,15 @@ final class APIClient {
         try await sendJSONNoContent(path: "/v1/devices/locations", method: "POST", payload: payload)
     }
 
+    /// Validated grape disease infection-condition estimates for the vineyard at (lat,lng). Decision
+    /// support for scouting — the response carries a "not a spray recommendation" disclaimer.
+    func getDiseaseRisk(lat: Double, lng: Double, bloomDate: String?, shootCm: Int?) async throws -> DiseaseAssessment {
+        var path = "/v1/vineyard/disease-risk?lat=\(lat)&lng=\(lng)"
+        if let bloomDate { path += "&bloomDate=\(bloomDate)" }
+        if let shootCm { path += "&shootCm=\(shootCm)" }
+        return try await getDecoded(path, as: DiseaseAssessment.self)
+    }
+
     // MARK: - Admin (staff only)
     //
     // These endpoints answer 404 for non-staff, so the admin surface is invisible rather than

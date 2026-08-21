@@ -217,6 +217,35 @@ struct UserProfile: Codable, Identifiable {
     }
 }
 
+// MARK: - Disease risk (validated models)
+
+struct PhenologyContext: Codable {
+    let hasBloomDate: Bool
+    let weeksSinceBloom: Double?
+    let stage: String
+    let inCriticalWindow: Bool
+    let fruitSusceptibleBlackRot: Bool
+    let inPhomopsisWindow: Bool
+    let note: String
+}
+
+struct DiseaseRisk: Codable, Identifiable {
+    let key: String
+    let name: String
+    let level: String   // "low" | "moderate" | "high" | "not-applicable"
+    let headline: String
+    let detail: String
+    var id: String { key }
+}
+
+struct DiseaseAssessment: Codable {
+    let updatedAt: Double
+    let gddBase50FromApr1: Int
+    let phenology: PhenologyContext
+    let diseases: [DiseaseRisk]
+    let disclaimer: String
+}
+
 // MARK: - Admin (staff only)
 
 struct AdminFarmSummary: Codable, Identifiable {

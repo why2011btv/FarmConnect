@@ -30,29 +30,37 @@ enum VineyardCanopyAnalytics {
         let variety = block.grapeVariety
         var items: [VineyardBlockInsight] = []
 
+        // Block-level microclimate context only. Disease infection risk is now computed from the
+        // validated models in the "Disease risk" view (Spotts/Gubler-Thomas/Erincik/DMCast), not the
+        // earlier invented indices.
         items.append(
             VineyardBlockInsight(
                 id: "\(block.id)-metrics",
-                title: "Canopy metrics",
-                message: "GDD (base 50°F, daily proxy): \(Int(analytics.gddBase50F)). VPD: \(String(format: "%.2f", analytics.vpdKPa)) kPa.",
+                title: "Canopy conditions",
+                message: "Vapor-pressure deficit: \(String(format: "%.2f", analytics.vpdKPa)) kPa — a measure of how drying the air is at the canopy.",
                 severity: "low"
             )
         )
-
-        items.append(combinedMildewInsight(block: block, analytics: analytics, variety: variety))
 
         if variety != .notSpecified {
             items.append(
                 VineyardBlockInsight(
                     id: "\(block.id)-variety",
                     title: "\(variety.displayName)",
-                    message: varietyContextMessage(variety: variety, powdery: analytics.powderyMildewIndex, downy: analytics.downyMildewIndex),
+                    message: "\(variety.displayName) is on file for variety-aware notes.",
                     severity: "low"
                 )
             )
         }
 
-        items.append(actionInsight(block: block, analytics: analytics, variety: variety))
+        items.append(
+            VineyardBlockInsight(
+                id: "\(block.id)-disease-pointer",
+                title: "Disease infection risk",
+                message: "See “Disease risk” for validated, weather-based infection-condition estimates (black rot, Phomopsis, powdery, downy). Scouting decision support — not a spray recommendation.",
+                severity: "low"
+            )
+        )
         return items
     }
 
@@ -147,85 +155,7 @@ enum VineyardCanopyAnalytics {
         }
     }
 
-    private static func combinedMildewInsight(
-        block: VineyardDemoBlock,
-        analytics: VineyardCanopyAnalyticsSummary,
-        variety: GrapeVariety
-    ) -> VineyardBlockInsight {
-        let powdery = Int(Double(analytics.powderyMildewIndex) * (0.85 + variety.powderySusceptibility * 0.15))
-        let downy = Int(Double(analytics.downyMildewIndex) * (0.85 + variety.downySusceptibility * 0.15))
-        let peak = max(powdery, downy)
-        let severity = peak >= 70 ? "high" : (peak >= 40 ? "medium" : "low")
 
-        let message: String
-        switch peak {
-        case 70...:
-            message = """
-            Powdery index \(powdery) (\(riskLabel(for: powdery))) and downy index \(downy) (\(riskLabel(for: downy))). \
-            Warm, humid, low-airflow conditions currently favor mildew. Prioritize scouting; refer to your fungicide \
-            program and the product label for timing and materials.
-            """
-        case 40..<70:
-            message = """
-            Powdery index \(powdery) and downy index \(downy) — moderate pressure. \
-            Watch overnight humidity and leaf wetness, and scout affected leaves.
-            """
-        default:
-            message = """
-            Powdery index \(powdery) and downy index \(downy) — low pressure for now. \
-            Current conditions are not highly favorable for new mildew infections.
-            """
-        }
 
-        // These indices are experimental risk estimates from current conditions, not a validated
-        // infection model, and not a spray recommendation. See the disclaimer note in each view.
-
-        return VineyardBlockInsight(
-            id: "\(block.id)-mildew",
-            title: "Mildew risk",
-            message: message,
-            severity: severity
-        )
-    }
-
-    private static func varietyContextMessage(variety: GrapeVariety, powdery: Int, downy: Int) -> String {
-        if powdery >= 60 || downy >= 60 {
-            return "\(variety.displayName) tends toward higher mildew sensitivity—weight scouting accordingly."
-        }
-        return "\(variety.displayName) is on file for variety-aware recommendations."
-    }
-
-    private static func actionInsight(
-        block: VineyardDemoBlock,
-        analytics: VineyardCanopyAnalyticsSummary,
-        variety: GrapeVariety
-    ) -> VineyardBlockInsight {
-        let risk = VineyardDemoData.riskLevel(from: analytics)
-        let varietyNote = variety == .notSpecified ? "" : " (\(variety.displayName).)"
-
-        // Report infection PRESSURE from current conditions and defer the spray/harvest DECISION to
-        // the grower's program, the product label (the legal authority on rate/REI/PHI), and their
-        // advisor. The app does not tell anyone to apply a pesticide.
-        let message: String
-        let severity: String
-        switch risk {
-        case .high:
-            message = "Conditions in \(block.name) currently favor infection.\(varietyNote) Prioritize scouting and review your fungicide program and the product label for timing and materials."
-            severity = "high"
-        case .moderate:
-            message = "Moderate infection pressure in \(block.name).\(varietyNote) Scout and watch overnight leaf wetness."
-            severity = "medium"
-        case .low:
-            message = "Low infection pressure in \(block.name) based on current readings.\(varietyNote) Keep scouting."
-            severity = "low"
-        }
-
-        return VineyardBlockInsight(
-            id: "\(block.id)-action",
-            title: "Infection pressure",
-            message: message,
-            severity: severity
-        )
-    }
 
 }

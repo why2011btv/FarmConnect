@@ -13,6 +13,7 @@ struct SensorDashboardView: View {
     @State private var showLayoutEditorSheet = false
     @State private var showGeneratorSheet = false
     @State private var showDevicePlacement = false
+    @State private var showDiseaseRisk = false
     /// True when the two-pane wide layout is active (kept in sync with the GeometryReader). The
     /// block-detail bottom sheet is a phone-only affordance, so it presents only when this is false.
     @State private var isWide = false
@@ -136,6 +137,11 @@ struct SensorDashboardView: View {
                     }
                 )
             }
+            .sheet(isPresented: $showDiseaseRisk) {
+                if let center = layoutStore.activeProfile?.center {
+                    DiseaseRiskView(latitude: center.latitude, longitude: center.longitude)
+                }
+            }
             .sheet(isPresented: $showDevicePlacement) {
                 DevicePlacementView(
                     layoutStore: layoutStore,
@@ -242,6 +248,16 @@ struct SensorDashboardView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 220)
+            }
+        }
+        if layoutStore.activeProfile?.center != nil {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showDiseaseRisk = true
+                } label: {
+                    Image(systemName: "leaf.arrow.triangle.circlepath")
+                }
+                .accessibilityLabel("Disease risk")
             }
         }
         ToolbarItem(placement: .topBarTrailing) {

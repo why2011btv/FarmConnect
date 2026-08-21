@@ -27,6 +27,7 @@
 		3A5FAD475A52D8BC8A86FD67 /* UserLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E037D2A141A178276DB57 /* UserLocationManager.swift */; };
 		3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0FCB47A55D55BBA048109 /* LoginView.swift */; };
 		3CBA481DE1662E4CA5E46E5C /* NewPostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759C077ED260960D2113749E /* NewPostView.swift */; };
+		3D7D0C52AD067EE09662DAB6 /* DiseaseRiskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E4CA2C633F739AFFF5F8E46 /* DiseaseRiskView.swift */; };
 		3E2814C2C5222AD70C152884 /* AdminFarmsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C445BF16DF03C1A6F06996AA /* AdminFarmsView.swift */; };
 		3E8FA09A79296FD488D8E734 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A3C11C905D8D879A6462C6 /* ChatView.swift */; };
 		42DD87C45272A5156B3AB1AD /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5E5F5604E738CC6CB68CE7 /* SessionStore.swift */; };
@@ -113,6 +114,7 @@
 		9169DF6659B988CAA8DE05D9 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		975BDBE5AE51AA576E6BFF44 /* VineyardDemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoData.swift; sourceTree = "<group>"; };
 		9B173F1AE704A9795074503E /* DevicePlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePlacementView.swift; sourceTree = "<group>"; };
+		9E4CA2C633F739AFFF5F8E46 /* DiseaseRiskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiseaseRiskView.swift; sourceTree = "<group>"; };
 		9ED6684CEB63217A5CD70268 /* FarmConnect.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FarmConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4EDCA8EDA3CAB96A48394E5 /* VineyardFieldLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardFieldLogStore.swift; sourceTree = "<group>"; };
 		A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePlacementMap.swift; sourceTree = "<group>"; };
@@ -273,6 +275,7 @@
 				156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */,
 				A6ECD34ED3D3C9C6018FE467 /* DevicePlacementMap.swift */,
 				9B173F1AE704A9795074503E /* DevicePlacementView.swift */,
+				9E4CA2C633F739AFFF5F8E46 /* DiseaseRiskView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
 				7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */,
 				FD9270A806E6D0EA8E76F7C5 /* VineyardBlockLayoutEditor.swift */,
@@ -476,6 +479,7 @@
 				5B38E3429F9B0CCA32DE4951 /* ChatViewModel.swift in Sources */,
 				AE0501CB60A6397771BED72F /* DevicePlacementMap.swift in Sources */,
 				7A539280076BAF8427ACAD06 /* DevicePlacementView.swift in Sources */,
+				3D7D0C52AD067EE09662DAB6 /* DiseaseRiskView.swift in Sources */,
 				E1C00A9B32119819F938D53F /* DomainModels.swift in Sources */,
 				9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */,
 				D4C2F86EAFEAA05A8E43F9DA /* FarmConnectApp.swift in Sources */,
