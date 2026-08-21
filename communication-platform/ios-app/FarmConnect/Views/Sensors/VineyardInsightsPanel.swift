@@ -35,6 +35,16 @@ struct VineyardInsightsPanel: View {
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }
+
+            // Standing, non-removable disclaimer. Infection pressure is not a spray recommendation.
+            Divider()
+            Text("Infection pressure is estimated from current conditions, not a validated disease model, and is not a spray recommendation. The product label is the legal authority on materials, rate, REI and PHI — follow it and consult Cornell NEWA and a licensed advisor.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemGroupedBackground))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(.systemGroupedBackground))

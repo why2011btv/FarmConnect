@@ -73,8 +73,13 @@ enum VineyardCanopyAnalytics {
             ),
             VineyardBlockInsight(
                 id: "g2",
-                title: "What to do this week",
-                message: regionalActionContext(peakRisk: high > 0 ? .high : (moderate > 0 ? .moderate : .low)) + " Tap a block for block-specific canopy data.",
+                title: "Where to focus",
+                message: (high > 0
+                    ? "\(high) block\(high == 1 ? "" : "s") show conditions that favor infection — scout those first and check your fungicide program and the product label."
+                    : (moderate > 0
+                        ? "Moderate pressure in some blocks — scout and watch overnight leaf wetness."
+                        : "Low infection pressure across blocks right now — keep scouting."))
+                    + " Tap a block for its readings.",
                 severity: high > 0 ? "high" : "medium"
             ),
             VineyardBlockInsight(
@@ -157,19 +162,23 @@ enum VineyardCanopyAnalytics {
         case 70...:
             message = """
             Powdery index \(powdery) (\(riskLabel(for: powdery))) and downy index \(downy) (\(riskLabel(for: downy))). \
-            Canopy is warm and humid with limited airflow—scout leaves and plan a protectant spray if forecast stays damp.
+            Warm, humid, low-airflow conditions currently favor mildew. Prioritize scouting; refer to your fungicide \
+            program and the product label for timing and materials.
             """
         case 40..<70:
             message = """
-            Powdery index \(powdery) and downy index \(downy)—moderate pressure. \
-            Watch overnight humidity and leaf wetness; spray only if wet weather is expected.
+            Powdery index \(powdery) and downy index \(downy) — moderate pressure. \
+            Watch overnight humidity and leaf wetness, and scout affected leaves.
             """
         default:
             message = """
-            Powdery index \(powdery) and downy index \(downy)—low pressure for now. \
-            Conditions are not highly favorable for new mildew infections.
+            Powdery index \(powdery) and downy index \(downy) — low pressure for now. \
+            Current conditions are not highly favorable for new mildew infections.
             """
         }
+
+        // These indices are experimental risk estimates from current conditions, not a validated
+        // infection model, and not a spray recommendation. See the disclaimer note in each view.
 
         return VineyardBlockInsight(
             id: "\(block.id)-mildew",
@@ -192,40 +201,31 @@ enum VineyardCanopyAnalytics {
         variety: GrapeVariety
     ) -> VineyardBlockInsight {
         let risk = VineyardDemoData.riskLevel(from: analytics)
-        let weatherNote = regionalActionContext(peakRisk: risk)
-        let varietyNote = variety == .notSpecified ? "" : " (\(variety.displayName) block.)"
+        let varietyNote = variety == .notSpecified ? "" : " (\(variety.displayName).)"
 
+        // Report infection PRESSURE from current conditions and defer the spray/harvest DECISION to
+        // the grower's program, the product label (the legal authority on rate/REI/PHI), and their
+        // advisor. The app does not tell anyone to apply a pesticide.
         let message: String
         let severity: String
         switch risk {
         case .high:
-            message = "Apply fungicide in \(block.name) when wind is below 10 mph and before the next rain.\(varietyNote) \(weatherNote)"
+            message = "Conditions in \(block.name) currently favor infection.\(varietyNote) Prioritize scouting and review your fungicide program and the product label for timing and materials."
             severity = "high"
         case .moderate:
-            message = "Routine scouting in \(block.name); hold spray unless rain and humid nights continue.\(varietyNote) \(weatherNote)"
+            message = "Moderate infection pressure in \(block.name).\(varietyNote) Scout and watch overnight leaf wetness."
             severity = "medium"
         case .low:
-            message = "No spray needed in \(block.name) based on current canopy readings; keep monitoring.\(varietyNote) \(weatherNote)"
+            message = "Low infection pressure in \(block.name) based on current readings.\(varietyNote) Keep scouting."
             severity = "low"
         }
 
         return VineyardBlockInsight(
             id: "\(block.id)-action",
-            title: "Recommended action",
+            title: "Infection pressure",
             message: message,
             severity: severity
         )
     }
 
-    /// Demo regional context (South Coast MA)—action only, no forecast UI.
-    private static func regionalActionContext(peakRisk: VineyardRiskLevel) -> String {
-        switch peakRisk {
-        case .high:
-            return "Outlook: humid nights and a chance of light rain in the next 48 h favor downy mildew in wet blocks—treat before weather closes spray windows."
-        case .moderate:
-            return "Outlook: a few mild, humid nights ahead; delay irrigation late in the day to limit leaf wetness."
-        case .low:
-            return "Outlook: drier, breezier pattern expected—favorable for holding off fungicide unless forecast changes."
-        }
-    }
 }

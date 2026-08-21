@@ -19,29 +19,19 @@ enum VineyardDemoData {
         rect("b8", 41.68020999999992, -71.00044999999987, halfLat: 0.0004299999999999998, halfLng: 0.0005049999999999999, rotation: 0),
     ]
 
+    // Shown only as a fallback when there are no blocks yet. Deliberately generic — no invented
+    // per-block risk or spray prescriptions (those would be fabricated agronomy).
     static let generalInsights: [VineyardBlockInsight] = [
         insight(
             "g1",
-            "Vineyard-wide disease outlook",
-            "5 of 8 canopy blocks are in the low-risk band; Blocks 4 and 6 are moderate. Block 3 is high—prioritize scouting and spray timing there.",
-            "high"
-        ),
-        insight(
-            "g2",
-            "Spraying and harvesting",
-            "A protectant fungicide application is recommended in high-risk blocks within 48 hours if conditions remain humid. Harvest timing is not constrained by current heat or moisture stress.",
-            "medium"
-        ),
-        insight(
-            "g3",
-            "Weather pattern",
-            "Recent light rainfall increased canopy moisture in Block 3. Blocks with good air drainage and lower humidity (1, 2, 5, 7, 8) remain in the low-risk zone.",
+            "Set up your blocks",
+            "Add your vineyard map to see per-block microclimate readings and condition-based infection pressure. Tap a block for its data.",
             "low"
         ),
         insight(
-            "g4",
-            "Sensor network status",
-            "All 8 canopy nodes are reporting. Tap a block on the map to view block-level microclimate readings and tailored recommendations.",
+            "g2",
+            "How to read this",
+            "Infection-pressure estimates come from current conditions, not a validated disease model, and are not a spray recommendation. For spray, product, rate, REI, or PHI decisions, follow the product label and your extension guidelines (e.g. Cornell NEWA).",
             "low"
         ),
     ]

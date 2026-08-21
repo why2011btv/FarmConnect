@@ -54,7 +54,7 @@ struct SensorNodeListView: View {
             }
 
             if !insights.isEmpty {
-                Section("Insights") {
+                Section {
                     ForEach(insights) { insight in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
@@ -69,6 +69,10 @@ struct SensorNodeListView: View {
                         }
                         .padding(.vertical, 2)
                     }
+                } header: {
+                    Text("Insights")
+                } footer: {
+                    Text("Estimated from current conditions — not a validated disease model, and not a spray recommendation. Follow the product label and consult Cornell NEWA and a licensed advisor.")
                 }
             }
 

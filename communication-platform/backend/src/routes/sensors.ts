@@ -69,41 +69,13 @@ function buildInsights(items: SensorDeviceOverview[]): SensorInsight[] {
       });
     }
 
-    const temp = readingMap.get("temperature");
-    if (temp && temp.value >= 30) {
-      insights.push({
-        id: `temp_${device.id}`,
-        title: `Heat stress risk at ${device.name}`,
-        message: `Temperature is ${temp.value.toFixed(1)}${temp.unit}. Consider irrigation timing or shading.`,
-        severity: temp.value >= 34 ? "high" : "medium",
-        deviceId: device.id,
-        createdAt: now,
-      });
-    }
-
-    const moisture = readingMap.get("soil_moisture");
-    if (moisture && moisture.value < 30) {
-      insights.push({
-        id: `soil_${device.id}`,
-        title: `Low soil moisture at ${device.name}`,
-        message: `Soil moisture is ${moisture.value.toFixed(1)}${moisture.unit}. Irrigation is recommended soon.`,
-        severity: moisture.value < 20 ? "high" : "medium",
-        deviceId: device.id,
-        createdAt: now,
-      });
-    }
-
-    const humidity = readingMap.get("humidity");
-    if (humidity && humidity.value < 40) {
-      insights.push({
-        id: `humidity_${device.id}`,
-        title: `Low humidity at ${device.name}`,
-        message: `Humidity is ${humidity.value.toFixed(1)}${humidity.unit}. Monitor disease and transpiration risk.`,
-        severity: "low",
-        deviceId: device.id,
-        createdAt: now,
-      });
-    }
+    // NOTE: previously this emitted agronomic prescriptions from single-threshold rules —
+    // "temp>=30C -> irrigate", "humidity<40% -> monitor disease", "soil<30% -> irrigate".
+    // Those are unsound for the humid, largely dry-farmed Northeast/Mid-Atlantic (30C is not heat
+    // stress here; LOW humidity LOWERS fungal risk; prescribing irrigation off air temp adds vigor
+    // and disease). They were removed pending validated, phenology-aware models. This endpoint now
+    // reports only operational device status; disease pressure is shown per block in the app with a
+    // clear "not a spray recommendation" disclaimer.
   }
 
   if (insights.length === 0 && items.length > 0) {
