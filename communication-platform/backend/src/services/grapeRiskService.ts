@@ -18,6 +18,7 @@ import {
   botrytisRisk,
 } from "./grapeDiseaseModels.js";
 import { phenologyContext, PhenologyContext } from "./grapePhenology.js";
+import { actionsFor, DiseaseAction } from "./grapeActions.js";
 
 export type RiskLevel = "low" | "moderate" | "high" | "not-applicable";
 
@@ -27,6 +28,7 @@ export type DiseaseRisk = {
   level: RiskLevel;
   headline: string;
   detail: string;
+  actions: DiseaseAction[];
 };
 
 export type DiseaseAssessment = {
@@ -99,7 +101,7 @@ export function assessFromWeather(
     return d < 1 ? "in the last day" : `${Math.round(d)} day${Math.round(d) === 1 ? "" : "s"} ago`;
   };
 
-  const diseases: DiseaseRisk[] = [];
+  const diseases: Omit<DiseaseRisk, "actions">[] = [];
 
   // --- Black rot ---
   {
@@ -238,11 +240,16 @@ export function assessFromWeather(
     });
   }
 
+  const diseasesWithActions: DiseaseRisk[] = diseases.map((d) => ({
+    ...d,
+    actions: actionsFor(d.key, d.level, { inCriticalWindow: phenology.inCriticalWindow }),
+  }));
+
   return {
     updatedAt: now.getTime(),
     gddBase50FromApr1: Math.round(gddBase50),
     phenology,
-    diseases,
+    diseases: diseasesWithActions,
     disclaimer: DISCLAIMER,
   };
 }

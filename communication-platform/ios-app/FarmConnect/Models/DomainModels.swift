@@ -243,12 +243,20 @@ struct PhenologyContext: Codable {
     let note: String
 }
 
+struct DiseaseAction: Codable, Identifiable {
+    let category: String   // "scout" | "cultural" | "protect"
+    let action: String
+    let reason: String
+    var id: String { category + action }
+}
+
 struct DiseaseRisk: Codable, Identifiable {
     let key: String
     let name: String
     let level: String   // "low" | "moderate" | "high" | "not-applicable"
     let headline: String
     let detail: String
+    let actions: [DiseaseAction]?
     var id: String { key }
 }
 
