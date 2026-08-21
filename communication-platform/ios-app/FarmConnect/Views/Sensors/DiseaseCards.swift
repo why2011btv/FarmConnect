@@ -58,19 +58,18 @@ struct DiseaseCard: View {
 
             if let actions = disease.actions, !actions.isEmpty {
                 Divider().padding(.vertical, 2)
-                Text("What to do").font(.caption.weight(.semibold))
                 ForEach(actions) { act in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Image(systemName: diseaseActionIcon(act.category))
                             .font(.caption)
                             .foregroundStyle(diseaseActionColor(act.category))
                             .frame(width: 16)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(act.action).font(.caption)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Text(act.reason).font(.caption2).foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        // Action, then a short reason in-line (only when there is one).
+                        (Text(act.action).font(.caption)
+                            + (act.reason.isEmpty
+                                ? Text("")
+                                : Text("  \(act.reason)").font(.caption2).foregroundColor(.secondary)))
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }

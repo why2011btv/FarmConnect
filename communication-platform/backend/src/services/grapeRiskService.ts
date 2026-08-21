@@ -115,7 +115,7 @@ export function assessFromWeather(
         name: "Black rot",
         level: "not-applicable",
         headline: "Past the fruit-susceptible window",
-        detail: "Berries are past the black-rot susceptible period (~6 weeks post-bloom). New fruit infection is unlikely.",
+        detail: "Fruit is past the stage black rot can infect.",
       });
     } else if (infections.length > 0) {
       const e = infections[infections.length - 1];
@@ -123,16 +123,16 @@ export function assessFromWeather(
         key: "black_rot",
         name: "Black rot",
         level: "high",
-        headline: `Infection conditions met ${daysAgoLabel(e)}`,
-        detail: `A wetting period of ${e.hours}h near ${Math.round(e.meanTempF)}°F met the Spotts infection threshold. Scout susceptible tissue; refer to your program and the label.`,
+        headline: `Infection likely (${daysAgoLabel(e)})`,
+        detail: "Leaves stayed wet long and warm enough for black rot to infect.",
       });
     } else {
       diseases.push({
         key: "black_rot",
         name: "Black rot",
         level: recentEvents.some((e) => blackRotInfection(e).marginHours > -3) ? "moderate" : "low",
-        headline: "No infection period detected recently",
-        detail: "Recent wetting periods did not reach the Spotts temperature/duration threshold for black rot.",
+        headline: "No recent infection",
+        detail: "Recent wet spells were too short or cool to infect.",
       });
     }
   }
@@ -145,7 +145,7 @@ export function assessFromWeather(
         name: "Phomopsis",
         level: "not-applicable",
         headline: "Past the early-season window",
-        detail: "The critical Phomopsis window is bud break through pre-bloom; the primary spray target has passed.",
+        detail: "Past the early-season window when Phomopsis matters most.",
       });
     } else {
       const rainy = recentEvents.filter((e) => e.rainInch >= 0.04 && phomopsisInfection(e).infection);
@@ -155,16 +155,16 @@ export function assessFromWeather(
           key: "phomopsis",
           name: "Phomopsis",
           level: "high",
-          headline: `Rain-splash infection conditions ${daysAgoLabel(e)}`,
-          detail: `A rain event with ${e.hours}h wetness near ${Math.round(e.meanTempC)}°C met the Phomopsis threshold on new shoots.`,
+          headline: `Infection likely (${daysAgoLabel(e)})`,
+          detail: "A rain event was long and warm enough to infect new shoots.",
         });
       } else {
         diseases.push({
           key: "phomopsis",
           name: "Phomopsis",
           level: "low",
-          headline: "No qualifying rain-splash event",
-          detail: "No recent rain event met the Phomopsis wetness/temperature threshold.",
+          headline: "No recent infection",
+          detail: "No recent rain event long enough to infect.",
         });
       }
     }
@@ -180,8 +180,8 @@ export function assessFromWeather(
       level,
       headline: `Risk index ${pm.index}/100 (${levelToWord(level)})`,
       detail: pm.initiated
-        ? "Recent temperatures were in the 70–85°F band favorable to powdery mildew. Note: powdery is temperature-driven and NOT reduced by dryness."
-        : "Temperatures have not yet sustained the consecutive favorable days that start the powdery-mildew index. (Recent-window estimate.)",
+        ? "Warm days (70–85°F) favor powdery mildew. Dry weather does not slow it."
+        : "Not enough warm days yet to build powdery-mildew pressure.",
     });
   }
 
@@ -209,16 +209,16 @@ export function assessFromWeather(
         level: "high",
         headline: primary ? "Primary infection conditions (10-10-24)" : "Secondary infection conditions",
         detail: primary
-          ? `~${last48mm.toFixed(0)}mm rain over 48h with temperature ≥10°C on ≥10cm shoots — favorable for primary downy infection.`
-          : "A qualifying leaf-wetness period followed a humid, dark night favorable for sporulation.",
+          ? "Enough rain and warmth recently for downy to infect."
+          : "Wet leaves after a humid night let downy infect.",
       });
     } else {
       diseases.push({
         key: "downy_mildew",
         name: "Downy mildew",
         level: last48mm >= 5 ? "moderate" : "low",
-        headline: "No infection period detected recently",
-        detail: "Recent rain/leaf-wetness and night humidity did not meet the downy infection thresholds.",
+        headline: "No recent infection",
+        detail: "Not wet enough recently for downy to infect.",
       });
     }
   }
@@ -238,8 +238,8 @@ export function assessFromWeather(
       level: lateSeason ? level : "not-applicable",
       headline: lateSeason ? `${levelToWord(level)} — prolonged berry wetness` : "Most relevant from veraison to harvest",
       detail: lateSeason
-        ? "Extended wetness at 15–25°C on ripening fruit favors Botrytis and sour rot; tight/split clusters and wounds raise risk."
-        : "Botrytis and sour rot matter mainly on ripening fruit; watch this from veraison onward.",
+        ? "Long wetness on ripening fruit favors bunch rot; tight or split clusters raise the risk."
+        : "Matters mainly on ripening fruit, closer to harvest.",
     });
   }
 

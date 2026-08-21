@@ -32,7 +32,7 @@ export function phenologyContext(now: Date, bloomDateIso?: string | null): Pheno
       inCriticalWindow: false,
       fruitSusceptibleBlackRot: true, // unknown -> do not falsely reassure; treat fruit as susceptible
       inPhomopsisWindow: true,
-      note: "Set your bloom date for stage-aware timing. Until then, treat clusters as susceptible and protect on your normal schedule.",
+      note: "Set your bloom date to tune timing. Until then, treat fruit as vulnerable.",
     };
   }
 
@@ -53,14 +53,14 @@ export function phenologyContext(now: Date, bloomDateIso?: string | null): Pheno
 
   const note =
     stage === "pre-bloom"
-      ? "Pre-bloom: Phomopsis risk on new shoots; the pre-bloom-to-post-bloom critical window is beginning."
+      ? "Pre-bloom — the high-risk stretch is starting."
       : stage === "bloom"
-      ? "Bloom: the start of the critical window — clusters are highly susceptible; protect on schedule."
+      ? "Bloom — clusters are most vulnerable now."
       : stage === "critical-window"
-      ? `~${weeks.toFixed(1)} weeks post-bloom: critical window. Clusters remain highly susceptible to black rot, powdery and downy; keep protected on schedule.`
+      ? `${weeks.toFixed(0)} weeks after bloom — still the high-risk stretch.`
       : stage === "post-critical"
-      ? `~${weeks.toFixed(1)} weeks post-bloom: berries are gaining ontogenic resistance; fruit infection risk declines.`
-      : `~${weeks.toFixed(1)} weeks post-bloom: fruit largely resistant; watch Botrytis/sour rot from veraison to harvest.`;
+      ? `${weeks.toFixed(0)} weeks after bloom — fruit is toughening up; risk easing.`
+      : `${weeks.toFixed(0)} weeks after bloom — watch for bunch rot as fruit ripens.`;
 
   return {
     hasBloomDate: true,
