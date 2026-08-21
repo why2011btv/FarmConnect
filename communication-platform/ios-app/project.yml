@@ -25,8 +25,10 @@ targets:
         # Do not write "$(CI_BUILD_NUMBER)" here: build settings only expand variables
         # Xcode defines, so the literal text would land in CFBundleVersion.
         #
-        # 86 was consumed by a failed run; 100 clears it with room to spare.
-        CURRENT_PROJECT_VERSION: "100"
+        # Kept in step with the Xcode Cloud run counter: run 88 was the last failure,
+        # so the next run is 89. From here ci_post_clone.sh keeps it in sync, since
+        # the run number will always be >= this value.
+        CURRENT_PROJECT_VERSION: "89"
         # Required for App Store Connect: identifies the signing team. Xcode wrote this
         # into the project directly, so it was lost the first time the project was
         # regenerated from this spec.
