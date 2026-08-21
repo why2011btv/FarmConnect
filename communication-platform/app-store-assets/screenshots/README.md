@@ -1,13 +1,11 @@
-# App Store screenshots — iPhone 6.9" (1320×2868)
+# App Store screenshots
 
-Captured on iPhone 17 Pro Max simulator against the production backend,
-signed in as the demo review account. Upload in this order to App Store
-Connect (6.9" Display set; the 6.9" set also covers 6.5"):
+Real app screens (not mockups), captured on simulator against production, clean
+status bar (9:41). Two size sets are provided — upload the one whose dimensions
+App Store Connect accepts for the slot you're filling:
 
-1. `01-signin.png`        — Sign in to your vineyard dashboard
-2. `02-sensors.png`       — Live sensor nodes + latest readings
-3. `03-map.png`           — Vineyard map with per-block risk
-4. `04-disease-risk.png`  — Validated disease-risk estimates with plain actions
+- `1320x2868/` — 6.9" display (iPhone 16/17 Pro Max). Use in the 6.9" slot.
+- `1284x2778/` — 6.7"/6.5" display. Use if the upload rejects 1320×2868 and asks
+  for 1242×2688 or 1284×2778. (Uniform downscale of the 6.9" set; no distortion.)
 
-Status bar is clean (9:41, full battery/signal). These are real app screens,
-not mockups.
+Order in both: 01 sign-in · 02 live sensors · 03 vineyard map · 04 disease risk.
