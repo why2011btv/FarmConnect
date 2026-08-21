@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SensorDashboardView: View {
     @EnvironmentObject private var sensorViewModel: SensorViewModel
+    @EnvironmentObject private var session: SessionStore
 
     @StateObject private var layoutStore = VineyardBlockLayoutStore()
     @StateObject private var weatherViewModel = BlockWeatherViewModel()
@@ -17,12 +18,26 @@ struct SensorDashboardView: View {
 
     private var mode: LayoutMode { layoutStore.mode }
 
+    /// The customer has redeemed a code but not drawn their vineyard. Their sensors still have to
+    /// be visible, so we show a list instead of an empty map.
+    private var needsVineyardSetup: Bool {
+        mode == .planning && layoutStore.rectangles.isEmpty
+    }
+
+    private var nodeList: some View {
+        SensorNodeListView(
+            devices: sensorViewModel.devices,
+            insights: sensorViewModel.insights,
+            isLoading: sensorViewModel.isLoading,
+            onSetUpVineyard: { showGeneratorSheet = true }
+        )
+    }
+
     private var blocks: [VineyardDemoBlock] {
         BlockReadingsComposer.compose(
             blocks: layoutStore.blocks,
             weatherByBlockId: weatherViewModel.readingsByBlockId,
-            devices: sensorViewModel.devices,
-            includeSensorMapping: mode == .demo
+            devices: sensorViewModel.devices
         )
     }
 
@@ -91,6 +106,13 @@ struct SensorDashboardView: View {
             .toolbar { dashboardToolbar }
             .task(id: cameraKey) {
                 await reloadDashboard()
+            }
+            .task(id: session.isAdmin) {
+                // An older build could have persisted .demo. Customers are moved back to their
+                // own vineyard; only staff may sit in the sample layout.
+                if !session.isAdmin, layoutStore.mode == .demo {
+                    layoutStore.setMode(.planning)
+                }
             }
             .refreshable {
                 weatherViewModel.invalidate()
@@ -198,14 +220,18 @@ struct SensorDashboardView: View {
         ToolbarItem(placement: .topBarLeading) {
             AccountMenuButton()
         }
-        ToolbarItem(placement: .principal) {
-            Picker("Mode", selection: modeBinding) {
-                ForEach(LayoutMode.allCases) { m in
-                    Text(m.title).tag(m)
+        // The sample layout is a sales tool. Customers get one view -- their own vineyard --
+        // so the picker only exists for staff.
+        if session.isAdmin {
+            ToolbarItem(placement: .principal) {
+                Picker("Mode", selection: modeBinding) {
+                    ForEach(LayoutMode.allCases) { m in
+                        Text(m.title).tag(m)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 220)
             }
-            .pickerStyle(.segmented)
-            .frame(maxWidth: 220)
         }
         ToolbarItem(placement: .topBarTrailing) {
             trailingMenu
@@ -228,7 +254,7 @@ struct SensorDashboardView: View {
                     Label(isEditingLayout ? "Done editing" : "Edit blocks", systemImage: "slider.horizontal.3")
                 }
                 .disabled(layoutStore.rectangles.isEmpty)
-                if !layoutStore.rectangles.isEmpty {
+                if !layoutStore.rectangles.isEmpty, session.isAdmin {
                     Button {
                         layoutStore.promoteActiveLayoutToDemo()
                         layoutStore.setMode(.demo)
@@ -308,16 +334,12 @@ struct SensorDashboardView: View {
             parcels: planningParcels
         )
         .overlay(alignment: .top) { modeBanner }
-        .overlay { emptyPlanningOverlay }
     }
 
     @ViewBuilder
     private var modeBanner: some View {
-        if mode == .planning {
-            let name = layoutStore.activeProfile?.name
-            let label = name.map { "PLANNING · internal · \($0) · \(blocks.count) blocks" }
-                ?? "PLANNING · internal"
-            Text(label)
+        if mode == .demo, session.isAdmin {
+            Text("DEMO · sample vineyard · not your data")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.black)
                 .padding(.horizontal, 12)
@@ -327,35 +349,18 @@ struct SensorDashboardView: View {
         }
     }
 
+    // MARK: - iPad landscape / wide
+
     @ViewBuilder
-    private var emptyPlanningOverlay: some View {
-        if mode == .planning, layoutStore.rectangles.isEmpty {
-            VStack(spacing: 10) {
-                Image(systemName: "plus.viewfinder")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.secondary)
-                Text("No planning layout yet")
-                    .font(.headline)
-                Text("Tap the menu and choose “New vineyard” to auto-arrange sensor blocks.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button {
-                    showGeneratorSheet = true
-                } label: {
-                    Label("New vineyard", systemImage: "plus")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding(24)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .padding()
+    private var wideLayout: some View {
+        if needsVineyardSetup {
+            nodeList
+        } else {
+            wideMapLayout
         }
     }
 
-    // MARK: - iPad landscape / wide
-
-    private var wideLayout: some View {
+    private var wideMapLayout: some View {
         HStack(spacing: 0) {
             mapView()
                 .frame(maxWidth: .infinity)
@@ -406,9 +411,14 @@ struct SensorDashboardView: View {
     // MARK: - iPhone / portrait
 
     // Full-screen map; tapping a block raises the detail bottom sheet (see blockDetailSheet).
+    @ViewBuilder
     private var phoneLayout: some View {
-        mapView()
-            .ignoresSafeArea(.container, edges: .bottom)
+        if needsVineyardSetup {
+            nodeList
+        } else {
+            mapView()
+                .ignoresSafeArea(.container, edges: .bottom)
+        }
     }
 }
 

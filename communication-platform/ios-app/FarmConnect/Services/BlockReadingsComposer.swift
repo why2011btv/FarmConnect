@@ -35,13 +35,34 @@ struct CanopyReadingSources: Equatable {
 }
 
 enum BlockReadingsComposer {
+    /// Merges weather and live sensor readings into each block.
+    ///
+    /// Devices attach to blocks by position (node A3 -> third block), so this works identically on
+    /// the bundled sample layout and on a layout generated for a customer's own vineyard.
     static func compose(
         blocks: [VineyardDemoBlock],
         weatherByBlockId: [String: VineyardCanopyReading],
-        devices: [SensorDeviceOverview],
-        includeSensorMapping: Bool
+        devices: [SensorDeviceOverview]
     ) -> [VineyardDemoBlock] {
-        blocks.map { block in
+        // Resolve one device per position up front, preferring a PB Node A# over a legacy
+        // lora/pi node when both claim the same slot.
+        var deviceByIndex: [Int: SensorDeviceOverview] = [:]
+        for device in devices {
+            guard let index = SensorBlockMapping.nodeIndex(for: device) else { continue }
+            if let existing = deviceByIndex[index],
+               SensorBlockMapping.extractSeriesANumber(from: existing.id.lowercased()) != nil
+                || SensorBlockMapping.extractSeriesANumber(from: existing.name.lowercased()) != nil {
+                continue
+            }
+            deviceByIndex[index] = device
+        }
+
+        // Blocks past the highest node we know about were never instrumented, so they get no
+        // sensor row at all rather than a misleading "offline" placeholder.
+        let instrumentedCount = deviceByIndex.keys.max() ?? 0
+
+        return blocks.enumerated().map { offset, block in
+            let position = offset + 1
             let baseReading = weatherByBlockId[block.id] ?? block.readings
             var sources = weatherByBlockId[block.id] != nil
                 ? CanopyReadingSources(all: .weather)
@@ -51,36 +72,24 @@ enum BlockReadingsComposer {
             var liveSensor: BlockLiveSensorData?
             var sensorConnection: BlockSensorConnection?
 
-            if includeSensorMapping, SensorBlockMapping.assignedSensorBlockIds.contains(block.id) {
-                let deviceByBlockId = devices.reduce(into: [String: SensorDeviceOverview]()) { result, device in
-                    guard let blockId = SensorBlockMapping.blockId(for: device) else { return }
-                    // Prefer PB Node A# over legacy lora/pi nodes when both map to the same block.
-                    if let existing = result[blockId],
-                       SensorBlockMapping.extractSeriesANumber(from: existing.id.lowercased()) != nil
-                        || SensorBlockMapping.extractSeriesANumber(from: existing.name.lowercased()) != nil {
-                        return
-                    }
-                    result[blockId] = device
+            if let device = deviceByIndex[position] {
+                sensorConnection = BlockSensorConnection(
+                    deviceName: device.name,
+                    isOnline: device.status.lowercased() == "online"
+                )
+                if let live = BlockLiveSensorData(device: device, maxAgeMs: SensorBlockMapping.maxAgeMs) {
+                    liveSensor = live
+                    reading = mergeSensor(live, into: reading)
+                    if live.temperatureC != nil { sources.set(.airTemperature, to: .sensor) }
+                    if live.humidityPct != nil { sources.set(.humidity, to: .sensor) }
+                    if live.soilMoisturePct != nil { sources.set(.soilMoisture, to: .sensor) }
                 }
-
-                if let device = deviceByBlockId[block.id] {
-                    sensorConnection = BlockSensorConnection(
-                        deviceName: device.name,
-                        isOnline: device.status.lowercased() == "online"
-                    )
-                    if let live = BlockLiveSensorData(device: device, maxAgeMs: SensorBlockMapping.maxAgeMs) {
-                        liveSensor = live
-                        reading = mergeSensor(live, into: reading)
-                        if live.temperatureC != nil { sources.set(.airTemperature, to: .sensor) }
-                        if live.humidityPct != nil { sources.set(.humidity, to: .sensor) }
-                        if live.soilMoisturePct != nil { sources.set(.soilMoisture, to: .sensor) }
-                    }
-                } else {
-                    sensorConnection = BlockSensorConnection(
-                        deviceName: SensorBlockMapping.placeholderDeviceName(for: block.id),
-                        isOnline: false
-                    )
-                }
+            } else if position <= instrumentedCount {
+                // A gap in the series: this block's node exists in the fleet but has not reported.
+                sensorConnection = BlockSensorConnection(
+                    deviceName: SensorBlockMapping.placeholderDeviceName(forIndex: position),
+                    isOnline: false
+                )
             }
 
             return rebuildBlock(

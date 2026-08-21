@@ -24,7 +24,9 @@ final class VineyardBlockLayoutStore: ObservableObject {
         let planningSlot = Self.loadSlot(forKey: Self.planningSlotKey) ?? .empty
 
         slots = LayoutSlots(demo: demoSlot, planning: planningSlot)
-        mode = Self.loadMode() ?? .demo
+        // Default to the customer's own vineyard. Defaulting to .demo meant a grower who
+        // signed up and redeemed a code landed on the bundled sample vineyard.
+        mode = Self.loadMode() ?? .planning
 
         // Persist the (possibly migrated) demo slot so future launches skip migration.
         persist(slot: slots.demo, forKey: Self.demoSlotKey)

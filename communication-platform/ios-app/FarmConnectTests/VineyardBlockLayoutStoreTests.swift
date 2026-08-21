@@ -35,10 +35,19 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         }
     }
 
-    func testFreshInstallShowsBundledSampleDemo() {
+    /// A fresh install now opens on the customer's own (empty) vineyard, not the sample one.
+    /// Defaulting to .demo meant a grower who redeemed an access code landed on somebody else's
+    /// vineyard, which is why the Sensors tab now starts empty and offers setup instead.
+    func testFreshInstallOpensOnCustomerVineyard() {
         let store = VineyardBlockLayoutStore()
-        XCTAssertEqual(store.mode, .demo)
-        // Bundled demo = 8 hand-tuned blocks b1..b8.
+        XCTAssertEqual(store.mode, .planning)
+        XCTAssertTrue(store.rectangles.isEmpty)
+    }
+
+    /// The sample layout still exists behind the staff-only mode switch.
+    func testBundledSampleLayoutRemainsAvailableToStaff() {
+        let store = VineyardBlockLayoutStore()
+        store.setMode(.demo)
         XCTAssertEqual(store.rectangles.count, VineyardDemoData.defaultRectangles.count)
         XCTAssertEqual(Set(store.rectangles.map(\.id)), Set(VineyardDemoData.defaultRectangles.map(\.id)))
     }
@@ -129,9 +138,11 @@ final class VineyardBlockLayoutStoreTests: XCTestCase {
         let data = try! JSONEncoder().encode(legacy)
         UserDefaults.standard.set(data, forKey: "vineyard.demo.block.rectangles.v1")
 
+        // The migrated layout still lands in the demo slot; the active mode is now the customer's
+        // own vineyard, so assert against the slot rather than the visible rectangles.
         let store = VineyardBlockLayoutStore()
-        XCTAssertEqual(store.mode, .demo)
-        XCTAssertEqual(store.rectangles.count, 8)
-        XCTAssertEqual(Set(store.rectangles.map(\.id)), Set(legacy.map(\.id)))
+        XCTAssertEqual(store.mode, .planning)
+        XCTAssertEqual(store.slots.demo.rectangles.count, 8)
+        XCTAssertEqual(Set(store.slots.demo.rectangles.map(\.id)), Set(legacy.map(\.id)))
     }
 }

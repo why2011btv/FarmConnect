@@ -3,8 +3,11 @@ import Foundation
 import MapKit
 
 /// Which layout the Sensors tab is showing.
-/// - `demo`: curated, farmer-facing layout (the hand-tuned sample blocks). Launch default.
-/// - `planning`: auto-arranged layout used internally to judge a proposed device deployment.
+/// - `myVineyard` (stored as "planning"): the customer's own vineyard. What everyone sees.
+/// - `demo`: the bundled sample layout, a sales tool. Staff-only -- customers never see the
+///   picker, because a paying grower opening the app to somebody else's vineyard is a bug.
+///
+/// The raw values are unchanged so layouts persisted by earlier builds still decode.
 enum LayoutMode: String, Codable, CaseIterable, Identifiable {
     case demo
     case planning
@@ -14,7 +17,7 @@ enum LayoutMode: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .demo: return "Demo"
-        case .planning: return "Planning"
+        case .planning: return "My Vineyard"
         }
     }
 }

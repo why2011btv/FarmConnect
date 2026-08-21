@@ -1,41 +1,47 @@
 import Foundation
 
-/// Maps live sensor devices from the API onto vineyard block ids (b1, b2, …).
+/// Maps live sensor devices onto vineyard blocks **by position**.
+///
+/// A node named "PB Node A3" drives the third block of whatever layout is showing. This is
+/// deliberately positional rather than keyed on block id: the bundled sample layout numbers its
+/// blocks `b1…b8`, while a layout generated for a real customer numbers them `gen-1…gen-N`. Keying
+/// on the id meant sensor data only ever appeared on the sample vineyard, which is exactly the
+/// wrong way round for a shipping product.
 enum SensorBlockMapping {
     static let maxAgeMs: Int64 = 7 * 24 * 60 * 60 * 1000
 
-    /// Demo blocks that can show a sensor online/offline indicator (the sample layout has 8 blocks).
-    static let assignedSensorBlockIds: Set<String> = [
-        "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8",
-    ]
+    /// Upper bound on the node suffix we will parse. Previously capped at 8 to match the sample
+    /// layout's block count, which silently dropped A9 and beyond.
+    static let maxNodeIndex = 64
 
     /// Legacy fallbacks when no PB Node A# device is present.
-    private static let legacyMatchers: [(blockId: String, patterns: [String])] = [
-        ("b1", ["node 0", "node-0", "lora-node-0"]),
-        ("b2", ["node 1", "node-1", "lora-node-1"]),
+    private static let legacyMatchers: [(index: Int, patterns: [String])] = [
+        (1, ["node 0", "node-0", "lora-node-0"]),
+        (2, ["node 1", "node-1", "lora-node-1"]),
     ]
 
-    static func blockId(for device: SensorDeviceOverview) -> String? {
+    /// 1-based position of the block this device belongs to, or nil if the name carries no index.
+    static func nodeIndex(for device: SensorDeviceOverview) -> Int? {
         let candidates = [device.id, device.name].map { $0.lowercased() }
 
-        // Prefer PB Node A1 / pb-node-A1 → b1, A2 → b2, …
+        // Prefer PB Node A1 / pb-node-A1 -> 1, A2 -> 2, ...
         for text in candidates {
             if let number = extractSeriesANumber(from: text) {
-                return "b\(number)"
+                return number
             }
         }
 
-        for (blockId, patterns) in legacyMatchers {
+        for (index, patterns) in legacyMatchers {
             for pattern in patterns {
                 if candidates.contains(where: { $0.contains(pattern) }) {
-                    return blockId
+                    return index
                 }
             }
         }
         return nil
     }
 
-    /// Parses `A1`, `a2`, `pb-node-A3`, `PB Node A4`, etc. into 1…8.
+    /// Parses `A1`, `a2`, `pb-node-A3`, `PB Node A4`, etc. into 1…`maxNodeIndex`.
     static func extractSeriesANumber(from text: String) -> Int? {
         let patterns = [
             #"pb[-_]?node[-_]?a(\d+)"#,
@@ -51,18 +57,16 @@ enum SensorBlockMapping {
                   match.numberOfRanges >= 2,
                   let numberRange = Range(match.range(at: 1), in: text),
                   let number = Int(text[numberRange]),
-                  (1...8).contains(number)
+                  (1...maxNodeIndex).contains(number)
             else { continue }
             return number
         }
         return nil
     }
 
-    static func placeholderDeviceName(for blockId: String) -> String {
-        if blockId.hasPrefix("b"), let n = Int(blockId.dropFirst()), (1...8).contains(n) {
-            return "PB Node A\(n)"
-        }
-        return "Sensor node"
+    /// Name shown for a block whose node is provisioned but has never reported.
+    static func placeholderDeviceName(forIndex index: Int) -> String {
+        "PB Node A\(index)"
     }
 }
 

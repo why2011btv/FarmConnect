@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0005409FA22CD0E7C64A113D /* VineyardBlockRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B373E8A9C17FB53E8936FB03 /* VineyardBlockRectangle.swift */; };
 		0170406A69BBF6924085EBEF /* VineyardLayoutGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E578EADFEA29270D08F9BB66 /* VineyardLayoutGenerator.swift */; };
+		01F92DB3CD0E887F5247515B /* SensorNodeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */; };
 		060BA3BE9647A87B8E03B93C /* AddEmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DD6E60F0405B9FD1FAA11BC /* AddEmailView.swift */; };
 		0A0EDB0C0F88807FAF16F95F /* AdminSecretsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E19BAD3F022BE0CD6873C1 /* AdminSecretsView.swift */; };
 		106FF522EFC1F38FC8EFBE4E /* MapFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9AD053305991A9390867F2 /* MapFeedView.swift */; };
@@ -100,6 +101,7 @@
 		6A888FAD16E4369D43BC994F /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
+		7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorNodeListView.swift; sourceTree = "<group>"; };
 		8758CBA4CE8A9DF73CC95EC6 /* VineyardDemoModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardDemoModels.swift; sourceTree = "<group>"; };
 		8A5E0C85EE3681BE0D115213 /* CategoryStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStyle.swift; sourceTree = "<group>"; };
 		8E09B7F9A122A4AFF86449C7 /* VineyardMapSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VineyardMapSnapshot.swift; sourceTree = "<group>"; };
@@ -263,6 +265,7 @@
 				3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */,
 				156FF6357AAEAAD96626D797 /* CanopySensorReadingsView.swift */,
 				C9D712060AB07E2C155FD87F /* SensorDashboardView.swift */,
+				7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */,
 				FD9270A806E6D0EA8E76F7C5 /* VineyardBlockLayoutEditor.swift */,
 				582569A960DC341DA72F14F7 /* VineyardGeneratorView.swift */,
 				EE68397FEE1340CAEEFAB904 /* VineyardHealthMapView.swift */,
@@ -480,6 +483,7 @@
 				EF834883A902B1EC0A89FABC /* RootTabView.swift in Sources */,
 				B94DF3BB36B56000056A9005 /* SensorBlockMapping.swift in Sources */,
 				739D028B6F301E0299BADBED /* SensorDashboardView.swift in Sources */,
+				01F92DB3CD0E887F5247515B /* SensorNodeListView.swift in Sources */,
 				E7292CC73D449EC8B24621AA /* SensorViewModel.swift in Sources */,
 				42DD87C45272A5156B3AB1AD /* SessionStore.swift in Sources */,
 				CD7A8B5227772E67A136599D /* TimeFormatting.swift in Sources */,
