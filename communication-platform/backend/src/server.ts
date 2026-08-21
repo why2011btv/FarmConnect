@@ -23,6 +23,7 @@ import { runSensorHealthCheck } from "./services/sensorHealthService.js";
 import { adminRoutes } from "./routes/admin.js";
 import { diseaseRiskRoutes } from "./routes/diseaseRisk.js";
 import { harvestRoutes } from "./routes/harvest.js";
+import { legalRoutes } from "./routes/legal.js";
 
 const app = Fastify({
   logger: true,
@@ -50,6 +51,7 @@ await app.register(fastifyStatic, {
 });
 
 app.get("/health", async () => ({ ok: true, service: "communication-backend" }));
+await legalRoutes(app);
 await authRoutes(app, pool);
 
 const postRepository = new PostRepository(pool);
