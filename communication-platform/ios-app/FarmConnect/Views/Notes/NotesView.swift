@@ -379,22 +379,49 @@ struct NotesView: View {
 
     // MARK: - Sensor readings for the selected day
 
-    private var readingsByDevice: [(device: String, rows: [SensorReadingRecord])] {
-        Dictionary(grouping: dayReadings) { $0.deviceName }
-            .map { (device: $0.key, rows: $0.value.sorted { $0.createdAt > $1.createdAt }) }
+    private struct NodeStat: Identifiable {
+        let type: String
+        let low: Double
+        let avg: Double
+        let high: Double
+        let unit: String
+        var id: String { type }
+    }
+
+    /// Per-node low/avg/high per sensor for the selected day (computed from the day's readings).
+    private var dayStats: [(device: String, sensors: [NodeStat])] {
+        let order = ["temperature", "humidity", "soil_moisture"]
+        return Dictionary(grouping: dayReadings) { $0.deviceName }
+            .map { device, rows -> (device: String, sensors: [NodeStat]) in
+                let sensors = Dictionary(grouping: rows) { $0.sensorType }
+                    .map { type, list -> NodeStat in
+                        let values = list.map { $0.value }
+                        let sum = values.reduce(0, +)
+                        return NodeStat(
+                            type: type,
+                            low: values.min() ?? 0,
+                            avg: values.isEmpty ? 0 : sum / Double(values.count),
+                            high: values.max() ?? 0,
+                            unit: list.first?.unit ?? ""
+                        )
+                    }
+                    .sorted { a, b in
+                        let ia = order.firstIndex(of: a.type) ?? Int.max
+                        let ib = order.firstIndex(of: b.type) ?? Int.max
+                        return ia != ib ? ia < ib : a.type < b.type
+                    }
+                return (device: device, sensors: sensors)
+            }
             .sorted { $0.device < $1.device }
     }
 
-    private func formattedReading(_ r: SensorReadingRecord) -> String {
-        let label = r.sensorType.replacingOccurrences(of: "_", with: " ").capitalized
-        return "\(label) \(String(format: "%.1f", r.value))\(r.unit == "%" ? "%" : " \(r.unit)")"
+    private func sensorLabel(_ type: String) -> String {
+        type.replacingOccurrences(of: "_", with: " ").capitalized
     }
 
-    private func readingTime(_ ms: Int64) -> String {
-        let date = Date(timeIntervalSince1970: Double(ms) / 1000)
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        return f.string(from: date)
+    private func statValue(_ s: NodeStat) -> String {
+        let suffix = s.unit == "%" ? "%" : " \(s.unit)"
+        return "\(String(format: "%.1f", s.low)) / \(String(format: "%.1f", s.avg)) / \(String(format: "%.1f", s.high))\(suffix)"
     }
 
     private var sensorReadingsSection: some View {
@@ -407,7 +434,7 @@ struct NotesView: View {
             }
             .padding(.horizontal)
 
-            if dayReadings.isEmpty {
+            if dayStats.isEmpty {
                 if !isLoadingReadings {
                     Text("No sensor readings on this date.")
                         .font(.footnote)
@@ -415,19 +442,22 @@ struct NotesView: View {
                         .padding(.horizontal)
                 }
             } else {
-                ForEach(readingsByDevice, id: \.device) { group in
+                Text("low / avg / high per node")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                ForEach(dayStats, id: \.device) { node in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(group.device)
+                        Text(node.device)
                             .font(.subheadline.weight(.semibold))
-                        ForEach(group.rows) { r in
-                            HStack(spacing: 10) {
-                                Text(readingTime(r.createdAt))
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 46, alignment: .leading)
-                                Text(formattedReading(r))
+                        ForEach(node.sensors) { s in
+                            HStack {
+                                Text(sensorLabel(s.type))
                                     .font(.callout)
                                 Spacer()
+                                Text(statValue(s))
+                                    .font(.callout.monospacedDigit())
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
