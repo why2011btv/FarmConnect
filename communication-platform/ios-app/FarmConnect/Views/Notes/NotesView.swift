@@ -437,7 +437,24 @@ struct NotesView: View {
                     .padding(.horizontal)
                 }
             }
+
+            Button {
+                AssistantHandoff.shared.ask(assistantPromptForSelectedDay())
+            } label: {
+                Label("Ask the assistant about this day", systemImage: "sparkles")
+                    .font(.subheadline.weight(.medium))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .padding(.horizontal)
+            .padding(.top, 2)
         }
+    }
+
+    private func assistantPromptForSelectedDay() -> String {
+        let f = DateFormatter()
+        f.dateStyle = .full
+        return "How did my vineyard sensors look on \(f.string(from: selectedCalendarDay))? Anything I should keep an eye on or consider doing?"
     }
 
     private func loadDayReadings() async {

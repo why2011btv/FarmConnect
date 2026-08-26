@@ -194,3 +194,18 @@ final class AssistantChatViewModel: ObservableObject {
         return error.localizedDescription
     }
 }
+
+/// Cross-tab handoff so other tabs (e.g. the Notes calendar) can send the grower to the Chat tab
+/// with a question ready to ask. RootTabView watches `pendingPrompt` to switch to Chat; the chat
+/// view consumes it by opening a fresh session and sending the question.
+@MainActor
+final class AssistantHandoff: ObservableObject {
+    static let shared = AssistantHandoff()
+    private init() {}
+
+    @Published var pendingPrompt: String?
+
+    func ask(_ prompt: String) {
+        pendingPrompt = prompt
+    }
+}

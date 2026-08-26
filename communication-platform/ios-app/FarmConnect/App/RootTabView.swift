@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootTabView: View {
     @EnvironmentObject private var session: SessionStore
+    @ObservedObject private var handoff = AssistantHandoff.shared
     @State private var selectedTab = 0
     @State private var showAddEmail = false
     @State private var skippedAddEmail = false
@@ -46,6 +47,9 @@ struct RootTabView: View {
             if session.needsEmail && !skippedAddEmail {
                 showAddEmail = true
             }
+        }
+        .onChange(of: handoff.pendingPrompt) { _, prompt in
+            if prompt != nil { selectedTab = 0 }
         }
     }
 }

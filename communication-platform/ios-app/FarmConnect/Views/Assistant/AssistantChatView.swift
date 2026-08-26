@@ -4,6 +4,7 @@ import UIKit
 
 struct AssistantChatView: View {
     @EnvironmentObject private var viewModel: AssistantChatViewModel
+    @ObservedObject private var handoff = AssistantHandoff.shared
     @State private var draft = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var pendingImageData: Data?
@@ -48,6 +49,10 @@ struct AssistantChatView: View {
             }
             .task {
                 await viewModel.loadSessions()
+                consumeHandoffIfNeeded()
+            }
+            .onChange(of: handoff.pendingPrompt) { _, prompt in
+                if prompt != nil { consumeHandoffIfNeeded() }
             }
             .overlay {
                 if viewModel.isLoading && viewModel.sessions.isEmpty {
@@ -344,6 +349,15 @@ struct AssistantChatView: View {
                 }
             }
         }
+    }
+
+    /// If another tab queued a question, open a fresh chat and send it automatically.
+    private func consumeHandoffIfNeeded() {
+        guard let prompt = handoff.pendingPrompt, !viewModel.isSending else { return }
+        handoff.pendingPrompt = nil
+        viewModel.selectedSessionId = nil
+        draft = ""
+        Task { await viewModel.sendMessage(text: prompt) }
     }
 
     private var canSend: Bool {
