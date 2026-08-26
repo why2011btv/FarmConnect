@@ -279,4 +279,59 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
 
     return { items, insights: buildInsights(items) };
   });
+
+  /**
+   * All readings for the user's farm(s) within a time window [from, to) in epoch ms.
+   * Powers the Notes calendar "readings on this day" view. The client passes the day's local
+   * midnight-to-midnight bounds so day boundaries match what the grower sees on the calendar.
+   */
+  app.get("/v1/sensors/readings", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
+    const q = req.query as { from?: string; to?: string };
+    const from = Number(q.from);
+    const to = Number(q.to);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) {
+      return reply.code(400).send({ error: "from and to (epoch ms) are required, with to > from" });
+    }
+    if (to - from > 32 * 24 * 60 * 60 * 1000) {
+      return reply.code(400).send({ error: "Range too large (max 31 days)" });
+    }
+
+    const farmIds = await getUserFarmIds(db, authUser.id);
+    if (farmIds.length === 0) return { items: [] };
+
+    const { rows } = await db.query<{
+      device_id: string;
+      device_name: string;
+      sensor_type: string;
+      value: number;
+      unit: string;
+      created_at: string;
+    }>(
+      `
+      SELECT sr.device_id, d.name AS device_name, sr.sensor_type, sr.value, sr.unit, sr.created_at
+      FROM sensor_readings sr
+      JOIN devices d ON d.id = sr.device_id
+      WHERE d.farm_id = ANY($1::text[])
+        AND sr.created_at >= $2
+        AND sr.created_at < $3
+      ORDER BY sr.created_at DESC, d.name ASC
+      LIMIT 5000
+      `,
+      [farmIds, from, to]
+    );
+
+    return {
+      items: rows.map((r) => ({
+        deviceId: r.device_id,
+        deviceName: r.device_name,
+        sensorType: r.sensor_type,
+        value: Number(r.value),
+        unit: r.unit,
+        createdAt: Number(r.created_at),
+      })),
+    };
+  });
 }

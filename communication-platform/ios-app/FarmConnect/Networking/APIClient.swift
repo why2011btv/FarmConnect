@@ -633,6 +633,14 @@ final class APIClient {
         return dashboard.insights
     }
 
+    /// All readings for the user's farm(s) within [from, to). The Notes calendar passes the
+    /// selected day's local midnight bounds so day boundaries match the calendar.
+    func getSensorReadings(from: Date, to: Date) async throws -> [SensorReadingRecord] {
+        let fromMs = Int64(from.timeIntervalSince1970 * 1000)
+        let toMs = Int64(to.timeIntervalSince1970 * 1000)
+        return try await getDecoded("/v1/sensors/readings?from=\(fromMs)&to=\(toMs)", as: SensorReadingsResponse.self).items
+    }
+
     func getBlockWeather(points: [BlockWeatherPoint]) async throws -> [BlockWeatherReadingDTO] {
         var req = try authorizedRequest(path: "/v1/weather/blocks", method: "POST")
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -652,7 +660,12 @@ final class APIClient {
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
         req.timeoutInterval = 120
         req.httpBody = try makeJSONEncoder().encode(
-            AssistantChatSendRequest(sessionId: sessionId, text: text, imageUrls: imageUrls)
+            AssistantChatSendRequest(
+                sessionId: sessionId,
+                text: text,
+                imageUrls: imageUrls,
+                timezoneOffsetMinutes: TimeZone.current.secondsFromGMT() / 60
+            )
         )
 
         let (data, response) = try await URLSession.shared.data(for: req)

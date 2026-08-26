@@ -424,6 +424,21 @@ struct SensorOverviewResponse: Codable {
     let insights: [SensorInsight]
 }
 
+/// One historical sensor reading with its device and timestamp, for the Notes calendar day view.
+struct SensorReadingRecord: Codable, Identifiable {
+    let deviceId: String
+    let deviceName: String
+    let sensorType: String
+    let value: Double
+    let unit: String
+    let createdAt: Int64
+    var id: String { "\(deviceId)-\(sensorType)-\(createdAt)" }
+}
+
+struct SensorReadingsResponse: Codable {
+    let items: [SensorReadingRecord]
+}
+
 struct NotificationPreferences: Codable {
     var enabled: Bool
     var radiusMiles: Int

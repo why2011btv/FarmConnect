@@ -60,6 +60,8 @@ struct NotesView: View {
     @State private var selectedCalendarDay = Calendar.current.startOfDay(for: Date())
     @State private var pendingDeletion: Post?
     @State private var isDeleting = false
+    @State private var dayReadings: [SensorReadingRecord] = []
+    @State private var isLoadingReadings = false
 
     private var filteredFieldEntries: [VineyardFieldLogEntry] {
         let base = fieldLogStore.entries(kind: notesFilter.fieldLogKind)
@@ -149,6 +151,7 @@ struct NotesView: View {
                             VStack(spacing: 12) {
                                 calendarView
                                 selectedDaySection
+                                sensorReadingsSection
                             }
                             .padding(.bottom, 12)
                         }
@@ -193,6 +196,10 @@ struct NotesView: View {
             }
             .onChange(of: selectedCalendarDay) { _, newValue in
                 displayedMonth = Self.startOfMonth(newValue)
+                Task { await loadDayReadings() }
+            }
+            .onChange(of: displayMode) { _, mode in
+                if mode == .calendar { Task { await loadDayReadings() } }
             }
             .sheet(isPresented: $isCreateNoteOpen) {
                 NewPostView(
@@ -367,6 +374,82 @@ struct NotesView: View {
                         .padding(.horizontal)
                 }
             }
+        }
+    }
+
+    // MARK: - Sensor readings for the selected day
+
+    private var readingsByDevice: [(device: String, rows: [SensorReadingRecord])] {
+        Dictionary(grouping: dayReadings) { $0.deviceName }
+            .map { (device: $0.key, rows: $0.value.sorted { $0.createdAt > $1.createdAt }) }
+            .sorted { $0.device < $1.device }
+    }
+
+    private func formattedReading(_ r: SensorReadingRecord) -> String {
+        let label = r.sensorType.replacingOccurrences(of: "_", with: " ").capitalized
+        return "\(label) \(String(format: "%.1f", r.value))\(r.unit == "%" ? "%" : " \(r.unit)")"
+    }
+
+    private func readingTime(_ ms: Int64) -> String {
+        let date = Date(timeIntervalSince1970: Double(ms) / 1000)
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f.string(from: date)
+    }
+
+    private var sensorReadingsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Sensor readings")
+                    .font(.headline)
+                Spacer()
+                if isLoadingReadings { ProgressView().controlSize(.small) }
+            }
+            .padding(.horizontal)
+
+            if dayReadings.isEmpty {
+                if !isLoadingReadings {
+                    Text("No sensor readings on this date.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
+                }
+            } else {
+                ForEach(readingsByDevice, id: \.device) { group in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(group.device)
+                            .font(.subheadline.weight(.semibold))
+                        ForEach(group.rows) { r in
+                            HStack(spacing: 10) {
+                                Text(readingTime(r.createdAt))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 46, alignment: .leading)
+                                Text(formattedReading(r))
+                                    .font(.callout)
+                                Spacer()
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                }
+            }
+        }
+    }
+
+    private func loadDayReadings() async {
+        guard displayMode == .calendar else { return }
+        let start = Calendar.current.startOfDay(for: selectedCalendarDay)
+        guard let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else { return }
+        isLoadingReadings = true
+        defer { isLoadingReadings = false }
+        do {
+            dayReadings = try await APIClient.shared.getSensorReadings(from: start, to: end)
+        } catch {
+            dayReadings = []
         }
     }
 

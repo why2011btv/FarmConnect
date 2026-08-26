@@ -46,7 +46,8 @@ function toOpenRouterMessage(message: ChatMessageInput): OpenRouterChatMessage {
 
 export async function completeAssistantChat(
   logger: FastifyBaseLogger,
-  messages: ChatMessageInput[]
+  messages: ChatMessageInput[],
+  sensorContext?: string | null
 ): Promise<string> {
   const cfg = readConfig();
   if (!cfg.apiKey) {
@@ -67,9 +68,13 @@ export async function completeAssistantChat(
       "label, their state's Pest Management Guidelines for Grapes (e.g., Cornell/Penn State), " +
       "Cornell NEWA disease models, and a licensed advisor or extension specialist. " +
       "2) Do NOT invent product names, rates, PHIs, REIs, or spray schedules. " +
-      "3) You do NOT have the grower's sensor readings or a validated disease model in this chat, so " +
-      "do not assert current field/disease conditions; speak generally and tell them to scout and " +
-      "check NEWA. " +
+      "3) SENSOR DATA: If a section headed \"GROWER'S OWN SENSOR DATA\" is present below, it is THIS " +
+      "grower's private readings for THEIR farm only. Use it to answer questions about their conditions, " +
+      "trends, and specific days (e.g. 'two days ago') — report the numbers plainly and helpfully. If they " +
+      "ask about a day or metric that is not in the data, say you don't have that specific reading and " +
+      "point them to the app. If no such section is present, you do not have their live readings — say so " +
+      "and speak generally. Never reference or infer another grower's data. Temperature/humidity/soil " +
+      "readings are not a validated disease model, so keep any disease/spray guidance non-prescriptive per rule 1. " +
       "4) When a decision carries agronomic, worker-safety, residue, or crop-loss risk, say so plainly " +
       "and recommend verifying with the label and a licensed advisor — do not suppress that. " +
       "Be clear, practical, and honest about uncertainty. If asked what AI model or technology you " +
@@ -77,8 +82,14 @@ export async function completeAssistantChat(
       "assistant and redirect to their question.",
   };
 
+  const contextMessage: OpenRouterChatMessage | null =
+    sensorContext && sensorContext.trim().length > 0
+      ? { role: "system", content: sensorContext }
+      : null;
+
   const openRouterMessages: OpenRouterChatMessage[] = [
     systemMessage,
+    ...(contextMessage ? [contextMessage] : []),
     ...messages.map(toOpenRouterMessage),
   ];
 

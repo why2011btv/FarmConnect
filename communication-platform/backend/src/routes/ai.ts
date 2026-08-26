@@ -8,6 +8,7 @@ import {
   AssistantChatMessage,
 } from "../repositories/assistantChatRepository.js";
 import { completeAssistantChat, ChatMessageInput } from "../services/openRouterChatService.js";
+import { buildAssistantSensorContext } from "../services/assistantContextService.js";
 
 const createSessionSchema = z.object({
   title: z.string().min(1).max(120).optional(),
@@ -17,6 +18,9 @@ const sendChatSchema = z.object({
   sessionId: z.string().min(1).optional(),
   text: z.string(),
   imageUrls: z.array(z.string().url()).max(5).optional(),
+  // Grower's UTC offset in minutes (e.g. -240 for US Eastern DST), so the assistant can resolve
+  // "yesterday" / "two days ago" against the grower's local calendar.
+  timezoneOffsetMinutes: z.number().int().min(-840).max(840).optional(),
 });
 
 function buildOpenRouterMessages(messages: AssistantChatMessage[]): ChatMessageInput[] {
@@ -116,7 +120,25 @@ export async function aiRoutes(app: FastifyInstance, db: Pool) {
       }
 
       const history = await repo.listMessages(sessionId!);
-      const replyText = await completeAssistantChat(app.log, buildOpenRouterMessages(history));
+
+      // Per-user sensor data, scoped to this account's farms only (tenant isolation).
+      let sensorContext: string | null = null;
+      try {
+        sensorContext = await buildAssistantSensorContext(
+          db,
+          authUser.id,
+          parsed.data.timezoneOffsetMinutes ?? 0,
+          Date.now()
+        );
+      } catch (ctxError) {
+        app.log.warn({ ctxError }, "Failed to build assistant sensor context");
+      }
+
+      const replyText = await completeAssistantChat(
+        app.log,
+        buildOpenRouterMessages(history),
+        sensorContext
+      );
 
       const assistantMessage = await repo.addMessage({
         sessionId: sessionId!,

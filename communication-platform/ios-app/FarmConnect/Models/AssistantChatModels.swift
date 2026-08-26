@@ -117,9 +117,10 @@ struct AssistantChatSendRequest: Encodable {
     let sessionId: String?
     let text: String
     let imageUrls: [String]?
+    let timezoneOffsetMinutes: Int?
 
     enum CodingKeys: String, CodingKey {
-        case sessionId, text, imageUrls
+        case sessionId, text, imageUrls, timezoneOffsetMinutes
     }
 
     func encode(to encoder: Encoder) throws {
@@ -129,6 +130,7 @@ struct AssistantChatSendRequest: Encodable {
         if let imageUrls, !imageUrls.isEmpty {
             try container.encode(imageUrls, forKey: .imageUrls)
         }
+        try container.encodeIfPresent(timezoneOffsetMinutes, forKey: .timezoneOffsetMinutes)
     }
 }
 
