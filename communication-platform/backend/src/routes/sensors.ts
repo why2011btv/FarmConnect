@@ -194,7 +194,8 @@ export async function sensorRoutes(app: FastifyInstance, db: Pool) {
         [
           createId("sr"),
           payload.deviceId,
-          reading.sensorType,
+          // Devices historically report this metric as "soil_moisture"; it is leaf wetness.
+          reading.sensorType === "soil_moisture" ? "leaf_wetness" : reading.sensorType,
           reading.value,
           reading.unit,
           reading.createdAt ?? now,

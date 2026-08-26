@@ -17,7 +17,7 @@ import { sendSensorHealthAlert } from "./mailService.js";
 const RANGE = {
   temperature: { min: -40, max: 60, unit: "C" },
   humidity: { min: 0, max: 100, unit: "%" },
-  soil_moisture: { min: 0, max: 100, unit: "%" },
+  leaf_wetness: { min: 0, max: 100, unit: "%" },
 } as const;
 
 // Divergence from the weather API beyond what canopy/aspect/elevation can plausibly explain.

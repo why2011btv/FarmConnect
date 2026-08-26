@@ -99,6 +99,6 @@ struct BlockLiveSensorData: Equatable {
         lastSeenAt = Date(timeIntervalSince1970: TimeInterval(device.lastSeenAt) / 1000)
         temperatureC = readingMap["temperature"]?.value
         humidityPct = readingMap["humidity"]?.value
-        soilMoisturePct = readingMap["soil_moisture"]?.value
+        soilMoisturePct = readingMap["leaf_wetness"]?.value
     }
 }

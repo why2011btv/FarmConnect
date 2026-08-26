@@ -390,7 +390,7 @@ struct NotesView: View {
 
     /// Per-node low/avg/high per sensor for the selected day (computed from the day's readings).
     private var dayStats: [(device: String, sensors: [NodeStat])] {
-        let order = ["temperature", "humidity", "soil_moisture"]
+        let order = ["temperature", "humidity", "leaf_wetness"]
         return Dictionary(grouping: dayReadings) { $0.deviceName }
             .map { device, rows -> (device: String, sensors: [NodeStat]) in
                 let sensors = Dictionary(grouping: rows) { $0.sensorType }

@@ -72,7 +72,7 @@ struct CanopySensorReadingsView: View {
                 source: s.source(for: .humidity)
             )
             metricCard(
-                "Leaf wetness",
+                "Leaf Wetness",
                 value: format(r.soilMoisturePct, unit: "%"),
                 icon: "drop.fill",
                 tint: .teal,
