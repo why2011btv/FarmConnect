@@ -63,10 +63,13 @@ enum BlockReadingsComposer {
 
         return blocks.enumerated().map { offset, block in
             let position = offset + 1
-            let baseReading = weatherByBlockId[block.id] ?? block.readings
-            var sources = weatherByBlockId[block.id] != nil
-                ? CanopyReadingSources(all: .weather)
-                : CanopyReadingSources(all: .weather)
+            // Open-Meteo returns one weather cell for a whole vineyard, so weather can't tell blocks
+            // apart — it just flattens them to one colour. The block's own profile varies by block
+            // (curated for the sample, synthetic for a generated layout), so drive the crop-health
+            // visual from that; live field sensors still override below. The validated per-block
+            // infection risk lives in the Disease Risk view, which uses real weather + sensors.
+            let baseReading = block.readings
+            var sources = CanopyReadingSources(all: .weather)
 
             var reading = baseReading
             var liveSensor: BlockLiveSensorData?

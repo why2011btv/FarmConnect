@@ -179,8 +179,8 @@ enum VineyardDemoData {
             name: "Block 8",
             locationLabel: "South rows (lower)",
             readings: readings(
-                temp: 76, rh: 53, leafWet: 0.5, soilMoist: 38, soilTemp: 70,
-                rain: 0.01, solar: 23, wind: 9, windDir: 265
+                temp: 73, rh: 89, leafWet: 6.5, soilMoist: 47, soilTemp: 68,
+                rain: 0.14, solar: 17, wind: 2.5, windDir: 265
             )
         ),
     ]

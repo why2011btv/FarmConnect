@@ -75,7 +75,9 @@ struct VineyardHealthMapView: View {
                 }
                 mapLegend
             }
-            .padding(12)
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
+            .padding(.bottom, 88) // clear the full-bleed map's tab bar (Chat/Notes/Sensors)
         }
     }
 
