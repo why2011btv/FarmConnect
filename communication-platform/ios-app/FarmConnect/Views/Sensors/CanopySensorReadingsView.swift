@@ -127,7 +127,7 @@ struct CanopySensorReadingsView: View {
     @ViewBuilder
     private var vineyardOverview: some View {
         let summaryBlocks = allBlocks.isEmpty ? [] : allBlocks
-        let highRisk = summaryBlocks.filter { $0.riskLevel == .high }.count
+        let needsAttention = summaryBlocks.filter { $0.riskLevel == .high }.count
         let liveCount = summaryBlocks.filter { $0.liveSensor != nil }.count
         let sensorBlocks = summaryBlocks.filter { $0.sensorConnection != nil }.count
 
@@ -149,9 +149,9 @@ struct CanopySensorReadingsView: View {
                     tint: liveCount > 0 ? .green : .blue
                 )
                 overviewTile(
-                    title: "High-risk blocks",
-                    value: "\(highRisk)",
-                    caption: sensorBlocks > 0 ? "\(sensorBlocks) sensor blocks" : "Fungus pressure",
+                    title: "Needs attention",
+                    value: "\(needsAttention)",
+                    caption: sensorBlocks > 0 ? "\(sensorBlocks) sensor blocks" : "From local conditions",
                     icon: "leaf.fill",
                     tint: .red
                 )
@@ -203,12 +203,12 @@ struct CanopySensorReadingsView: View {
         let high = allBlocks.filter { $0.riskLevel == .high }.count
 
         return VStack(alignment: .leading, spacing: 6) {
-            Text("Crop health summary")
+            Text("Block conditions")
                 .font(.caption.weight(.semibold))
             HStack(spacing: 12) {
-                riskChip(count: low, label: "Low", color: .green)
-                riskChip(count: moderate, label: "Mod", color: .orange)
-                riskChip(count: high, label: "High", color: .red)
+                riskChip(count: low, label: "Good", color: .green)
+                riskChip(count: moderate, label: "Watch", color: .orange)
+                riskChip(count: high, label: "Attention", color: .red)
             }
         }
         .padding(10)

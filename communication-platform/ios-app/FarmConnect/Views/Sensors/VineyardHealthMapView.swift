@@ -77,17 +77,17 @@ struct VineyardHealthMapView: View {
             }
             .padding(.horizontal, 12)
             .padding(.top, 12)
-            .padding(.bottom, 88) // clear the full-bleed map's tab bar (Chat/Notes/Sensors)
+            .padding(.bottom, 104) // leave a little breathing room above the tab bar
         }
     }
 
     private var mapLegend: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Crop health")
+            Text("Block conditions")
                 .font(.caption.weight(.semibold))
-            legendRow(color: .green, label: "Low fungus risk")
-            legendRow(color: .orange, label: "Moderate risk")
-            legendRow(color: .red, label: "High fungus risk")
+            legendRow(color: .green, label: "Good")
+            legendRow(color: .orange, label: "Watch")
+            legendRow(color: .red, label: "Needs attention")
             if !isEditingLayout {
                 Text("Tap a block for canopy readings")
                     .font(.caption2)

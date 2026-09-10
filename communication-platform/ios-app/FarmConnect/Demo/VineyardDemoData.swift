@@ -59,7 +59,7 @@ enum VineyardDemoData {
             let template = blockTemplates[rectangle.id] ?? syntheticTemplate(id: rectangle.id, index: index)
             let variety = settings[rectangle.id]?.variety ?? .notSpecified
             let analytics = VineyardCanopyAnalytics.summarize(readings: template.readings)
-            let risk = riskLevel(from: analytics)
+            let risk = conditionLevel(from: template.readings)
 
             let draft = VineyardDemoBlock(
                 id: rectangle.id,
@@ -94,13 +94,34 @@ enum VineyardDemoData {
         return blocks
     }
 
-    static func riskLevel(from analytics: VineyardCanopyAnalyticsSummary) -> VineyardRiskLevel {
-        let peak = max(analytics.powderyMildewIndex, analytics.downyMildewIndex)
-        switch peak {
-        case 70...: return .high
-        case 40..<70: return .moderate
-        default: return .low
+    /// Overall block-condition band for the map. Disease-specific infection estimates live in
+    /// the dedicated Disease Risk screen; this combines the environmental readings visible in
+    /// Sensors so the map is not mislabeled as a fungus map.
+    static func conditionLevel(from readings: VineyardCanopyReading) -> VineyardRiskLevel {
+        var concerns = 0
+        var severeConcerns = 0
+
+        func evaluate(_ moderate: Bool, severe: Bool) {
+            if severe { severeConcerns += 1 }
+            else if moderate { concerns += 1 }
         }
+
+        evaluate(readings.airTemperatureF < 45 || readings.airTemperatureF > 88,
+                 severe: readings.airTemperatureF < 35 || readings.airTemperatureF > 96)
+        evaluate(readings.relativeHumidityPct > 82,
+                 severe: readings.relativeHumidityPct > 94)
+        evaluate(readings.leafWetnessHours > 4,
+                 severe: readings.leafWetnessHours > 8)
+        evaluate(readings.soilMoisturePct < 28 || readings.soilMoisturePct > 65,
+                 severe: readings.soilMoisturePct < 18 || readings.soilMoisturePct > 80)
+        evaluate(readings.rainfallInches24h > 0.5,
+                 severe: readings.rainfallInches24h > 1.5)
+        evaluate(readings.windSpeedMph > 20,
+                 severe: readings.windSpeedMph > 35)
+
+        if severeConcerns > 0 || concerns >= 3 { return .high }
+        if concerns > 0 { return .moderate }
+        return .low
     }
 
     static var mapRegion: MKCoordinateRegion {

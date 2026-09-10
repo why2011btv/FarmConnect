@@ -139,7 +139,7 @@ enum BlockReadingsComposer {
         sensorConnection: BlockSensorConnection?
     ) -> VineyardDemoBlock {
         let analytics = VineyardCanopyAnalytics.summarize(readings: readings)
-        let risk = VineyardDemoData.riskLevel(from: analytics)
+        let risk = VineyardDemoData.conditionLevel(from: readings)
             let draft = VineyardDemoBlock(
                 id: block.id,
                 deviceId: block.deviceId,

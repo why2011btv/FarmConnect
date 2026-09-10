@@ -277,16 +277,6 @@ struct SensorDashboardView: View {
                 .frame(maxWidth: 220)
             }
         }
-        if layoutStore.activeProfile?.center != nil {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showDiseaseRisk = true
-                } label: {
-                    Image(systemName: "leaf.arrow.triangle.circlepath")
-                }
-                .accessibilityLabel("Disease risk")
-            }
-        }
         ToolbarItem(placement: .topBarTrailing) {
             trailingMenu
         }
@@ -300,6 +290,13 @@ struct SensorDashboardView: View {
         switch mode {
         case .planning:
             Menu {
+                if layoutStore.activeProfile?.center != nil {
+                    Button {
+                        showDiseaseRisk = true
+                    } label: {
+                        Label("Disease risk", systemImage: "leaf.arrow.triangle.circlepath")
+                    }
+                }
                 if layoutStore.activeProfile != nil {
                     Button {
                         vineyardNameDraft = layoutStore.activeProfile?.name ?? ""
@@ -338,6 +335,13 @@ struct SensorDashboardView: View {
         case .demo:
             // Presentation-locked: editing is a de-emphasized, office-prep opt-in.
             Menu {
+                if layoutStore.activeProfile?.center != nil {
+                    Button {
+                        showDiseaseRisk = true
+                    } label: {
+                        Label("Disease risk", systemImage: "leaf.arrow.triangle.circlepath")
+                    }
+                }
                 Button {
                     toggleLayoutEditing()
                 } label: {

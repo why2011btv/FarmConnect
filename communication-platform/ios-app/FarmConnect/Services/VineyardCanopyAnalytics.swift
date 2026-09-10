@@ -76,17 +76,17 @@ enum VineyardCanopyAnalytics {
             VineyardBlockInsight(
                 id: "g1",
                 title: "Vineyard-wide outlook",
-                message: "Crop health: \(low) low, \(moderate) moderate, \(high) high. \(high > 0 ? "Priority: \(highRiskNames)." : "No blocks in the high-risk band right now.")",
+                message: "Block conditions: \(low) good, \(moderate) to watch, \(high) need attention. \(high > 0 ? "Priority: \(highRiskNames)." : "No blocks need immediate attention right now.")",
                 severity: high > 0 ? "high" : "low"
             ),
             VineyardBlockInsight(
                 id: "g2",
                 title: "Where to focus",
                 message: (high > 0
-                    ? "\(high) block\(high == 1 ? "" : "s") show conditions that favor infection — scout those first and check your fungicide program and the product label."
+                    ? "\(high) block\(high == 1 ? "" : "s") show environmental readings that need attention — inspect those first."
                     : (moderate > 0
-                        ? "Moderate pressure in some blocks — scout and watch overnight leaf wetness."
-                        : "Low infection pressure across blocks right now — keep scouting."))
+                        ? "Some blocks have readings to watch — review their sensor details and scout as needed."
+                        : "Environmental readings look good across the mapped blocks right now."))
                     + " Tap a block for its readings.",
                 severity: high > 0 ? "high" : "medium"
             ),
