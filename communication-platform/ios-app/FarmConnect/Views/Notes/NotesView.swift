@@ -168,10 +168,7 @@ struct NotesView: View {
             }
             .navigationTitle("Notes")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    AccountMenuButton()
-                }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     Menu {
                         Button {
                             isCreateFieldLogOpen = true
@@ -187,6 +184,7 @@ struct NotesView: View {
                         Image(systemName: "plus")
                     }
                     .accessibilityLabel("Add note")
+                    AccountMenuButton()
                 }
             }
             .task {

@@ -45,15 +45,13 @@ struct ChatView: View {
             }
             .navigationTitle("Chat")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    AccountMenuButton()
-                }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
                         isCreateGroupOpen = true
                     } label: {
                         Image(systemName: "person.3.fill")
                     }
+                    AccountMenuButton()
                 }
             }
             .task {

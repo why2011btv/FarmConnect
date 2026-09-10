@@ -113,6 +113,18 @@ final class VineyardBlockLayoutStore: ObservableObject {
         mutateActiveSlot { $0.rectangles = next }
     }
 
+    /// Renames the customer's vineyard without disturbing its map, blocks, or device assignments.
+    /// Planning layouts are farm-shared, so this automatically syncs to every member's device.
+    func renamePlanningVineyard(to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, slots.planning.profile != nil else { return }
+        mode = .planning
+        slots.planning.profile?.name = trimmed
+        persist(slot: slots.planning, forKey: planningSlotKey)
+        persistMode()
+        schedulePlanningSync()
+    }
+
     /// Persist the active slot explicitly (e.g. at the end of a drag that mutated without persisting).
     func commitActiveSlot() {
         persistActiveSlot()

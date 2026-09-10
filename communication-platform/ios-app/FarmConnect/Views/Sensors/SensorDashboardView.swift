@@ -15,6 +15,8 @@ struct SensorDashboardView: View {
     @State private var showDevicePlacement = false
     @State private var showDiseaseRisk = false
     @State private var showHarvestLog = false
+    @State private var showRenameVineyard = false
+    @State private var vineyardNameDraft = ""
     /// True when the two-pane wide layout is active (kept in sync with the GeometryReader). The
     /// block-detail bottom sheet is a phone-only affordance, so it presents only when this is false.
     @State private var isWide = false
@@ -104,7 +106,7 @@ struct SensorDashboardView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Vineyard Sensors")
+            .navigationTitle(vineyardNavigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .top) { sensorLoadBanner }
             .toolbarBackground(Color(.systemBackground), for: .navigationBar)
@@ -172,6 +174,16 @@ struct SensorDashboardView: View {
                         isEditingLayout = false
                     }
                 )
+            }
+            .alert("Vineyard name", isPresented: $showRenameVineyard) {
+                TextField("Vineyard name", text: $vineyardNameDraft)
+                Button("Cancel", role: .cancel) {}
+                Button("Save") {
+                    layoutStore.renamePlanningVineyard(to: vineyardNameDraft)
+                }
+                .disabled(vineyardNameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            } message: {
+                Text("This name is shared with everyone who has access to this vineyard.")
             }
             .sheet(isPresented: showBlockDetailBinding) {
                 blockDetailSheet
@@ -243,11 +255,15 @@ struct SensorDashboardView: View {
         _ = await (sensors, weather)
     }
 
+    private var vineyardNavigationTitle: String {
+        if mode == .planning, let name = layoutStore.activeProfile?.name, !name.isEmpty {
+            return name
+        }
+        return "Vineyard Sensors"
+    }
+
     @ToolbarContentBuilder
     private var dashboardToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            AccountMenuButton()
-        }
         // The sample layout is a sales tool. Customers get one view -- their own vineyard --
         // so the picker only exists for staff.
         if session.isAdmin {
@@ -274,6 +290,9 @@ struct SensorDashboardView: View {
         ToolbarItem(placement: .topBarTrailing) {
             trailingMenu
         }
+        ToolbarItem(placement: .topBarTrailing) {
+            AccountMenuButton()
+        }
     }
 
     @ViewBuilder
@@ -281,6 +300,14 @@ struct SensorDashboardView: View {
         switch mode {
         case .planning:
             Menu {
+                if layoutStore.activeProfile != nil {
+                    Button {
+                        vineyardNameDraft = layoutStore.activeProfile?.name ?? ""
+                        showRenameVineyard = true
+                    } label: {
+                        Label("Rename vineyard…", systemImage: "pencil")
+                    }
+                }
                 Button {
                     showGeneratorSheet = true
                 } label: {
