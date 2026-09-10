@@ -233,7 +233,7 @@ struct DevicePlacementView: View {
         // Each device becomes a small map block that keeps the exact backend device identity.
         let rectangles = pins.enumerated().map { index, pin in
             let device = devicesById[pin.id]
-            VineyardBlockRectangle(
+            return VineyardBlockRectangle(
                 id: "gen-\(index + 1)",
                 deviceId: pin.id,
                 deviceName: device?.name ?? pin.name,
