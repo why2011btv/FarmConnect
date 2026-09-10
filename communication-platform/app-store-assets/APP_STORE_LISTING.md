@@ -1,4 +1,4 @@
-# App Store listing copy — Persephone's Basket (v1.2)
+# App Store listing copy — Persephone's Basket (v1.3)
 
 ## App name (≤30)
 Persephone's Basket
@@ -21,7 +21,7 @@ Pair it with Persephone's Basket sensors placed among your vines, and the app sh
 WHAT YOU GET
 
 Live conditions, by block
-See temperature, humidity, and soil moisture from every sensor node through the day, laid out on a map of your own vineyard.
+See temperature, humidity, and leaf wetness from every sensor node through the day, laid out on a map of your own vineyard.
 
 Disease risk you can understand
 The app runs published grape-disease models used across the Northeast and Mid-Atlantic — black rot, powdery and downy mildew, Phomopsis, and Botrytis — against each block's real conditions. Every risk comes with a plain-language reason and short, practical scouting and canopy tips.
@@ -43,9 +43,5 @@ Sign in, enter the access code that came with your sensors, and your farm's data
 
 Made in the Northeast, for growers who want to know their own ground.
 
-## What's New (release notes for 1.2)
-- Live per-block temperature, humidity, and soil moisture on your vineyard map
-- Grape disease-risk estimates (black rot, powdery & downy mildew, Phomopsis, Botrytis) with plain-language guidance
-- Growing-degree-day and bloom-window tracking
-- Harvest log for Brix, TA, and pH
-- Sign in with email and join your farm with an access code
+## What's New (release notes for 1.3)
+Set up your own vineyard map, place each sensor where it is installed, and adjust blocks directly in the app. Your vineyard name and layout now stay in sync across devices. This update also adds daily sensor summaries in Notes, clearer block-condition indicators, improved disease-risk guidance, and a more helpful vineyard assistant.
