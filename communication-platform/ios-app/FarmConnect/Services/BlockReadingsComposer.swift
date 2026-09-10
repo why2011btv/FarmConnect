@@ -37,8 +37,8 @@ struct CanopyReadingSources: Equatable {
 enum BlockReadingsComposer {
     /// Merges weather and live sensor readings into each block.
     ///
-    /// Devices attach to blocks by position (node A3 -> third block), so this works identically on
-    /// the bundled sample layout and on a layout generated for a customer's own vineyard.
+    /// Customer-placed blocks attach by their persisted backend device id. Legacy/demo layouts
+    /// retain the old positional A-number fallback for backwards compatibility.
     static func compose(
         blocks: [VineyardDemoBlock],
         weatherByBlockId: [String: VineyardCanopyReading],
@@ -75,7 +75,11 @@ enum BlockReadingsComposer {
             var liveSensor: BlockLiveSensorData?
             var sensorConnection: BlockSensorConnection?
 
-            if let device = deviceByIndex[position] {
+            let assignedDevice = block.deviceId.flatMap { assignedId in
+                devices.first { $0.id == assignedId }
+            } ?? (block.deviceId == nil ? deviceByIndex[position] : nil)
+
+            if let device = assignedDevice {
                 sensorConnection = BlockSensorConnection(
                     deviceName: device.name,
                     isOnline: device.status.lowercased() == "online"
@@ -87,6 +91,13 @@ enum BlockReadingsComposer {
                     if live.humidityPct != nil { sources.set(.humidity, to: .sensor) }
                     if live.soilMoisturePct != nil { sources.set(.soilMoisture, to: .sensor) }
                 }
+            } else if block.deviceId != nil {
+                // The assigned device is temporarily absent from the overview response. Preserve
+                // its real identity instead of relabeling it as the positional A1/A2 fallback.
+                sensorConnection = BlockSensorConnection(
+                    deviceName: block.name,
+                    isOnline: false
+                )
             } else if position <= instrumentedCount {
                 // A gap in the series: this block's node exists in the fleet but has not reported.
                 sensorConnection = BlockSensorConnection(
@@ -129,9 +140,10 @@ enum BlockReadingsComposer {
     ) -> VineyardDemoBlock {
         let analytics = VineyardCanopyAnalytics.summarize(readings: readings)
         let risk = VineyardDemoData.riskLevel(from: analytics)
-        let draft = VineyardDemoBlock(
-            id: block.id,
-            name: block.name,
+            let draft = VineyardDemoBlock(
+                id: block.id,
+                deviceId: block.deviceId,
+                name: block.name,
             locationLabel: block.locationLabel,
             polygon: block.polygon,
             center: block.center,
@@ -147,6 +159,7 @@ enum BlockReadingsComposer {
         let insights = VineyardCanopyAnalytics.insights(for: draft)
         return VineyardDemoBlock(
             id: draft.id,
+            deviceId: draft.deviceId,
             name: draft.name,
             locationLabel: draft.locationLabel,
             polygon: draft.polygon,

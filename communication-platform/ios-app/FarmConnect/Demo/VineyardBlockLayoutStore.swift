@@ -8,28 +8,31 @@ final class VineyardBlockLayoutStore: ObservableObject {
     /// Both layouts at once. A write to one slot never touches the other.
     @Published private(set) var slots: LayoutSlots
 
-    // Per-slot persistence keys (v2). A planning write only re-encodes the planning key, etc.
-    private static let demoSlotKey = "vineyard.slot.demo.v2"
-    private static let planningSlotKey = "vineyard.slot.planning.v2"
-    private static let modeKey = "vineyard.layout.mode.v2"
-
-    // Legacy v1 keys — read once for migration, then left in place for one release.
-    private static let legacyRectanglesKey = "vineyard.demo.block.rectangles.v1"
-    private static let legacySettingsKey = "vineyard.demo.block.settings.v1"
+    // Account/farm-scoped persistence. A layout created by one signed-in customer must never be
+    // displayed to another account using the same iPhone.
+    private static let demoSlotKeyPrefix = "vineyard.slot.demo.v3"
+    private static let planningSlotKeyPrefix = "vineyard.slot.planning.v3"
+    private static let modeKeyPrefix = "vineyard.layout.mode.v3"
+    private var storageScope: String?
 
     init() {
-        let demoSlot = Self.loadSlot(forKey: Self.demoSlotKey)
-            ?? Self.migrateDemoFromV1()
-            ?? VineyardDemoData.defaultDemoSlot
-        let planningSlot = Self.loadSlot(forKey: Self.planningSlotKey) ?? .empty
+        slots = LayoutSlots(demo: VineyardDemoData.defaultDemoSlot, planning: .empty)
+        mode = .planning
+    }
 
-        slots = LayoutSlots(demo: demoSlot, planning: planningSlot)
-        // Default to the customer's own vineyard. Defaulting to .demo meant a grower who
-        // signed up and redeemed a code landed on the bundled sample vineyard.
-        mode = Self.loadMode() ?? .planning
+    /// Loads only this account/farm's layout. Legacy unscoped layouts are deliberately ignored
+    /// because they cannot safely be attributed after an account switch.
+    func configure(userId: String, farmId: String?) {
+        let scope = Self.safeScope("\(userId)|\(farmId ?? "no-farm")")
+        guard storageScope != scope else { return }
+        storageScope = scope
 
-        // Persist the (possibly migrated) demo slot so future launches skip migration.
-        persist(slot: slots.demo, forKey: Self.demoSlotKey)
+        slots = LayoutSlots(
+            demo: loadSlot(forKey: demoSlotKey) ?? VineyardDemoData.defaultDemoSlot,
+            planning: loadSlot(forKey: planningSlotKey) ?? .empty
+        )
+        mode = loadMode() ?? .planning
+        persist(slot: slots.demo, forKey: demoSlotKey)
     }
 
     // MARK: - Active-slot read facades (get-only; views observe $slots / $mode)
@@ -131,7 +134,7 @@ final class VineyardBlockLayoutStore: ObservableObject {
         profile: VineyardProfile
     ) {
         slots.planning = LayoutSlot(rectangles: rectangles, blockSettings: settings, profile: profile)
-        persist(slot: slots.planning, forKey: Self.planningSlotKey)
+        persist(slot: slots.planning, forKey: planningSlotKey)
         if mode != .planning {
             mode = .planning
             persistMode()
@@ -143,7 +146,7 @@ final class VineyardBlockLayoutStore: ObservableObject {
     /// Note: after promotion, demo "Reset to defaults" still reverts to the bundled sample layout.
     func promoteActiveLayoutToDemo() {
         slots.demo = slots.planning
-        persist(slot: slots.demo, forKey: Self.demoSlotKey)
+        persist(slot: slots.demo, forKey: demoSlotKey)
     }
 
     // MARK: - Import / export (active slot)
@@ -173,57 +176,48 @@ final class VineyardBlockLayoutStore: ObservableObject {
 
     private func persistActiveSlot() {
         switch mode {
-        case .demo: persist(slot: slots.demo, forKey: Self.demoSlotKey)
-        case .planning: persist(slot: slots.planning, forKey: Self.planningSlotKey)
+        case .demo: persist(slot: slots.demo, forKey: demoSlotKey)
+        case .planning: persist(slot: slots.planning, forKey: planningSlotKey)
         }
     }
 
-    private func persist(slot: LayoutSlot, forKey key: String) {
+    private func persist(slot: LayoutSlot, forKey key: String?) {
+        guard let key else { return }
         guard let data = try? JSONEncoder().encode(slot) else { return }
         UserDefaults.standard.set(data, forKey: key)
     }
 
     private func persistMode() {
+        guard let modeKey else { return }
         guard let data = try? JSONEncoder().encode(mode) else { return }
-        UserDefaults.standard.set(data, forKey: Self.modeKey)
+        UserDefaults.standard.set(data, forKey: modeKey)
     }
 
-    private static func loadSlot(forKey key: String) -> LayoutSlot? {
+    private func loadSlot(forKey key: String?) -> LayoutSlot? {
+        guard let key else { return nil }
         guard let data = UserDefaults.standard.data(forKey: key),
               let decoded = try? JSONDecoder().decode(LayoutSlot.self, from: data)
         else { return nil }
         return decoded
     }
 
-    private static func loadMode() -> LayoutMode? {
-        guard let data = UserDefaults.standard.data(forKey: modeKey),
+    private func loadMode() -> LayoutMode? {
+        guard let modeKey,
+              let data = UserDefaults.standard.data(forKey: modeKey),
               let decoded = try? JSONDecoder().decode(LayoutMode.self, from: data)
         else { return nil }
         return decoded
     }
 
-    /// One-way migration of the v1 demo layout into a v2 demo slot. The caller only invokes this
-    /// when the v2 demo key is absent. Returns nil when there's no usable v1 data (then the caller
-    /// falls back to the bundled sample defaults).
-    private static func migrateDemoFromV1() -> LayoutSlot? {
-        let rectangles: [VineyardBlockRectangle]? = {
-            guard let data = UserDefaults.standard.data(forKey: legacyRectanglesKey) else { return nil }
-            return try? JSONDecoder().decode([VineyardBlockRectangle].self, from: data)
-        }()
+    private var demoSlotKey: String? { storageScope.map { "\(Self.demoSlotKeyPrefix).\($0)" } }
+    private var planningSlotKey: String? { storageScope.map { "\(Self.planningSlotKeyPrefix).\($0)" } }
+    private var modeKey: String? { storageScope.map { "\(Self.modeKeyPrefix).\($0)" } }
 
-        guard let rectangles, !rectangles.isEmpty else { return nil }
-
-        let settings: [String: VineyardBlockSettings]? = {
-            guard let data = UserDefaults.standard.data(forKey: legacySettingsKey) else { return nil }
-            return try? JSONDecoder().decode([String: VineyardBlockSettings].self, from: data)
-        }()
-
-        // Rectangles present but settings missing/garbled -> use default grape varieties so the
-        // farmer-facing layout never shows blank/wrong varieties.
-        return LayoutSlot(
-            rectangles: rectangles,
-            blockSettings: settings ?? VineyardDemoData.defaultBlockSettings,
-            profile: nil
-        )
+    private static func safeScope(_ value: String) -> String {
+        Data(value.utf8).base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
     }
+
 }

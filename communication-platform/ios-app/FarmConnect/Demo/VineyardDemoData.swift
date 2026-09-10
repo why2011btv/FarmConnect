@@ -63,8 +63,9 @@ enum VineyardDemoData {
 
             let draft = VineyardDemoBlock(
                 id: rectangle.id,
-                name: template.name,
-                locationLabel: template.locationLabel,
+                deviceId: rectangle.deviceId,
+                name: rectangle.deviceName ?? template.name,
+                locationLabel: rectangle.deviceLocationLabel ?? template.locationLabel,
                 polygon: rectangle.polygon,
                 center: rectangle.center,
                 riskLevel: risk,
@@ -77,6 +78,7 @@ enum VineyardDemoData {
             blocks.append(
                 VineyardDemoBlock(
                     id: draft.id,
+                    deviceId: draft.deviceId,
                     name: draft.name,
                     locationLabel: draft.locationLabel,
                     polygon: draft.polygon,

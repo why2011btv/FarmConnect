@@ -20,6 +20,9 @@ struct SensorDashboardView: View {
     @State private var isWide = false
 
     private var mode: LayoutMode { layoutStore.mode }
+    private var layoutStorageScope: String {
+        "\(session.currentUser?.id ?? "signed-out")|\(session.farms.first?.id ?? "no-farm")"
+    }
 
     /// The customer has redeemed a code but not drawn their vineyard. Their sensors still have to
     /// be visible, so we show a list instead of an empty map.
@@ -110,9 +113,11 @@ struct SensorDashboardView: View {
             .task(id: cameraKey) {
                 await reloadDashboard()
             }
-            .task(id: session.isAdmin) {
-                // An older build could have persisted .demo. Customers are moved back to their
-                // own vineyard; only staff may sit in the sample layout.
+            .task(id: layoutStorageScope) {
+                guard let userId = session.currentUser?.id else { return }
+                if !session.isAdmin && session.farms.first == nil { return }
+                layoutStore.configure(userId: userId, farmId: session.farms.first?.id)
+                // Customers always enter their own farm-scoped planning layout.
                 if !session.isAdmin, layoutStore.mode == .demo {
                     layoutStore.setMode(.planning)
                 }

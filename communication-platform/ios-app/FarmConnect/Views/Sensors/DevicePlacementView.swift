@@ -229,11 +229,15 @@ struct DevicePlacementView: View {
     private func save() {
         guard !pins.isEmpty else { dismiss(); return }
 
-        // Each device becomes a small block at its pin. Order matches orderedDevices, so node A1
-        // maps to the first block, A2 to the second, and so on (see BlockReadingsComposer).
+        let devicesById = Dictionary(uniqueKeysWithValues: devices.map { ($0.id, $0) })
+        // Each device becomes a small map block that keeps the exact backend device identity.
         let rectangles = pins.enumerated().map { index, pin in
+            let device = devicesById[pin.id]
             VineyardBlockRectangle(
                 id: "gen-\(index + 1)",
+                deviceId: pin.id,
+                deviceName: device?.name ?? pin.name,
+                deviceLocationLabel: device?.locationLabel,
                 centerLatitude: pin.coordinate.latitude,
                 centerLongitude: pin.coordinate.longitude,
                 halfLatitudeSpan: 0.00018,

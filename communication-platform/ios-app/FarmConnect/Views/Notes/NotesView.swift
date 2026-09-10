@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct NotesView: View {
+    @EnvironmentObject private var session: SessionStore
     enum NotesFilter: String, CaseIterable, Identifiable {
         case all = "All"
         case spray = "Spray"
@@ -189,6 +190,9 @@ struct NotesView: View {
                 }
             }
             .task {
+                if let userId = session.currentUser?.id {
+                    fieldLogStore.configure(userId: userId)
+                }
                 await reloadAll()
             }
             .onChange(of: feedViewModel.refreshTrigger) { _, _ in

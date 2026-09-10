@@ -4,6 +4,10 @@ import Foundation
 /// Rectangle on the map; optional rotation in degrees (clockwise from north).
 struct VineyardBlockRectangle: Codable, Identifiable, Equatable {
     let id: String
+    /// Physical sensor assigned to this map block. Optional for legacy/demo/planning-only blocks.
+    var deviceId: String?
+    var deviceName: String?
+    var deviceLocationLabel: String?
     var centerLatitude: Double
     var centerLongitude: Double
     /// Half of the north–south extent before rotation (degrees latitude).
@@ -14,12 +18,15 @@ struct VineyardBlockRectangle: Codable, Identifiable, Equatable {
     var rotationDegrees: Double
 
     enum CodingKeys: String, CodingKey {
-        case id, centerLatitude, centerLongitude
+        case id, deviceId, deviceName, deviceLocationLabel, centerLatitude, centerLongitude
         case halfLatitudeSpan, halfLongitudeSpan, rotationDegrees
     }
 
     init(
         id: String,
+        deviceId: String? = nil,
+        deviceName: String? = nil,
+        deviceLocationLabel: String? = nil,
         centerLatitude: Double,
         centerLongitude: Double,
         halfLatitudeSpan: Double,
@@ -27,6 +34,9 @@ struct VineyardBlockRectangle: Codable, Identifiable, Equatable {
         rotationDegrees: Double = 0
     ) {
         self.id = id
+        self.deviceId = deviceId
+        self.deviceName = deviceName
+        self.deviceLocationLabel = deviceLocationLabel
         self.centerLatitude = centerLatitude
         self.centerLongitude = centerLongitude
         self.halfLatitudeSpan = halfLatitudeSpan
@@ -37,6 +47,9 @@ struct VineyardBlockRectangle: Codable, Identifiable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
+        deviceId = try c.decodeIfPresent(String.self, forKey: .deviceId)
+        deviceName = try c.decodeIfPresent(String.self, forKey: .deviceName)
+        deviceLocationLabel = try c.decodeIfPresent(String.self, forKey: .deviceLocationLabel)
         centerLatitude = try c.decode(Double.self, forKey: .centerLatitude)
         centerLongitude = try c.decode(Double.self, forKey: .centerLongitude)
         halfLatitudeSpan = try c.decode(Double.self, forKey: .halfLatitudeSpan)

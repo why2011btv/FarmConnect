@@ -56,6 +56,8 @@ struct VineyardBlockInsight: Identifiable {
 
 struct VineyardDemoBlock: Identifiable {
     let id: String
+    /// Exact backend device assigned during customer setup. Nil for demo/planning-only blocks.
+    let deviceId: String?
     let name: String
     let locationLabel: String
     let polygon: [CLLocationCoordinate2D]
@@ -74,6 +76,7 @@ struct VineyardDemoBlock: Identifiable {
 
     init(
         id: String,
+        deviceId: String? = nil,
         name: String,
         locationLabel: String,
         polygon: [CLLocationCoordinate2D],
@@ -88,6 +91,7 @@ struct VineyardDemoBlock: Identifiable {
         readingSources: CanopyReadingSources = CanopyReadingSources(all: .weather)
     ) {
         self.id = id
+        self.deviceId = deviceId
         self.name = name
         self.locationLabel = locationLabel
         self.polygon = polygon
