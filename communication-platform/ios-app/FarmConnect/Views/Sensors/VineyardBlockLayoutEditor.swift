@@ -235,6 +235,7 @@ struct VineyardBlockLayoutEditor: View {
     }
 
     private func finishEditing() {
+        layoutStore.commitActiveSlot()
         if style == .sheet {
             dismiss()
         }

@@ -14,6 +14,8 @@ final class VineyardBlockLayoutStore: ObservableObject {
     private static let planningSlotKeyPrefix = "vineyard.slot.planning.v3"
     private static let modeKeyPrefix = "vineyard.layout.mode.v3"
     private var storageScope: String?
+    private var farmId: String?
+    private var syncTask: Task<Void, Never>?
 
     init() {
         slots = LayoutSlots(demo: VineyardDemoData.defaultDemoSlot, planning: .empty)
@@ -22,10 +24,12 @@ final class VineyardBlockLayoutStore: ObservableObject {
 
     /// Loads only this account/farm's layout. Legacy unscoped layouts are deliberately ignored
     /// because they cannot safely be attributed after an account switch.
-    func configure(userId: String, farmId: String?) {
+    func configure(userId: String, farmId: String?) async {
         let scope = Self.safeScope("\(userId)|\(farmId ?? "no-farm")")
         guard storageScope != scope else { return }
+        syncTask?.cancel()
         storageScope = scope
+        self.farmId = farmId
 
         slots = LayoutSlots(
             demo: loadSlot(forKey: demoSlotKey) ?? VineyardDemoData.defaultDemoSlot,
@@ -33,6 +37,20 @@ final class VineyardBlockLayoutStore: ObservableObject {
         )
         mode = loadMode() ?? .planning
         persist(slot: slots.demo, forKey: demoSlotKey)
+
+        guard let farmId else { return }
+        do {
+            if let shared = try await APIClient.shared.getVineyardLayout(farmId: farmId) {
+                slots.planning = shared
+                persist(slot: shared, forKey: planningSlotKey)
+            } else if !slots.planning.rectangles.isEmpty {
+                // One-time migration: make a layout created by an older app build available to
+                // every device that belongs to this farm.
+                try await APIClient.shared.setVineyardLayout(slots.planning, farmId: farmId)
+            }
+        } catch {
+            // Keep the cached layout usable offline. The next edit or app launch retries sync.
+        }
     }
 
     // MARK: - Active-slot read facades (get-only; views observe $slots / $mode)
@@ -135,6 +153,7 @@ final class VineyardBlockLayoutStore: ObservableObject {
     ) {
         slots.planning = LayoutSlot(rectangles: rectangles, blockSettings: settings, profile: profile)
         persist(slot: slots.planning, forKey: planningSlotKey)
+        schedulePlanningSync()
         if mode != .planning {
             mode = .planning
             persistMode()
@@ -177,7 +196,21 @@ final class VineyardBlockLayoutStore: ObservableObject {
     private func persistActiveSlot() {
         switch mode {
         case .demo: persist(slot: slots.demo, forKey: demoSlotKey)
-        case .planning: persist(slot: slots.planning, forKey: planningSlotKey)
+        case .planning:
+            persist(slot: slots.planning, forKey: planningSlotKey)
+            schedulePlanningSync()
+        }
+    }
+
+    private func schedulePlanningSync() {
+        guard let farmId else { return }
+        let layout = slots.planning
+        syncTask?.cancel()
+        syncTask = Task {
+            // Coalesce slider and repeated nudge updates into one server write.
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            try? await APIClient.shared.setVineyardLayout(layout, farmId: farmId)
         }
     }
 

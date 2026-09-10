@@ -101,6 +101,10 @@ struct LayoutSlot: Codable, Equatable {
     }
 }
 
+struct VineyardLayoutResponse: Decodable {
+    let item: LayoutSlot?
+}
+
 /// Holds both layout slots. Both ALWAYS exist (value type, no dictionary, no force-unwrap),
 /// so a write to one slot is structurally incapable of touching the other.
 struct LayoutSlots {

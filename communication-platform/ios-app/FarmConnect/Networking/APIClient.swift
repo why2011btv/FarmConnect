@@ -180,6 +180,22 @@ final class APIClient {
         ).farm
     }
 
+    func getVineyardLayout(farmId: String) async throws -> LayoutSlot? {
+        try await getDecoded(
+            "/v1/farms/\(farmId)/vineyard-layout",
+            as: VineyardLayoutResponse.self
+        ).item
+    }
+
+    func setVineyardLayout(_ layout: LayoutSlot, farmId: String) async throws {
+        var req = try authorizedRequest(path: "/v1/farms/\(farmId)/vineyard-layout", method: "PUT")
+        req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(layout)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse else { throw APIError.badStatus(-1) }
+        guard 200..<300 ~= http.statusCode else { throw statusError(data: data, statusCode: http.statusCode) }
+    }
+
     /// Persists where the customer placed each device (from the vineyard map). Enables the
     /// server-side weather-divergence health check and makes placement durable across reinstalls.
     func setDeviceLocations(_ locations: [(deviceId: String, latitude: Double, longitude: Double)]) async throws {

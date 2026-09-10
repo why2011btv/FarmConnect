@@ -18,6 +18,40 @@ const createCodeSchema = z.object({
   expiresInDays: z.number().int().positive().max(3650).optional(),
 });
 
+const coordinateSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+const vineyardLayoutSchema = z.object({
+  rectangles: z.array(z.object({
+    id: z.string().min(1).max(120),
+    deviceId: z.string().max(200).nullable().optional(),
+    deviceName: z.string().max(200).nullable().optional(),
+    deviceLocationLabel: z.string().max(300).nullable().optional(),
+    centerLatitude: z.number().min(-90).max(90),
+    centerLongitude: z.number().min(-180).max(180),
+    halfLatitudeSpan: z.number().positive().max(10),
+    halfLongitudeSpan: z.number().positive().max(10),
+    rotationDegrees: z.number().finite(),
+  })).max(500),
+  blockSettings: z.record(z.string(), z.object({
+    grapeVariety: z.string().max(120),
+  })),
+  profile: z.object({
+    name: z.string().min(1).max(300),
+    centerLatitude: z.number().min(-90).max(90),
+    centerLongitude: z.number().min(-180).max(180),
+    latitudeDelta: z.number().positive().max(180),
+    longitudeDelta: z.number().positive().max(360),
+    parcels: z.array(z.array(coordinateSchema).max(1000)).max(100).nullable().optional(),
+    acreage: z.number().nonnegative().nullable().optional(),
+    reportedAcreage: z.number().nonnegative().nullable().optional(),
+    reportedAcreageNote: z.string().max(2000).nullable().optional(),
+    source: z.string().max(100).nullable().optional(),
+  }).nullable().optional(),
+});
+
 type FarmRow = {
   id: string;
   name: string;
@@ -54,6 +88,46 @@ export async function farmRoutes(app: FastifyInstance, db: Pool) {
         deviceCount: Number(r.device_count),
       })),
     };
+  });
+
+  /** Shared map/block layout for this farm. Any member can read and edit it. */
+  app.get("/v1/farms/:farmId/vineyard-layout", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
+    const { farmId } = req.params as { farmId: string };
+    if (!(await getFarmRole(db, authUser.id, farmId))) {
+      return reply.code(404).send({ error: "Farm not found" });
+    }
+
+    const { rows } = await db.query<{ layout: unknown; updated_at: Date }>(
+      "SELECT layout, updated_at FROM vineyard_layouts WHERE farm_id = $1",
+      [farmId]
+    );
+    const row = rows[0];
+    return { item: row?.layout ?? null, updatedAt: row?.updated_at.toISOString() ?? null };
+  });
+
+  app.put("/v1/farms/:farmId/vineyard-layout", async (req, reply) => {
+    const authUser = await requireAuth(req, reply, db);
+    if (!authUser) return;
+
+    const { farmId } = req.params as { farmId: string };
+    if (!(await getFarmRole(db, authUser.id, farmId))) {
+      return reply.code(404).send({ error: "Farm not found" });
+    }
+
+    const parsed = vineyardLayoutSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send(badRequest(parsed.error));
+
+    await db.query(
+      `INSERT INTO vineyard_layouts(farm_id, layout, updated_by, updated_at)
+       VALUES ($1, $2::jsonb, $3, NOW())
+       ON CONFLICT (farm_id) DO UPDATE
+       SET layout = EXCLUDED.layout, updated_by = EXCLUDED.updated_by, updated_at = NOW()`,
+      [farmId, JSON.stringify(parsed.data), authUser.id]
+    );
+    return reply.code(204).send();
   });
 
   /**

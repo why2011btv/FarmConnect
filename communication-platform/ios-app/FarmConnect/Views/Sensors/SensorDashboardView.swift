@@ -116,7 +116,7 @@ struct SensorDashboardView: View {
             .task(id: layoutStorageScope) {
                 guard let userId = session.currentUser?.id else { return }
                 if !session.isAdmin && session.farms.first == nil { return }
-                layoutStore.configure(userId: userId, farmId: session.farms.first?.id)
+                await layoutStore.configure(userId: userId, farmId: session.farms.first?.id)
                 // Customers always enter their own farm-scoped planning layout.
                 if !session.isAdmin, layoutStore.mode == .demo {
                     layoutStore.setMode(.planning)
