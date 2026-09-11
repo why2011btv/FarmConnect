@@ -13,6 +13,7 @@ struct SensorDashboardView: View {
     @State private var showLayoutEditorSheet = false
     @State private var showGeneratorSheet = false
     @State private var showDevicePlacement = false
+    @State private var showSensorStatus = false
     @State private var showDiseaseRisk = false
     @State private var showHarvestLog = false
     @State private var showRenameVineyard = false
@@ -155,6 +156,13 @@ struct SensorDashboardView: View {
                     DiseaseRiskView(latitude: center.latitude, longitude: center.longitude)
                 }
             }
+            .sheet(isPresented: $showSensorStatus) {
+                SensorStatusView(
+                    vineyardName: vineyardNavigationTitle,
+                    blocks: blocks,
+                    isLoading: sensorViewModel.isLoading || weatherViewModel.isLoading
+                )
+            }
             .sheet(isPresented: $showDevicePlacement) {
                 DevicePlacementView(
                     layoutStore: layoutStore,
@@ -290,6 +298,12 @@ struct SensorDashboardView: View {
         switch mode {
         case .planning:
             Menu {
+                Button {
+                    showSensorStatus = true
+                } label: {
+                    Label("Sensor status", systemImage: "sensor.tag.radiowaves.forward")
+                }
+                .disabled(blocks.isEmpty)
                 if layoutStore.activeProfile?.center != nil {
                     Button {
                         showDiseaseRisk = true
@@ -335,6 +349,12 @@ struct SensorDashboardView: View {
         case .demo:
             // Presentation-locked: editing is a de-emphasized, office-prep opt-in.
             Menu {
+                Button {
+                    showSensorStatus = true
+                } label: {
+                    Label("Sensor status", systemImage: "sensor.tag.radiowaves.forward")
+                }
+                .disabled(blocks.isEmpty)
                 if layoutStore.activeProfile?.center != nil {
                     Button {
                         showDiseaseRisk = true
@@ -537,5 +557,153 @@ private struct BlockDetailSheet: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+    }
+}
+
+// MARK: - Vineyard-wide sensor status (phone menu)
+
+private struct SensorStatusView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let vineyardName: String
+    let blocks: [VineyardDemoBlock]
+    let isLoading: Bool
+
+    private var goodCount: Int { blocks.filter { $0.riskLevel == .low }.count }
+    private var watchCount: Int { blocks.filter { $0.riskLevel == .moderate }.count }
+    private var attentionCount: Int { blocks.filter { $0.riskLevel == .high }.count }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    HStack(spacing: 8) {
+                        conditionCount(goodCount, label: "Good", color: .green)
+                        conditionCount(watchCount, label: "Watch", color: .orange)
+                        conditionCount(attentionCount, label: "Attention", color: .red)
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text(vineyardName)
+                } footer: {
+                    Text("Block condition combines current field-sensor readings with available local weather.")
+                }
+
+                Section("Blocks and nodes") {
+                    ForEach(blocks) { block in
+                        blockRow(block)
+                    }
+                }
+            }
+            .overlay {
+                if isLoading && blocks.isEmpty {
+                    ProgressView("Loading sensor status…")
+                }
+            }
+            .navigationTitle("Sensor status")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func conditionCount(_ count: Int, label: String, color: Color) -> some View {
+        VStack(spacing: 3) {
+            Text("\(count)")
+                .font(.title2.bold())
+                .foregroundStyle(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func blockRow(_ block: VineyardDemoBlock) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Circle()
+                    .fill(block.riskLevel.fillColor)
+                    .frame(width: 10, height: 10)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(block.name)
+                        .font(.headline)
+                    Text(block.locationLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(conditionLabel(for: block.riskLevel))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(block.riskLevel.fillColor)
+            }
+
+            if let sensor = block.liveSensor {
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 7, height: 7)
+                    Text(sensor.deviceName)
+                    Text("· Updated \(sensor.lastSeenAt.formatted(date: .omitted, time: .shortened))")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else if let connection = block.sensorConnection {
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(connection.isOnline ? Color.green : Color.red)
+                        .frame(width: 7, height: 7)
+                    Text(connection.deviceName)
+                    Text(connection.isOnline ? "· Online" : "· Offline")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else {
+                Label("Local weather only", systemImage: "cloud.sun")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 12) {
+                metric("Temp", value: temperature(for: block))
+                metric("Humidity", value: String(format: "%.1f%%", block.readings.relativeHumidityPct))
+                metric("Leaf wetness", value: String(format: "%.1f%%", block.readings.soilMoisturePct))
+            }
+        }
+        .padding(.vertical, 5)
+    }
+
+    private func metric(_ label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption.weight(.medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func temperature(for block: VineyardDemoBlock) -> String {
+        if let temperatureC = block.liveSensor?.temperatureC {
+            return String(format: "%.1f°C", temperatureC)
+        }
+        return String(format: "%.1f°F", block.readings.airTemperatureF)
+    }
+
+    private func conditionLabel(for risk: VineyardRiskLevel) -> String {
+        switch risk {
+        case .low: return "Good"
+        case .moderate: return "Watch"
+        case .high: return "Needs attention"
+        }
     }
 }
