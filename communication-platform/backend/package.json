@@ -8,6 +8,7 @@
     "migrate": "tsx src/scripts/migrate.ts",
     "provision": "tsx src/scripts/provisionFarm.ts",
     "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/services/partnerDataService.test.js",
     "start": "node dist/server.js",
     "validate-newa": "tsx src/scripts/validateAgainstNewa.ts"
   },

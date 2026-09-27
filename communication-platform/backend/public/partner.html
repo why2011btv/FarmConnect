@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Persephone's Basket · Partner Data</title>
+  <style>
+    :root{--ink:#17382d;--muted:#65736e;--paper:#f4f2e9;--card:#fffdf6;--line:#d9ddd3;--green:#286a4b;--lime:#b9d273;--amber:#d99631;--red:#b95042;--shadow:0 18px 50px rgba(28,56,43,.09)}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input{font:inherit} button{cursor:pointer}.shell{max-width:1240px;margin:auto;padding:28px}
+    header{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-bottom:28px}.brand{display:flex;gap:14px;align-items:center}.mark{width:46px;height:46px;border-radius:15px;background:var(--ink);display:grid;place-items:center;color:#fff;font-size:24px}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-weight:750;font-size:11px;color:var(--green)}h1{font-family:Georgia,serif;font-size:28px;line-height:1.1;margin:2px 0}.sub{color:var(--muted)}
+    .keybox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;gap:8px;box-shadow:var(--shadow)}input{border:0;background:transparent;outline:0;width:260px;padding:9px 12px}.primary{border:0;border-radius:11px;padding:10px 16px;background:var(--green);color:white;font-weight:700}.secondary{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:650}
+    .notice{display:none;padding:12px 16px;border-radius:12px;margin:0 0 20px;background:#fde8e5;color:#7e2f26}.hero{border-radius:28px;padding:34px;background:linear-gradient(135deg,#17382d,#315b48);color:#fff;display:grid;grid-template-columns:1.45fr .8fr;gap:30px;box-shadow:var(--shadow)}.hero h2{font:44px/1.04 Georgia,serif;margin:10px 0 13px}.hero p{max-width:680px;color:#dbe8df}.hero-meta{border-left:1px solid rgba(255,255,255,.22);padding-left:28px;display:flex;flex-direction:column;justify-content:center}.hero-meta strong{font-size:29px}.hero-meta span{color:#c7d8ce}
+    .tabs{display:flex;gap:10px;margin:24px 0}.tab{border:1px solid var(--line);background:transparent;border-radius:100px;padding:10px 18px;color:var(--muted);font-weight:700}.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 8px 24px rgba(28,56,43,.04)}.metric-label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.metric-value{font:32px/1.15 Georgia,serif;margin-top:6px}.metric-note{font-size:12px;color:var(--muted);margin-top:4px}
+    .split{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section-title h3{margin:0;font:24px Georgia,serif}.downloads{display:flex;gap:8px;flex-wrap:wrap}.chart{height:250px;width:100%;display:block}.legend{display:flex;gap:16px;color:var(--muted);font-size:12px;margin-top:8px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}.empty{color:var(--muted);padding:40px;text-align:center}
+    .recommendations{display:flex;flex-direction:column;gap:10px;max-height:350px;overflow:auto}.rec{border:1px solid var(--line);border-left:5px solid var(--lime);border-radius:13px;padding:13px;background:#fff}.rec.watch{border-left-color:var(--amber)}.rec.attention{border-left-color:var(--red)}.rec-head{display:flex;justify-content:space-between;gap:10px}.rec h4{margin:0;font-size:14px}.rec time{font-size:11px;color:var(--muted)}.rec p{margin:5px 0;color:#45574f;font-size:13px}.evidence{font-size:11px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.status{display:inline-flex;align-items:center;gap:6px}.status:before{content:"";width:8px;height:8px;border-radius:50%;background:#a0aaa5}.status.online:before{background:#48a16f}
+    .method{margin:16px 0 30px;background:#e7ede4;border-radius:18px;padding:18px 22px;display:flex;gap:18px;align-items:flex-start}.method strong{white-space:nowrap}.method p{margin:0;color:#4d6057}.hidden{display:none!important}footer{color:var(--muted);font-size:12px;padding:16px 0 30px}
+    @media(max-width:850px){header{align-items:flex-start;flex-direction:column}.keybox{width:100%}.keybox input{width:100%}.hero{grid-template-columns:1fr}.hero-meta{border-left:0;border-top:1px solid rgba(255,255,255,.22);padding:22px 0 0}.grid{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}.shell{padding:18px}.hero h2{font-size:36px}}@media(max-width:520px){.grid{grid-template-columns:1fr}.downloads{margin-top:8px}.section-title{align-items:flex-start;flex-direction:column}.hero{padding:24px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><div class="mark">♙</div><div><div class="eyebrow">Persephone's Basket</div><h1>Partner Data Portal</h1><div class="sub">Pseudonymized vineyard intelligence</div></div></div>
+      <form class="keybox" id="key-form"><input id="api-key" type="password" autocomplete="off" placeholder="Partner API key" aria-label="Partner API key"><button class="primary">Connect</button></form>
+    </header>
+    <div class="notice" id="notice"></div>
+    <section class="hero">
+      <div><div class="eyebrow" style="color:#b9d273">Field intelligence, shared responsibly</div><h2>Sensor context and transparent recommendations.</h2><p>Explore temperature, humidity, and leaf-wetness observations for two consented farm deployments. Every recommendation includes its evidence and limitations.</p></div>
+      <div class="hero-meta"><span>Authorized dataset</span><strong id="date-range">Connect to load</strong><span id="updated">Read-only partner access</span></div>
+    </section>
+    <div class="tabs" id="tabs"><button class="tab active" data-farm="farm-1">Farm 1</button><button class="tab" data-farm="farm-2">Farm 2</button></div>
+    <section id="dashboard" class="hidden">
+      <div class="grid">
+        <article class="card"><div class="metric-label">Raw readings</div><div class="metric-value" id="m-readings">—</div><div class="metric-note">within authorized range</div></article>
+        <article class="card"><div class="metric-label">Devices reporting</div><div class="metric-value" id="m-devices">—</div><div class="metric-note">with received readings</div></article>
+        <article class="card"><div class="metric-label">Latest humidity</div><div class="metric-value" id="m-humidity">—</div><div class="metric-note">most recent node value</div></article>
+        <article class="card"><div class="metric-label">Recommendations</div><div class="metric-value" id="m-recs">—</div><div class="metric-note">transparent daily records</div></article>
+      </div>
+      <div class="split">
+        <article class="card">
+          <div class="section-title"><h3>Daily conditions</h3><div class="downloads"><button class="secondary" data-download="readings">Download readings CSV</button><button class="secondary" data-download="recommendations">Recommendations CSV</button></div></div>
+          <svg class="chart" id="chart" viewBox="0 0 760 250" preserveAspectRatio="none" role="img" aria-label="Daily sensor trend chart"></svg>
+          <div class="legend"><span><i class="dot" style="background:#286a4b"></i>Temperature °C</span><span><i class="dot" style="background:#4b7faa"></i>Humidity %</span><span><i class="dot" style="background:#d99631"></i>Leaf wetness %</span></div>
+        </article>
+        <article class="card"><div class="section-title"><h3>Recommendations</h3></div><div class="recommendations" id="recommendations"></div></article>
+      </div>
+      <article class="card" style="margin-top:16px"><div class="section-title"><h3>Latest device readings</h3><span class="sub" id="farm-start"></span></div><div style="overflow:auto"><table><thead><tr><th>Node</th><th>Block</th><th>Status</th><th>Temperature</th><th>Humidity</th><th>Leaf wetness</th><th>Last seen</th></tr></thead><tbody id="devices"></tbody></table></div></article>
+      <div class="method"><strong>Interpretation note</strong><p>These sensors describe microclimate conditions; they do not measure nitrogen, phosphorus, potassium, pH, or soil nutrient availability. Recommendations are non-prescriptive decision support and should be combined with field observations, laboratory testing, labels, and qualified agronomic advice.</p></div>
+    </section>
+    <section class="empty" id="locked">Enter the partner API key to load the authorized farm data.</section>
+    <footer>API documentation: <code>/v1/partner/openapi.json</code> · Authentication: <code>x-partner-api-key</code> or Bearer token · Times displayed in your browser's timezone.</footer>
+  </main>
+  <script>
+    const state={key:sessionStorage.getItem('pb-partner-key')||'',farm:'farm-1',data:null};
+    const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    $('api-key').value=state.key;
+    async function api(path){const r=await fetch(path,{headers:{'x-partner-api-key':state.key}});if(!r.ok){let m=`HTTP ${r.status}`;try{m=(await r.json()).error||m}catch{}throw new Error(m)}return r}
+    function notice(message){$('notice').textContent=message;$('notice').style.display=message?'block':'none'}
+    const fmtTime=ms=>ms?new Date(ms).toLocaleString([], {dateStyle:'medium',timeStyle:'short'}):'—'; const num=n=>Number(n).toLocaleString();
+    async function connect(){notice('');await api('/v1/partner/farms');sessionStorage.setItem('pb-partner-key',state.key);await loadFarm()}
+    async function loadFarm(){
+      const json=await (await api(`/v1/partner/farms/${state.farm}/summary`)).json(); state.data=json; render(json);
+      $('dashboard').classList.remove('hidden');$('locked').classList.add('hidden');
+    }
+    function render(d){
+      $('date-range').textContent=`${d.farm.label} · since ${d.farm.startDate}`;$('updated').textContent=`Latest reading ${fmtTime(d.totals.lastReadingAt)}`;
+      $('m-readings').textContent=num(d.totals.readings);$('m-devices').textContent=d.totals.devicesReporting;$('m-recs').textContent=d.totals.recommendations;$('farm-start').textContent=`Authorized from ${d.farm.startDate}`;
+      const newest=d.devices.flatMap(x=>Object.entries(x.readings).map(([type,v])=>({...v,type}))).filter(x=>x.type==='humidity').sort((a,b)=>b.createdAt-a.createdAt)[0];$('m-humidity').textContent=newest?`${Number(newest.value).toFixed(1)}${newest.unit}`:'—';
+      $('devices').innerHTML=d.devices.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.block)}</td><td><span class="status ${esc(x.status)}">${esc(x.status)}</span></td><td>${reading(x.readings.temperature)}</td><td>${reading(x.readings.humidity)}</td><td>${reading(x.readings.leaf_wetness||x.readings.soil_moisture)}</td><td>${fmtTime(x.lastSeenAt)}</td></tr>`).join('');
+      $('recommendations').innerHTML=d.latestRecommendations.length?d.latestRecommendations.map(r=>`<div class="rec ${esc(r.severity)}"><div class="rec-head"><h4>${esc(r.title)}</h4><time>${esc(r.date)}</time></div><p>${esc(r.recommendation)}</p><div class="evidence">${esc(r.evidence)}</div></div>`).join(''):'<div class="empty">No recommendations in range.</div>'; draw(d.daily);
+    }
+    function reading(v){return v?`${Number(v.value).toFixed(1)}${esc(v.unit)}`:'—'}
+    function draw(daily){const svg=$('chart'),W=760,H=250,p=28;svg.innerHTML='';if(!daily.length){svg.innerHTML='<text x="380" y="125" text-anchor="middle" fill="#65736e">No daily data</text>';return}const defs=[['temperature','#286a4b',0,40],['humidity','#4b7faa',0,100],['leafWetness','#d99631',0,100]];let grid='';for(let i=0;i<5;i++){const y=p+i*(H-2*p)/4;grid+=`<line x1="${p}" y1="${y}" x2="${W-p}" y2="${y}" stroke="#d9ddd3" stroke-width="1"/>`}let paths='';for(const [k,c,min,max] of defs){const pts=daily.map((d,i)=>{const v=d[k]?.average;if(v==null)return null;return [p+i*(W-2*p)/Math.max(1,daily.length-1),H-p-(v-min)/(max-min)*(H-2*p)]}).filter(Boolean);if(pts.length)paths+=`<polyline points="${pts.map(x=>x.join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`}svg.innerHTML=grid+paths}
+    async function download(kind){try{const suffix=kind==='readings'?'readings.csv':'recommendations.csv';const r=await api(`/v1/partner/farms/${state.farm}/${suffix}`);const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${state.farm}-${suffix}`;a.click();URL.revokeObjectURL(url)}catch(e){notice(e.message)}}
+    $('key-form').addEventListener('submit',async e=>{e.preventDefault();state.key=$('api-key').value.trim();try{await connect()}catch(err){notice(err.message)}});
+    document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',async()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.farm=b.dataset.farm;try{await loadFarm()}catch(e){notice(e.message)}}));
+    document.querySelectorAll('[data-download]').forEach(b=>b.addEventListener('click',()=>download(b.dataset.download)));
+    if(state.key)connect().catch(e=>notice(e.message));
+  </script>
+</body>
+</html>

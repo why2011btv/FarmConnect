@@ -47,6 +47,12 @@ Server defaults:
 - `POST /v1/uploads/image` (multipart, auth required)
 - `GET /v1/sensors/overview` (auth required)
 - `POST /v1/sensors/ingest` (Raspberry Pi ingest, API key required)
+- `GET /partner` (partner dashboard shell; data requires partner API key)
+- `GET /v1/partner/farms` (pseudonymized partner dataset, partner API key required)
+- `GET /v1/partner/farms/:farmKey/summary` (daily metrics + recommendations)
+- `GET /v1/partner/farms/:farmKey/readings` (paginated raw readings)
+- `GET /v1/partner/farms/:farmKey/readings.csv` (per-farm research export)
+- `GET /v1/partner/farms/:farmKey/recommendations.csv` (recommendation evaluation export)
 
 ## Notes
 
