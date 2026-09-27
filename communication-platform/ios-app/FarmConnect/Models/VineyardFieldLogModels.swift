@@ -1,6 +1,6 @@
 import Foundation
 
-/// Demo vineyard field log — spray applications and scouting observations.
+/// Shared vineyard field log — spray applications and scouting observations.
 enum VineyardLogKind: String, Codable, CaseIterable, Identifiable {
     case spray = "Spray"
     case scouting = "Scouting"
@@ -65,6 +65,10 @@ struct VineyardFieldLogEntry: Identifiable, Codable, Hashable {
         if let blockName, !blockName.isEmpty { return blockName }
         return nil
     }
+}
+
+struct VineyardFieldLogList: Codable {
+    let items: [VineyardFieldLogEntry]
 }
 
 enum VineyardBlockOption: String, CaseIterable, Identifiable {

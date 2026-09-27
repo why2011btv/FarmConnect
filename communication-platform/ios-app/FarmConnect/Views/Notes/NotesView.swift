@@ -189,7 +189,7 @@ struct NotesView: View {
             }
             .task {
                 if let userId = session.currentUser?.id {
-                    fieldLogStore.configure(userId: userId)
+                    await fieldLogStore.configure(userId: userId, farmId: session.farms.first?.id)
                 }
                 await reloadAll()
             }
@@ -225,7 +225,7 @@ struct NotesView: View {
                     onDelete: entry.isBundledDemo
                         ? nil
                         : {
-                            fieldLogStore.delete(entry)
+                            Task { await fieldLogStore.delete(entry) }
                             selectedFieldEntry = nil
                         }
                 )
@@ -298,7 +298,7 @@ struct NotesView: View {
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     if !entry.isBundledDemo {
                         Button(role: .destructive) {
-                            fieldLogStore.delete(entry)
+                            Task { await fieldLogStore.delete(entry) }
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -529,7 +529,7 @@ struct NotesView: View {
     // MARK: - Data
 
     private func reloadAll() async {
-        fieldLogStore.reload()
+        await fieldLogStore.reload()
         await loadNotes()
     }
 

@@ -163,8 +163,10 @@ struct NewVineyardLogEntryView: View {
             )
         }
 
-        store.add(entry)
-        dismiss()
+        Task {
+            await store.add(entry)
+            dismiss()
+        }
     }
 }
 

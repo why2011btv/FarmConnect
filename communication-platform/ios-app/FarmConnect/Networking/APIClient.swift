@@ -236,6 +236,34 @@ final class APIClient {
         try await deleteNoContent("/v1/farms/\(farmId)/fruit-samples/\(id)")
     }
 
+    // MARK: - Shared spray/scouting field logs
+
+    func getFieldLogs(farmId: String) async throws -> [VineyardFieldLogEntry] {
+        try await getDecoded("/v1/farms/\(farmId)/field-logs", as: VineyardFieldLogList.self).items
+    }
+
+    func addFieldLog(farmId: String, entry: VineyardFieldLogEntry) async throws {
+        var payload: [String: Any] = [
+            "kind": entry.kind.rawValue,
+            "createdAt": entry.createdAtMs,
+            "locationDetail": entry.locationDetail,
+            "grapeVariety": entry.grapeVariety,
+            "title": entry.title,
+            "notes": entry.notes,
+        ]
+        if let blockId = entry.blockId { payload["blockId"] = blockId }
+        if let blockName = entry.blockName { payload["blockName"] = blockName }
+        if let product = entry.product { payload["product"] = product }
+        if let applicationRate = entry.applicationRate { payload["applicationRate"] = applicationRate }
+        if let issueType = entry.issueType { payload["issueType"] = issueType }
+        if let severity = entry.severity { payload["severity"] = severity }
+        _ = try await sendJSON(path: "/v1/farms/\(farmId)/field-logs", method: "POST", payload: payload, as: [String: String].self)
+    }
+
+    func deleteFieldLog(farmId: String, id: String) async throws {
+        try await deleteNoContent("/v1/farms/\(farmId)/field-logs/\(id)")
+    }
+
     // MARK: - Admin (staff only)
     //
     // These endpoints answer 404 for non-staff, so the admin surface is invisible rather than
