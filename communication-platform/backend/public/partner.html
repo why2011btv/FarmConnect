@@ -73,7 +73,30 @@
       $('recommendations').innerHTML=d.latestRecommendations.length?d.latestRecommendations.map(r=>`<div class="rec ${esc(r.severity)}"><div class="rec-head"><h4>${esc(r.title)}</h4><time>${esc(r.date)}</time></div><p>${esc(r.recommendation)}</p><div class="evidence">${esc(r.evidence)}</div></div>`).join(''):'<div class="empty">No recommendations in range.</div>'; draw(d.daily);
     }
     function reading(v){return v?`${Number(v.value).toFixed(1)}${esc(v.unit)}`:'—'}
-    function draw(daily){const svg=$('chart'),W=760,H=250,p=28;svg.innerHTML='';if(!daily.length){svg.innerHTML='<text x="380" y="125" text-anchor="middle" fill="#65736e">No daily data</text>';return}const defs=[['temperature','#286a4b',0,40],['humidity','#4b7faa',0,100],['leafWetness','#d99631',0,100]];let grid='';for(let i=0;i<5;i++){const y=p+i*(H-2*p)/4;grid+=`<line x1="${p}" y1="${y}" x2="${W-p}" y2="${y}" stroke="#d9ddd3" stroke-width="1"/>`}let paths='';for(const [k,c,min,max] of defs){const pts=daily.map((d,i)=>{const v=d[k]?.average;if(v==null)return null;return [p+i*(W-2*p)/Math.max(1,daily.length-1),H-p-(v-min)/(max-min)*(H-2*p)]}).filter(Boolean);if(pts.length)paths+=`<polyline points="${pts.map(x=>x.join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`}svg.innerHTML=grid+paths}
+    function draw(daily){
+      const svg=$('chart'),W=760,H=250,left=30,right=12,top=18,bottom=42;
+      const plotW=W-left-right,plotH=H-top-bottom;
+      svg.innerHTML='';
+      if(!daily.length){svg.innerHTML='<text x="380" y="125" text-anchor="middle" fill="#65736e">No daily data</text>';return}
+      const x=i=>left+i*plotW/Math.max(1,daily.length-1);
+      const defs=[['temperature','#286a4b',0,40],['humidity','#4b7faa',0,100],['leafWetness','#d99631',0,100]];
+      let grid='';
+      for(let i=0;i<5;i++){const y=top+i*plotH/4;grid+=`<line x1="${left}" y1="${y}" x2="${W-right}" y2="${y}" stroke="#d9ddd3" stroke-width="1"/>`}
+      const tickCount=Math.min(5,daily.length);
+      const tickIndexes=[...new Set(Array.from({length:tickCount},(_,i)=>tickCount===1?0:Math.round(i*(daily.length-1)/(tickCount-1))))];
+      let labels='';
+      for(const i of tickIndexes){
+        const date=new Date(`${daily[i].date}T12:00:00`);
+        const label=date.toLocaleDateString([], {month:'short',day:'numeric'});
+        labels+=`<line x1="${x(i)}" y1="${H-bottom}" x2="${x(i)}" y2="${H-bottom+6}" stroke="#9aa69f"/><text x="${x(i)}" y="${H-13}" text-anchor="middle" fill="#65736e" font-size="11">${label}</text>`;
+      }
+      let paths='';
+      for(const [k,c,min,max] of defs){
+        const pts=daily.map((d,i)=>{const v=d[k]?.average;if(v==null)return null;return [x(i),top+(1-(v-min)/(max-min))*plotH]}).filter(Boolean);
+        if(pts.length)paths+=`<polyline points="${pts.map(point=>point.join(',')).join(' ')}" fill="none" stroke="${c}" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+      }
+      svg.innerHTML=grid+paths+labels;
+    }
     async function download(kind){try{const suffix=kind==='readings'?'readings.csv':'recommendations.csv';const r=await api(`/v1/partner/farms/${state.farm}/${suffix}`);const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${state.farm}-${suffix}`;a.click();URL.revokeObjectURL(url)}catch(e){notice(e.message)}}
     $('key-form').addEventListener('submit',async e=>{e.preventDefault();state.key=$('api-key').value.trim();try{await connect()}catch(err){notice(err.message)}});
     document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',async()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.farm=b.dataset.farm;try{await loadFarm()}catch(e){notice(e.message)}}));
