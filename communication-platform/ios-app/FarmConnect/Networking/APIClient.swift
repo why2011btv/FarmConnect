@@ -159,6 +159,33 @@ final class APIClient {
         ).user
     }
 
+    // MARK: - Feedback
+
+    func submitFeedback(
+        category: FeedbackCategory,
+        rating: Int,
+        message: String,
+        diagnostics: FeedbackDiagnostics?
+    ) async throws -> FeedbackReceipt {
+        var payload: [String: Any] = [
+            "category": category.rawValue,
+            "rating": rating,
+            "message": message
+        ]
+        if let diagnostics {
+            payload["appVersion"] = diagnostics.appVersion
+            payload["buildNumber"] = diagnostics.buildNumber
+            payload["osVersion"] = diagnostics.osVersion
+            payload["deviceModel"] = diagnostics.deviceModel
+        }
+        return try await sendJSON(
+            path: "/v1/feedback",
+            method: "POST",
+            payload: payload,
+            as: FeedbackResponse.self
+        ).item
+    }
+
     // MARK: - Farms
 
     func getFarms() async throws -> [Farm] {

@@ -55,6 +55,7 @@
 		94C042452F3050509C352E8A /* VineyardFieldLogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C753BE2FCE1BC4CF611FB391 /* VineyardFieldLogModels.swift */; };
 		9A03266CF9D0792C91198A5A /* BlockDiseaseRiskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F3157591DCD8CD69EAB0CA /* BlockDiseaseRiskView.swift */; };
 		9C0679E7746A289CEC07DD1C /* NewVineyardLogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29C8F3EC3D15237249B97DAE /* NewVineyardLogEntryView.swift */; };
+		9D6683377179F09009F2B0F7 /* FeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733389A6AAA7B16D78306E78 /* FeedbackView.swift */; };
 		9EE3182845B76E66DA346A1E /* ErrorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315A68954A4EA050BC10058F /* ErrorHelpers.swift */; };
 		A03C46F8BB35D8B79CE648BF /* BoundaryEditorMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C963A5103D4B7AC5025BD6C /* BoundaryEditorMap.swift */; };
 		AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC4BD82888633215B07B2A7 /* FeedView.swift */; };
@@ -106,6 +107,7 @@
 		588D44AB56AC7599029D3283 /* GrapeVariety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrapeVariety.swift; sourceTree = "<group>"; };
 		61701E1FC5CB2AC609DC3315 /* PasswordResetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetView.swift; sourceTree = "<group>"; };
 		6A888FAD16E4369D43BC994F /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
+		733389A6AAA7B16D78306E78 /* FeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackView.swift; sourceTree = "<group>"; };
 		759C077ED260960D2113749E /* NewPostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPostView.swift; sourceTree = "<group>"; };
 		770E037D2A141A178276DB57 /* UserLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLocationManager.swift; sourceTree = "<group>"; };
 		7ED88653F6DBC4089D7F48D9 /* SensorNodeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorNodeListView.swift; sourceTree = "<group>"; };
@@ -295,6 +297,7 @@
 		83DC1535EC8892F7E63F566F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				733389A6AAA7B16D78306E78 /* FeedbackView.swift */,
 				C2395D4A12ADBCE121AC4E17 /* NotificationSettingsView.swift */,
 			);
 			path = Settings;
@@ -493,6 +496,7 @@
 				D4C2F86EAFEAA05A8E43F9DA /* FarmConnectApp.swift in Sources */,
 				AD9ED162E1F7F21D544513CD /* FeedView.swift in Sources */,
 				1C8A75560FA5724D4B2FDADE /* FeedViewModel.swift in Sources */,
+				9D6683377179F09009F2B0F7 /* FeedbackView.swift in Sources */,
 				14431E869C5FDB9E05CE9CA7 /* GrapeVariety.swift in Sources */,
 				0619CCF6FFAA00900716A210 /* HarvestLogView.swift in Sources */,
 				3B9D9C98E3F91104D65A890D /* LoginView.swift in Sources */,

@@ -3,6 +3,7 @@ import SwiftUI
 struct AccountMenuButton: View {
     @EnvironmentObject private var session: SessionStore
     @State private var isNotificationSettingsOpen = false
+    @State private var isFeedbackOpen = false
     @State private var isConfirmingDelete = false
     @State private var isDeleting = false
     @State private var showDeleteError = false
@@ -14,6 +15,9 @@ struct AccountMenuButton: View {
             }
             Button("Notification settings") {
                 isNotificationSettingsOpen = true
+            }
+            Button("Share feedback", systemImage: "bubble.left.and.bubble.right") {
+                isFeedbackOpen = true
             }
             Button("Sign out", role: .destructive) {
                 session.logout()
@@ -27,6 +31,9 @@ struct AccountMenuButton: View {
         }
         .sheet(isPresented: $isNotificationSettingsOpen) {
             NotificationSettingsView()
+        }
+        .sheet(isPresented: $isFeedbackOpen) {
+            FeedbackView()
         }
         .confirmationDialog(
             "Delete your account?",

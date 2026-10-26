@@ -217,6 +217,40 @@ struct UserProfile: Codable, Identifiable {
     }
 }
 
+enum FeedbackCategory: String, CaseIterable, Identifiable {
+    case bug = "Bug"
+    case idea = "Idea"
+    case question = "Question"
+    case other = "Other"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .bug: return "Report a problem"
+        case .idea: return "Suggest an idea"
+        case .question: return "Ask a question"
+        case .other: return "Other feedback"
+        }
+    }
+}
+
+struct FeedbackDiagnostics {
+    let appVersion: String
+    let buildNumber: String
+    let osVersion: String
+    let deviceModel: String
+}
+
+struct FeedbackReceipt: Codable, Identifiable {
+    let id: String
+    let createdAt: String
+}
+
+struct FeedbackResponse: Codable {
+    let item: FeedbackReceipt
+}
+
 // MARK: - Harvest fruit samples
 
 struct FruitSample: Codable, Identifiable {
